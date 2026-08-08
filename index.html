@@ -1,468 +1,218 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#f6f7fb">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="週週存">
-<title>週週存｜個人記帳</title>
-<style>
-:root{
-  --bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#8a93a3;--line:#e9edf3;
-  --primary:#5b67f1;--primary2:#7b83f5;--green:#22a06b;--red:#e05252;--orange:#e89b36;
-  --shadow:0 8px 24px rgba(31,41,55,.07);--radius:20px;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
-button,input,select{font:inherit}
-button{border:0;cursor:pointer}
-.app{max-width:520px;margin:0 auto;min-height:100vh;padding-bottom:92px}
-header{padding:28px 20px 10px;display:flex;justify-content:space-between;align-items:center}
-.logo{font-size:25px;font-weight:800;letter-spacing:-.5px}
-.logo span{font-size:20px}
-.icon-btn{width:42px;height:42px;border-radius:14px;background:#fff;box-shadow:var(--shadow);font-size:19px}
-.page{display:none;padding:10px 18px}
-.page.active{display:block}
-.week-card{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:26px;padding:24px;box-shadow:0 12px 28px rgba(91,103,241,.22)}
-.week-label{opacity:.85;font-size:14px}
-.week-dates{font-size:17px;font-weight:700;margin-top:5px}
-.balance-title{margin-top:25px;opacity:.9;font-size:14px}
-.balance{font-size:43px;font-weight:850;letter-spacing:-1px;margin:3px 0 17px}
-.progress{height:10px;background:rgba(255,255,255,.25);border-radius:99px;overflow:hidden}
-.progress>div{height:100%;background:#fff;border-radius:99px;transition:.25s}
-.progress-info{display:flex;justify-content:space-between;font-size:12px;margin-top:9px;opacity:.9}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
-.stat{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
-.stat .label{font-size:12px;color:var(--muted)}
-.stat .value{font-size:22px;font-weight:800;margin-top:5px}
-.value.green{color:var(--green)}.value.red{color:var(--red)}
-.section-title{font-size:18px;font-weight:800;margin:24px 3px 12px}
-.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-.daily{display:flex;justify-content:space-between;align-items:center}
-.daily strong{font-size:25px}
-.small{font-size:12px;color:var(--muted)}
-.primary-btn{width:100%;background:var(--primary);color:#fff;padding:15px;border-radius:16px;font-weight:800;font-size:16px;margin-top:14px}
-.secondary-btn{background:#eef0ff;color:var(--primary);padding:11px 15px;border-radius:13px;font-weight:700}
-.txn{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
-.txn:last-child{border-bottom:0}
-.txn-icon{width:42px;height:42px;border-radius:14px;background:#f2f4f8;display:flex;align-items:center;justify-content:center;font-size:20px}
-.txn-main{flex:1}.txn-name{font-weight:700}.txn-meta{font-size:11px;color:var(--muted);margin-top:3px}
-.txn-amount{font-weight:800}.txn-actions{display:flex;gap:5px}.txn-actions button{background:none;color:var(--muted);font-size:12px}
-.empty{text-align:center;color:var(--muted);padding:25px 10px;font-size:14px}
-.nav{position:fixed;z-index:20;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:78px;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom)}
-.nav button{background:none;color:#9aa2b0;font-size:11px;font-weight:700}
-.nav button.active{color:var(--primary)}
-.nav .nav-icon{font-size:22px;display:block;margin-bottom:2px}
-.money-hero{text-align:center;background:#fff;border-radius:24px;padding:24px;box-shadow:var(--shadow)}
-.money-hero .big{font-size:39px;font-weight:850;margin:5px 0}
-.rows .row{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line)}
-.rows .row:last-child{border-bottom:0}
-.bar-row{margin:16px 0}.bar-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px}
-.mini-bar{height:8px;background:#edf0f5;border-radius:99px;overflow:hidden}.mini-bar div{height:100%;background:var(--primary);border-radius:99px}
-.week-row{display:grid;grid-template-columns:1.1fr .8fr .8fr .8fr;gap:6px;padding:12px 0;border-bottom:1px solid var(--line);font-size:12px;align-items:center}
-.week-row.header{color:var(--muted);font-weight:700}
-.green-text{color:var(--green);font-weight:800}.danger{color:var(--red)!important}
-.modal{display:none;position:fixed;z-index:50;inset:0;background:rgba(15,23,42,.4);align-items:flex-end;justify-content:center}
-.modal.show{display:flex}
-.sheet{width:min(520px,100%);background:#fff;border-radius:25px 25px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
-.sheet h2{margin:0 0 18px}.close{float:right;background:#f2f4f8;border-radius:50%;width:34px;height:34px}
-label{display:block;font-size:13px;font-weight:700;margin:13px 0 7px}
-input,select{width:100%;padding:13px;border:1px solid #dde2ea;border-radius:13px;background:#fff;outline:none}
-input:focus,select:focus{border-color:var(--primary)}
-.category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.cat{background:#f3f5f8;border-radius:13px;padding:11px 5px;font-size:12px}.cat.selected{background:#eef0ff;color:var(--primary);outline:2px solid var(--primary)}
-.toast{position:fixed;z-index:100;left:50%;bottom:95px;transform:translateX(-50%) translateY(15px);background:#222;color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.25s}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.setting-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
-.setting-row:last-child{border:0}
-.danger-btn{width:100%;padding:13px;border-radius:14px;background:#fff0f0;color:var(--red);font-weight:800;margin-top:12px}
-.footer-note{text-align:center;color:var(--muted);font-size:11px;margin:18px 0}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>週週存 | 個人記帳</title>
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --sub: #6b7280;
+            --primary: #4f46e5;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border: #e5e7eb;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 16px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .budget-title {
+            font-size: 14px;
+            color: var(--sub);
+            margin-bottom: 8px;
+        }
+        .budget-amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--sub);
+            margin-bottom: 4px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        .amount-tag {
+            font-weight: bold;
+            color: var(--danger);
+        }
+    </style>
 </head>
 <body>
-<div class="app">
-<header>
-  <div class="logo">週週存 <span>💰</span></div>
-  <button class="icon-btn" onclick="openSettings()">⚙️</button>
-</header>
 
-<main id="home" class="page active">
-  <div class="week-card">
-    <div class="week-label">本週預算</div>
-    <div class="week-dates" id="weekDates">—</div>
-    <div class="balance-title">還可以使用</div>
-    <div class="balance" id="homeBalance">$3,500</div>
-    <div class="progress"><div id="progressBar" style="width:0%"></div></div>
-    <div class="progress-info"><span id="spentPercent">已使用 0%</span><span id="weekDays">—</span></div>
-  </div>
+    <div class="header">
+        <h2>💰 週週存</h2>
+    </div>
 
-  <div class="stats">
-    <div class="stat"><div class="label">本週已花</div><div class="value red" id="homeSpent">$0</div></div>
-    <div class="stat"><div class="label">本週預計存下</div><div class="value green" id="homeSave">$3,500</div></div>
-  </div>
+    <!-- 預算總覽卡片 -->
+    <div class="card">
+        <div class="flex-between" style="margin-bottom: 12px;">
+            <div>
+                <div class="budget-title">本月總預算</div>
+                <div class="budget-amount" id="monthlyBudget">NT$ 15,000</div>
+            </div>
+            <button onclick="setBudget()" style="width: auto; padding: 6px 12px; font-size: 12px; background: #e0e7ff; color: var(--primary);">修改預算</button>
+        </div>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
+        <div class="flex-between">
+            <div>
+                <div class="budget-title">已支出</div>
+                <div style="font-size: 18px; font-weight: bold; color: var(--danger);" id="totalSpent">NT$ 0</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="budget-title">剩餘預算</div>
+                <div style="font-size: 18px; font-weight: bold; color: var(--success);" id="remainingBudget">NT$ 15,000</div>
+            </div>
+        </div>
+    </div>
 
-  <div class="card daily">
-    <div><div class="small">今日建議可用</div><strong id="dailyBudget">$500</strong></div>
-    <div class="small" id="daysLeft">剩餘 7 天</div>
-  </div>
+    <!-- 新增消費卡片 -->
+    <div class="card">
+        <div class="input-group">
+            <label for="item">項目名稱</label>
+            <input type="text" id="item" placeholder="例如：午餐、搭車">
+        </div>
+        <div class="input-group">
+            <label for="amount">金額</label>
+            <input type="number" id="amount" placeholder="0">
+        </div>
+        <button onclick="addRecord()">新增消費</button>
+    </div>
 
-  <div class="section-title">快速記帳</div>
-  <button class="primary-btn" onclick="openAdd()">＋ 新增支出</button>
+    <!-- 消費紀錄 -->
+    <div class="card">
+        <div class="budget-title" style="margin-bottom: 12px;">消費明細</div>
+        <div id="recordList">
+            <!-- 記錄會顯示在這裡 -->
+        </div>
+    </div>
 
-  <div class="section-title">本週支出</div>
-  <div class="card" id="homeTransactions"></div>
-</main>
+    <script>
+        let defaultBudget = 15000;
+        let budget = parseFloat(localStorage.getItem('monthly_budget')) || defaultBudget;
+        let records = JSON.parse(localStorage.getItem('budget_records')) || [];
 
-<main id="records" class="page">
-  <div class="section-title" style="margin-top:4px">記帳</div>
-  <button class="primary-btn" onclick="openAdd()">＋ 新增支出</button>
-  <div class="section-title">最近紀錄</div>
-  <div class="card" id="allTransactions"></div>
-</main>
+        function init() {
+            document.getElementById('monthlyBudget').innerText = `NT$ ${budget.toLocaleString()}`;
+            render();
+        }
 
-<main id="savings" class="page">
-  <div class="section-title" style="margin-top:4px">我的存款</div>
-  <div class="money-hero">
-    <div class="small">累積存款</div>
-    <div class="big green-text" id="totalSaved">$0</div>
-    <div class="small">每週剩餘＋預備金未使用</div>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="label">本月已存</div><div class="value green" id="monthSaved">$0</div></div>
-    <div class="stat"><div class="label">本週預計存</div><div class="value green" id="savingThisWeek">$3,500</div></div>
-  </div>
-  <div class="section-title">每週存款紀錄</div>
-  <div class="card">
-    <div class="week-row header"><div>週次</div><div>花費</div><div>剩餘</div><div>狀態</div></div>
-    <div id="savingWeeks"></div>
-  </div>
-  <div class="section-title">預備金</div>
-  <div class="card rows" id="reserveCard"></div>
-</main>
+        function setBudget() {
+            let newBudget = prompt('請輸入新的每月預算金額：', budget);
+            if (newBudget !== null && !isNaN(newBudget) && newBudget > 0) {
+                budget = parseFloat(newBudget);
+                localStorage.setItem('monthly_budget', budget);
+                init();
+            }
+        }
 
-<main id="analysis" class="page">
-  <div class="section-title" style="margin-top:4px">本月分析</div>
-  <div class="stats">
-    <div class="stat"><div class="label">本月預算</div><div class="value" id="monthBudget">$0</div></div>
-    <div class="stat"><div class="label">本月花費</div><div class="value red" id="monthSpent">$0</div></div>
-  </div>
-  <div class="card">
-    <div class="daily"><div><div class="small">預算執行率</div><strong id="monthRate">0%</strong></div><div id="monthStatus" class="small">—</div></div>
-  </div>
-  <div class="section-title">支出分類</div>
-  <div class="card" id="categoryAnalysis"></div>
-</main>
+        function addRecord() {
+            const itemInput = document.getElementById('item');
+            const amountInput = document.getElementById('amount');
 
-<nav class="nav">
-  <button class="active" data-page="home"><span class="nav-icon">🏠</span>首頁</button>
-  <button data-page="records"><span class="nav-icon">🧾</span>記帳</button>
-  <button data-page="savings"><span class="nav-icon">💰</span>存款</button>
-  <button data-page="analysis"><span class="nav-icon">📊</span>分析</button>
-</nav>
-</div>
+            const item = itemInput.value.trim();
+            const amount = parseFloat(amountInput.value);
 
-<div class="modal" id="addModal">
-  <div class="sheet">
-    <button class="close" onclick="closeAdd()">×</button>
-    <h2>新增支出</h2>
-    <label>金額</label>
-    <input id="amount" type="number" inputmode="decimal" min="1" placeholder="例如 150">
-    <label>分類</label>
-    <div class="category-grid" id="categoryGrid"></div>
-    <label>備註（選填）</label>
-    <input id="note" type="text" maxlength="40" placeholder="例如：晚餐＋飲料">
-    <label>日期</label>
-    <input id="date" type="date">
-    <button class="primary-btn" onclick="saveTransaction()">完成記帳</button>
-  </div>
-</div>
+            if (!item || isNaN(amount) || amount <= 0) {
+                alert('請輸入正確的項目與金額！');
+                return;
+            }
 
-<div class="modal" id="editModal">
-  <div class="sheet">
-    <button class="close" onclick="closeEdit()">×</button>
-    <h2>編輯支出</h2>
-    <input id="editId" type="hidden">
-    <label>金額</label><input id="editAmount" type="number" inputmode="decimal" min="1">
-    <label>分類</label><select id="editCategory"></select>
-    <label>備註</label><input id="editNote" type="text" maxlength="40">
-    <label>日期</label><input id="editDate" type="date">
-    <button class="primary-btn" onclick="updateTransaction()">儲存修改</button>
-    <button class="danger-btn" onclick="deleteEditing()">刪除這筆紀錄</button>
-  </div>
-</div>
+            records.push({ item, amount, date: new Date().toLocaleDateString() });
+            localStorage.setItem('budget_records', JSON.stringify(records));
 
-<div class="modal" id="settingsModal">
-  <div class="sheet">
-    <button class="close" onclick="closeSettings()">×</button>
-    <h2>設定</h2>
-    <div class="setting-row"><span>每週預算</span><strong>$3,500</strong></div>
-    <div class="setting-row"><span>每月預備金</span><strong>$1,000</strong></div>
-    <div class="setting-row"><span>每週第一天</span><strong>星期日</strong></div>
-    <div class="setting-row"><span>資料筆數</span><strong id="dataCount">0</strong></div>
-    <button class="secondary-btn" style="width:100%;margin-top:15px" onclick="exportData()">📤 匯出備份</button>
-    <label style="margin-top:12px"><span class="secondary-btn" style="display:block;text-align:center">📥 匯入備份<input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)"></span></label>
-    <button class="danger-btn" onclick="clearAll()">清除所有記帳資料</button>
-    <div class="footer-note">資料只儲存在這台裝置的瀏覽器中。請定期匯出備份。</div>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
+            itemInput.value = '';
+            amountInput.value = '';
 
-<script>
-const WEEK_BUDGET = 3500;
-const MONTH_RESERVE = 1000;
-const CATS = [
-  ["餐飲","🍚"],["購物","🛍️"],["娛樂","🎮"],
-  ["飲料","☕"],["交通","🚗"],["其他","📦"]
-];
-const KEY = "weekSaveApp_v1";
-let db = loadDB();
-let selectedCat = "餐飲";
+            render();
+        }
 
-function loadDB(){
-  try { return JSON.parse(localStorage.getItem(KEY)) || {transactions:[], archivedWeeks:{}, reserves:{}}; }
-  catch(e){ return {transactions:[],archivedWeeks:{},reserves:{}}; }
-}
-function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); }
-function money(n){ return "$" + Math.round(n).toLocaleString("zh-TW"); }
-function dateObj(s){ return new Date(s + "T12:00:00"); }
-function iso(d){ return d.toISOString().slice(0,10); }
-function today(){ return iso(new Date()); }
+        function render() {
+            const listEl = document.getElementById('recordList');
+            listEl.innerHTML = '';
 
-function startOfWeek(date=new Date()){
-  const d = new Date(date); d.setHours(12,0,0,0);
-  const day = d.getDay(); d.setDate(d.getDate()-day); return d;
-}
-function endOfWeek(date=new Date()){
-  const d = startOfWeek(date); d.setDate(d.getDate()+6); return d;
-}
-function weekKey(date=new Date()){ return iso(startOfWeek(date)); }
-function fmtMD(d){ return `${d.getMonth()+1}/${d.getDate()}`; }
-function daysRemaining(){
-  const d = new Date(); const day = d.getDay();
-  return 7-day;
-}
-function txnsInWeek(startKey){
-  const s=dateObj(startKey), e=new Date(s); e.setDate(e.getDate()+7);
-  return db.transactions.filter(t=>{const d=dateObj(t.date); return d>=s && d<e;});
-}
-function sum(arr){return arr.reduce((a,b)=>a+b,0)}
+            let totalSpent = 0;
 
-function ensureWeekArchive(){
-  const current = weekKey();
-  const known = Object.keys(db.archivedWeeks).sort();
-  if(known.length){
-    const last = known[known.length-1];
-    let d = startOfWeek(dateObj(last));
-    d.setDate(d.getDate()+7);
-    while(iso(d) < current){
-      const k=iso(d);
-      if(!db.archivedWeeks[k]){
-        const ts=txnsInWeek(k), spent=sum(ts.map(t=>t.amount));
-        db.archivedWeeks[k]={budget:WEEK_BUDGET,spent,saved:Math.max(0,WEEK_BUDGET-spent)};
-      }
-      d.setDate(d.getDate()+7);
-    }
-  }
-  if(!db.archivedWeeks[current]){
-    // Current week is not finalized. Keep live calculations.
-  }
-  persist();
-}
-function ensureMonthReserve(){
-  const m=new Date(); const key=`${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,"0")}`;
-  if(db.reserves[key]===undefined) db.reserves[key]={allocated:MONTH_RESERVE,used:0,closed:false,saved:0};
-  persist();
-  return db.reserves[key];
-}
-function finalizePastMonths(){
-  const now=new Date(), current=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-  Object.keys(db.reserves).forEach(k=>{
-    if(k<current && !db.reserves[k].closed){
-      db.reserves[k].saved=Math.max(0,db.reserves[k].allocated-db.reserves[k].used);
-      db.reserves[k].closed=true;
-    }
-  });
-  persist();
-}
-function totalHistoricalSaved(){
-  let total=0;
-  Object.values(db.archivedWeeks).forEach(w=>total+=Math.max(0,w.saved||0));
-  Object.values(db.reserves).forEach(r=>{
-    if(r.closed) total+=Math.max(0,r.saved||0);
-  });
-  // Current week + current reserve are shown separately, not counted as finalized savings.
-  return total;
-}
+            records.forEach((rec, index) => {
+                totalSpent += rec.amount;
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: bold;">${rec.item}</div>
+                        <div style="font-size: 12px; color: var(--sub);">${rec.date}</div>
+                    </div>
+                    <div class="amount-tag">-NT$ ${rec.amount.toLocaleString()}</div>
+                `;
+                listEl.appendChild(div);
+            });
 
-function render(){
-  ensureWeekArchive(); finalizePastMonths(); const reserve=ensureMonthReserve();
-  const wk=weekKey(), start=dateObj(wk), end=endOfWeek();
-  const ts=txnsInWeek(wk), spent=sum(ts.map(t=>t.amount)), remaining=WEEK_BUDGET-spent;
-  document.getElementById("weekDates").textContent=`${fmtMD(start)} ～ ${fmtMD(end)}`;
-  document.getElementById("homeBalance").textContent=money(Math.max(0,remaining));
-  document.getElementById("homeBalance").classList.toggle("danger",remaining<0);
-  document.getElementById("homeSpent").textContent=money(spent);
-  document.getElementById("homeSave").textContent=money(Math.max(0,remaining));
-  const pct=Math.min(100,Math.max(0,spent/WEEK_BUDGET*100));
-  document.getElementById("progressBar").style.width=pct+"%";
-  document.getElementById("spentPercent").textContent=`已使用 ${Math.round(pct)}%`;
-  document.getElementById("weekDays").textContent=`本週 ${fmtMD(start)}～${fmtMD(end)}`;
-  const left=daysRemaining();
-  document.getElementById("daysLeft").textContent=`剩餘 ${left} 天`;
-  document.getElementById("dailyBudget").textContent=money(Math.max(0,remaining)/left);
-  renderTransactions("homeTransactions",ts,true);
-  renderTransactions("allTransactions",[...db.transactions].sort((a,b)=>b.date.localeCompare(a.date)),false);
-  renderSavings();
-  renderAnalysis();
-  document.getElementById("dataCount").textContent=db.transactions.length;
-}
-function renderTransactions(id, ts, limit){
-  const el=document.getElementById(id);
-  if(!ts.length){el.innerHTML='<div class="empty">目前還沒有支出紀錄 ✨</div>';return}
-  const list=(limit?ts.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8):ts);
-  el.innerHTML=list.map(t=>{
-    const c=CATS.find(x=>x[0]===t.category)||["其他","📦"];
-    return `<div class="txn">
-      <div class="txn-icon">${c[1]}</div>
-      <div class="txn-main"><div class="txn-name">${escapeHTML(t.note||t.category)}</div><div class="txn-meta">${t.category} · ${t.date}</div></div>
-      <div><div class="txn-amount">${money(t.amount)}</div><div class="txn-actions"><button onclick="openEdit('${t.id}')">編輯</button></div></div>
-    </div>`;
-  }).join("");
-}
-function renderSavings(){
-  const current=weekKey(), currentTs=txnsInWeek(current), currentSpent=sum(currentTs.map(t=>t.amount));
-  const archived=Object.entries(db.archivedWeeks).sort((a,b)=>b[0].localeCompare(a[0]));
-  let total=totalHistoricalSaved()+Math.max(0,WEEK_BUDGET-currentSpent);
-  document.getElementById("totalSaved").textContent=money(total);
-  const now=new Date(), monthPrefix=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-  let month=0;
-  archived.forEach(([k,w])=>{if(k.startsWith(monthPrefix))month+=Math.max(0,w.saved||0)});
-  const reserve=ensureMonthReserve();
-  month += Math.max(0, reserve.saved||0);
-  document.getElementById("monthSaved").textContent=money(month);
-  document.getElementById("savingThisWeek").textContent=money(Math.max(0,WEEK_BUDGET-currentSpent));
-  const rows=[];
-  const curStart=dateObj(current), curEnd=endOfWeek();
-  rows.push(`<div class="week-row"><div>${fmtMD(curStart)}～${fmtMD(curEnd)}</div><div>${money(currentSpent)}</div><div class="green-text">${money(Math.max(0,WEEK_BUDGET-currentSpent))}</div><div>進行中</div></div>`);
-  archived.slice(0,11).forEach(([k,w])=>{
-    const s=dateObj(k),e=new Date(s);e.setDate(e.getDate()+6);
-    rows.push(`<div class="week-row"><div>${fmtMD(s)}～${fmtMD(e)}</div><div>${money(w.spent)}</div><div class="green-text">${money(w.saved)}</div><div>已結算</div></div>`);
-  });
-  document.getElementById("savingWeeks").innerHTML=rows.join("");
-  const used=reserve.used||0, remain=Math.max(0,MONTH_RESERVE-used);
-  document.getElementById("reserveCard").innerHTML=`
-    <div class="row"><span>本月預備金</span><strong>${money(MONTH_RESERVE)}</strong></div>
-    <div class="row"><span>已使用</span><strong class="${used?'danger':''}">${money(used)}</strong></div>
-    <div class="row"><span>剩餘</span><strong class="green-text">${money(remain)}</strong></div>
-    <div class="row"><span>本月底預計存下</span><strong class="green-text">${money(remain)}</strong></div>
-    <button class="secondary-btn" style="width:100%" onclick="useReserve()">＋ 使用預備金</button>`;
-}
-function renderAnalysis(){
-  const now=new Date(), y=now.getFullYear(),m=now.getMonth();
-  const prefix=`${y}-${String(m+1).padStart(2,"0")}`;
-  const currentStart=weekKey();
-  const currentWeekStart=dateObj(currentStart);
-  const first=new Date(y,m,1), last=new Date(y,m+1,0);
-  let weeks=0;
-  let d=startOfWeek(first);
-  while(d<=last){weeks++;d.setDate(d.getDate()+7)}
-  const monthBudget=weeks*WEEK_BUDGET;
-  const mt=db.transactions.filter(t=>{const x=dateObj(t.date);return x.getFullYear()===y&&x.getMonth()===m});
-  const spent=sum(mt.map(t=>t.amount));
-  const rate=monthBudget?spent/monthBudget*100:0;
-  document.getElementById("monthBudget").textContent=money(monthBudget);
-  document.getElementById("monthSpent").textContent=money(spent);
-  document.getElementById("monthRate").textContent=Math.round(rate)+"%";
-  document.getElementById("monthStatus").textContent=rate<=100?"預算控制良好":"⚠️ 已超過本月週預算";
-  document.getElementById("monthStatus").className="small "+(rate<=100?"green-text":"danger");
-  const totals={};mt.forEach(t=>totals[t.category]=(totals[t.category]||0)+t.amount);
-  const max=Math.max(1,...Object.values(totals));
-  document.getElementById("categoryAnalysis").innerHTML=CATS.map(c=>{
-    const val=totals[c[0]]||0;
-    return `<div class="bar-row"><div class="bar-top"><span>${c[1]} ${c[0]}</span><strong>${money(val)}</strong></div><div class="mini-bar"><div style="width:${val/max*100}%"></div></div></div>`;
-  }).join("");
-}
-function openAdd(){
-  document.getElementById("addModal").classList.add("show");
-  document.getElementById("amount").value="";
-  document.getElementById("note").value="";
-  document.getElementById("date").value=today();
-  selectedCat="餐飲"; renderCategoryButtons();
-  setTimeout(()=>document.getElementById("amount").focus(),150);
-}
-function closeAdd(){document.getElementById("addModal").classList.remove("show")}
-function renderCategoryButtons(){
-  document.getElementById("categoryGrid").innerHTML=CATS.map(c=>`<button class="cat ${selectedCat===c[0]?"selected":""}" onclick="selectCat('${c[0]}')">${c[1]} ${c[0]}</button>`).join("");
-}
-function selectCat(c){selectedCat=c;renderCategoryButtons()}
-function saveTransaction(){
-  const amount=Number(document.getElementById("amount").value);
-  if(!amount||amount<=0){toast("請輸入有效金額");return}
-  db.transactions.push({id:Date.now().toString(),amount,category:selectedCat,note:document.getElementById("note").value.trim(),date:document.getElementById("date").value||today()});
-  persist();closeAdd();render();toast("已完成記帳");
-}
-function openEdit(id){
-  const t=db.transactions.find(x=>x.id===id);if(!t)return;
-  document.getElementById("editId").value=id;document.getElementById("editAmount").value=t.amount;
-  document.getElementById("editNote").value=t.note||"";document.getElementById("editDate").value=t.date;
-  document.getElementById("editCategory").innerHTML=CATS.map(c=>`<option value="${c[0]}">${c[1]} ${c[0]}</option>`).join("");
-  document.getElementById("editCategory").value=t.category;
-  document.getElementById("editModal").classList.add("show");
-}
-function closeEdit(){document.getElementById("editModal").classList.remove("show")}
-function updateTransaction(){
-  const t=db.transactions.find(x=>x.id===document.getElementById("editId").value);if(!t)return;
-  const a=Number(document.getElementById("editAmount").value);if(!a||a<=0){toast("請輸入有效金額");return}
-  t.amount=a;t.category=document.getElementById("editCategory").value;t.note=document.getElementById("editNote").value.trim();t.date=document.getElementById("editDate").value||today();
-  persist();closeEdit();render();toast("已更新");
-}
-function deleteEditing(){
-  if(!confirm("確定要刪除這筆紀錄嗎？"))return;
-  const id=document.getElementById("editId").value;db.transactions=db.transactions.filter(t=>t.id!==id);
-  persist();closeEdit();render();toast("已刪除");
-}
-function useReserve(){
-  const r=ensureMonthReserve(), remain=MONTH_RESERVE-r.used;
-  const amount=prompt(`本月預備金剩餘 ${money(remain)}\n請輸入要使用的金額：`);
-  if(amount===null)return;const a=Number(amount);
-  if(!a||a<=0||a>remain){toast("金額超過預備金剩餘額度");return}
-  r.used+=a;persist();render();toast(`預備金已使用 ${money(a)}`);
-}
-function openSettings(){document.getElementById("settingsModal").classList.add("show")}
-function closeSettings(){document.getElementById("settingsModal").classList.remove("show")}
-function exportData(){
-  const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`週週存備份_${today()}.json`;a.click();URL.revokeObjectURL(a.href);toast("備份已匯出");
-}
-function importData(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();reader.onload=ev=>{try{
-    const x=JSON.parse(ev.target.result);if(!x.transactions)throw Error();
-    db=x;persist();render();toast("備份匯入成功");
-  }catch(err){toast("備份格式不正確")}};reader.readAsText(file);
-}
-function clearAll(){
-  if(!confirm("確定清除所有記帳資料？此動作無法復原。"))return;
-  db={transactions:[],archivedWeeks:{},reserves:{}};persist();render();closeSettings();toast("資料已清除");
-}
-function toast(msg){
-  const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");
-  setTimeout(()=>el.classList.remove("show"),1800);
-}
-function escapeHTML(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+            const remaining = budget - totalSpent;
+            document.getElementById('totalSpent').innerText = `NT$ ${totalSpent.toLocaleString()}`;
+            document.getElementById('remainingBudget').innerText = `NT$ ${remaining.toLocaleString()}`;
+        }
 
-document.querySelectorAll(".nav button").forEach(btn=>btn.addEventListener("click",()=>{
-  document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.getElementById(btn.dataset.page).classList.add("active");render();
-}));
-document.getElementById("addModal").addEventListener("click",e=>{if(e.target.id==="addModal")closeAdd()});
-document.getElementById("editModal").addEventListener("click",e=>{if(e.target.id==="editModal")closeEdit()});
-document.getElementById("settingsModal").addEventListener("click",e=>{if(e.target.id==="settingsModal")closeSettings()});
-
-render();
-</script>
+        init();
+    </script>
 </body>
 </html>
