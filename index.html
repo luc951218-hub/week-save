@@ -2,217 +2,342 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>週週存 | 個人記帳</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>週週存</title>
     <style>
         :root {
-            --bg: #f6f7fb;
+            --bg: #f8fafc;
             --card: #ffffff;
-            --text: #1f2937;
-            --sub: #6b7280;
             --primary: #4f46e5;
-            --danger: #ef4444;
+            --primary-light: #e0e7ff;
+            --text: #0f172a;
+            --sub: #64748b;
             --success: #10b981;
-            --border: #e5e7eb;
+            --danger: #ef4444;
+            --border: #f1f5f9;
         }
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            padding: 16px;
-            max-width: 480px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .budget-title {
-            font-size: 14px;
-            color: var(--sub);
-            margin-bottom: 8px;
-        }
-        .budget-amount {
-            font-size: 32px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-        .flex-between {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .input-group {
-            margin-bottom: 12px;
-        }
-        label {
-            display: block;
-            font-size: 12px;
-            color: var(--sub);
-            margin-bottom: 4px;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 16px;
-            outline: none;
-        }
-        button {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .list-item:last-child {
-            border-bottom: none;
-        }
-        .amount-tag {
-            font-weight: bold;
-            color: var(--danger);
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; }
+        
+        /* Header */
+        header { padding: 20px 16px 10px; text-align: center; background: #fff; border-bottom: 1px solid var(--border); }
+        header h1 { font-size: 20px; font-weight: 800; }
+
+        /* Pages Section */
+        .page { display: none; padding: 16px; }
+        .page.active { display: block; }
+
+        /* Common Cards */
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+        .card-title { font-size: 13px; color: var(--sub); font-weight: 600; margin-bottom: 6px; }
+        .big-number { font-size: 32px; font-weight: 800; color: var(--text); }
+
+        /* Progress Bar */
+        .progress-bar { height: 12px; background: #f1f5f9; border-radius: 6px; overflow: hidden; margin: 12px 0 8px; }
+        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+
+        /* Grid Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        .stat-box { background: #f8fafc; padding: 12px; border-radius: 12px; text-align: center; }
+        .stat-box .num { font-size: 16px; font-weight: 700; margin-top: 4px; }
+
+        /* Form Inputs */
+        .input-group { margin-bottom: 12px; }
+        label { font-size: 13px; color: var(--sub); font-weight: 600; display: block; margin-bottom: 6px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; font-size: 16px; background: #f8fafc; outline: none; }
+        button.btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 700; margin-top: 8px; cursor: pointer; }
+
+        /* Transaction List */
+        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .tx-item:last-child { border-bottom: none; }
+        .tx-icon { font-size: 20px; margin-right: 12px; width: 36px; height: 36px; background: #f1f5f9; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
+
+        /* Bottom Nav Tab */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; height: 65px; background: #ffffff; display: flex; border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.03); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--sub); font-weight: 600; cursor: pointer; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>💰 週週存</h2>
-    </div>
+    <header>
+        <h1>💰 週週存</h1>
+    </header>
 
-    <!-- 預算總覽卡片 -->
-    <div class="card">
-        <div class="flex-between" style="margin-bottom: 12px;">
-            <div>
-                <div class="budget-title">本月總預算</div>
-                <div class="budget-amount" id="monthlyBudget">NT$ 15,000</div>
-            </div>
-            <button onclick="setBudget()" style="width: auto; padding: 6px 12px; font-size: 12px; background: #e0e7ff; color: var(--primary);">修改預算</button>
-        </div>
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
-        <div class="flex-between">
-            <div>
-                <div class="budget-title">已支出</div>
-                <div style="font-size: 18px; font-weight: bold; color: var(--danger);" id="totalSpent">NT$ 0</div>
-            </div>
-            <div style="text-align: right;">
-                <div class="budget-title">剩餘預算</div>
-                <div style="font-size: 18px; font-weight: bold; color: var(--success);" id="remainingBudget">NT$ 15,000</div>
+    <!-- 1. 首頁 (本週概況) -->
+    <div id="page-home" class="page active">
+        <!-- 月總預算概況卡片 -->
+        <div class="card" style="background: #f1f5f9; padding: 14px 20px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="card-title" style="margin: 0;">🗓️ 本月總預算：<b>NT$ 15,000</b></span>
+                <span style="font-size: 12px; color: var(--primary); font-weight: 600;" id="weeklyCalcTag">視週期分算</span>
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-title">本週可用預算剩餘</div>
+            <div class="big-number" id="weeklyRemaining">NT$ 0</div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--sub);">
+                <span>已用: <b id="weeklySpent">NT$ 0</b> / 目標 <span id="weeklyTarget">NT$ 0</span></span>
+                <span id="percentText">0%</span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="card-title">📅 本週剩餘天數</div>
+                    <div class="num" id="daysLeft">-- 天</div>
+                </div>
+                <div class="stat-box">
+                    <div class="card-title">💡 今日建議花費</div>
+                    <div class="num" style="color: var(--success);" id="dailyBudget">NT$ --</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 預備金狀態 -->
+        <div class="card" style="background: linear-gradient(135deg, #e0e7ff 0%, #ffffff 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div class="card-title" style="color: var(--primary);">🛟 本月緊急預備金</div>
+                    <div style="font-size: 20px; font-weight: 800; color: var(--primary);" id="reserveRemaining">NT$ 1,000</div>
+                </div>
+                <div style="text-align: right; font-size: 12px; color: var(--sub);">
+                    月額度 NT$ 1,000
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">近期支出</div>
+            <div id="homeTxList"></div>
+        </div>
     </div>
 
-    <!-- 新增消費卡片 -->
-    <div class="card">
-        <div class="input-group">
-            <label for="item">項目名稱</label>
-            <input type="text" id="item" placeholder="例如：午餐、搭車">
+    <!-- 2. 記帳頁面 -->
+    <div id="page-add" class="page">
+        <div class="card">
+            <div class="card-title" style="margin-bottom: 16px;">快速新增支出</div>
+            
+            <div class="input-group">
+                <label>支出扣款來源</label>
+                <select id="txType">
+                    <option value="weekly">本週日常預算</option>
+                    <option value="reserve">🛟 緊急預備金</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>金額</label>
+                <input type="number" id="txAmount" placeholder="0" inputmode="decimal">
+            </div>
+
+            <div class="input-group">
+                <label>分類</label>
+                <select id="txCategory">
+                    <option value="🍚 餐飲">🍚 餐飲</option>
+                    <option value="🛍️ 購物">🛍️ 購物</option>
+                    <option value="🎮 娛樂">🎮 娛樂</option>
+                    <option value="🚗 交通">🚗 交通</option>
+                    <option value="☕ 飲料">☕ 飲料</option>
+                    <option value="📦 其他">📦 其他</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>備註</label>
+                <input type="text" id="txNote" placeholder="例如：午餐、搭車">
+            </div>
+
+            <button class="btn-primary" onclick="addTransaction()">完成並扣款</button>
         </div>
-        <div class="input-group">
-            <label for="amount">金額</label>
-            <input type="number" id="amount" placeholder="0">
-        </div>
-        <button onclick="addRecord()">新增消費</button>
     </div>
 
-    <!-- 消費紀錄 -->
-    <div class="card">
-        <div class="budget-title" style="margin-bottom: 12px;">消費明細</div>
-        <div id="recordList">
-            <!-- 記錄會顯示在這裡 -->
+    <!-- 3. 分析頁面 -->
+    <div id="page-analytics" class="page">
+        <div class="card">
+            <div class="card-title">📊 本週分類花費</div>
+            <div id="categoryAnalysis" style="margin-top: 12px;"></div>
+        </div>
+    </div>
+
+    <!-- 4. 存款頁面 -->
+    <div id="page-savings" class="page">
+        <div class="card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+            <div class="card-title" style="color: #ecfdf5;">💰 累積存款總額</div>
+            <div class="big-number" style="color: white;" id="totalSavings">NT$ 0</div>
+            <div style="margin-top: 12px; font-size: 13px; opacity: 0.9;">每週剩餘預算與月底預備金剩餘會自動存入此處</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🗓️ 存款紀錄</div>
+            <div id="savingsHistory"></div>
+        </div>
+    </div>
+
+    <!-- 底部導覽列 -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchPage('home', this)">
+            <span>🏠</span>首頁
+        </div>
+        <div class="nav-item" onclick="switchPage('add', this)">
+            <span>➕</span>記帳
+        </div>
+        <div class="nav-item" onclick="switchPage('analytics', this)">
+            <span>📊</span>分析
+        </div>
+        <div class="nav-item" onclick="switchPage('savings', this)">
+            <span>💰</span>存款
         </div>
     </div>
 
     <script>
-        let defaultBudget = 15000;
-        let budget = parseFloat(localStorage.getItem('monthly_budget')) || defaultBudget;
-        let records = JSON.parse(localStorage.getItem('budget_records')) || [];
+        const MONTHLY_TOTAL = 15000;
+        const RESERVE_BUDGET = 1000;
 
-        function init() {
-            document.getElementById('monthlyBudget').innerText = `NT$ ${budget.toLocaleString()}`;
+        let state = JSON.parse(localStorage.getItem('week_save_state')) || {
+            transactions: [],
+            totalSavings: 0,
+            reserveSpent: 0
+        };
+
+        function getWeeksInMonth() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const usedDays = firstDay.getDay() + lastDay.getDate();
+            return Math.ceil(usedDays / 7);
+        }
+
+        function getWeeklyTarget() {
+            const weeks = getWeeksInMonth();
+            const availableForWeeks = MONTHLY_TOTAL - RESERVE_BUDGET;
+            return Math.floor(availableForWeeks / weeks);
+        }
+
+        function saveState() {
+            localStorage.setItem('week_save_state', JSON.stringify(state));
+        }
+
+        function switchPage(pageId, element) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            element.classList.add('active');
             render();
         }
 
-        function setBudget() {
-            let newBudget = prompt('請輸入新的每月預算金額：', budget);
-            if (newBudget !== null && !isNaN(newBudget) && newBudget > 0) {
-                budget = parseFloat(newBudget);
-                localStorage.setItem('monthly_budget', budget);
-                init();
-            }
+        function getWeeklySpent() {
+            return state.transactions
+                .filter(t => t.type === 'weekly')
+                .reduce((sum, t) => sum + t.amount, 0);
         }
 
-        function addRecord() {
-            const itemInput = document.getElementById('item');
-            const amountInput = document.getElementById('amount');
+        function addTransaction() {
+            const amount = parseFloat(document.getElementById('txAmount').value);
+            const category = document.getElementById('txCategory').value;
+            const note = document.getElementById('txNote').value.trim();
+            const type = document.getElementById('txType').value;
 
-            const item = itemInput.value.trim();
-            const amount = parseFloat(amountInput.value);
-
-            if (!item || isNaN(amount) || amount <= 0) {
-                alert('請輸入正確的項目與金額！');
+            if (isNaN(amount) || amount <= 0) {
+                alert('請輸入有效金額！');
                 return;
             }
 
-            records.push({ item, amount, date: new Date().toLocaleDateString() });
-            localStorage.setItem('budget_records', JSON.stringify(records));
+            if (type === 'reserve' && (state.reserveSpent + amount) > RESERVE_BUDGET) {
+                alert('緊急預備金餘額不足！');
+                return;
+            }
 
-            itemInput.value = '';
-            amountInput.value = '';
+            state.transactions.push({
+                id: Date.now(),
+                type,
+                amount,
+                category,
+                note,
+                date: new Date().toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
+            });
 
-            render();
+            if (type === 'reserve') {
+                state.reserveSpent += amount;
+            }
+
+            saveState();
+
+            document.getElementById('txAmount').value = '';
+            document.getElementById('txNote').value = '';
+            
+            switchPage('home', document.querySelectorAll('.nav-item')[0]);
         }
 
         function render() {
-            const listEl = document.getElementById('recordList');
-            listEl.innerHTML = '';
+            const weeklyTarget = getWeeklyTarget();
+            const weeklySpent = getWeeklySpent();
+            const remaining = weeklyTarget - weeklySpent;
+            const percent = Math.min(100, Math.round((weeklySpent / weeklyTarget) * 100));
 
-            let totalSpent = 0;
+            document.getElementById('weeklyCalcTag').innerText = `本月包含 ${getWeeksInMonth()} 週 (每週約 $${weeklyTarget.toLocaleString()})`;
+            document.getElementById('weeklyTarget').innerText = `NT$ ${weeklyTarget.toLocaleString()}`;
+            document.getElementById('weeklyRemaining').innerText = `NT$ ${remaining.toLocaleString()}`;
+            document.getElementById('weeklySpent').innerText = `NT$ ${weeklySpent.toLocaleString()}`;
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('percentText').innerText = `${percent}%`;
 
-            records.forEach((rec, index) => {
-                totalSpent += rec.amount;
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
-                    <div>
-                        <div style="font-weight: bold;">${rec.item}</div>
-                        <div style="font-size: 12px; color: var(--sub);">${rec.date}</div>
+            const now = new Date();
+            const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+            const daysLeft = 8 - dayOfWeek; 
+            document.getElementById('daysLeft').innerText = `${daysLeft} 天`;
+
+            const dailyBudget = daysLeft > 0 ? Math.max(0, Math.round(remaining / daysLeft)) : 0;
+            document.getElementById('dailyBudget').innerText = `NT$ ${dailyBudget.toLocaleString()}`;
+
+            const reserveRemaining = RESERVE_BUDGET - state.reserveSpent;
+            document.getElementById('reserveRemaining').innerText = `NT$ ${reserveRemaining.toLocaleString()}`;
+
+            document.getElementById('totalSavings').innerText = `NT$ ${state.totalSavings.toLocaleString()}`;
+
+            const homeList = document.getElementById('homeTxList');
+            homeList.innerHTML = '';
+            state.transactions.slice(-5).reverse().forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'tx-item';
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <div class="tx-icon">${t.category.split(' ')[0]}</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 14px;">${t.note || t.category}</div>
+                            <div style="font-size: 11px; color: var(--sub);">${t.date} · ${t.type === 'reserve' ? '預備金' : '日常預算'}</div>
+                        </div>
                     </div>
-                    <div class="amount-tag">-NT$ ${rec.amount.toLocaleString()}</div>
+                    <div style="font-weight: 700; color: var(--danger);">-NT$ ${t.amount.toLocaleString()}</div>
                 `;
-                listEl.appendChild(div);
+                homeList.appendChild(item);
             });
 
-            const remaining = budget - totalSpent;
-            document.getElementById('totalSpent').innerText = `NT$ ${totalSpent.toLocaleString()}`;
-            document.getElementById('remainingBudget').innerText = `NT$ ${remaining.toLocaleString()}`;
+            const analyticsList = document.getElementById('categoryAnalysis');
+            analyticsList.innerHTML = '';
+            const categories = {};
+            state.transactions.forEach(t => {
+                categories[t.category] = (categories[t.category] || 0) + t.amount;
+            });
+            for (let cat in categories) {
+                const div = document.createElement('div');
+                div.className = 'tx-item';
+                div.innerHTML = `
+                    <div style="font-weight: 600;">${cat}</div>
+                    <div style="font-weight: 700;">NT$ ${categories[cat].toLocaleString()}</div>
+                `;
+                analyticsList.appendChild(div);
+            }
         }
 
-        init();
+        render();
     </script>
 </body>
 </html>
