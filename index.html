@@ -1,3 +1,12 @@
+沒問題！我已在保留原本所有功能與 15,000 元預算計算邏輯的前提下，為你加入這兩項關於「日期」的詳細需求：
+調整項目說明：
+ * 顯示本週日期區間：在首頁預算卡片上方，明確標示出本週的開始與結束日期（例如：本週區間：8/3 (一) - 8/9 (日)）。
+ * 新增支出時可選擇日期：記帳頁面新增了「日期選擇器」，預設為今天，但也支援選擇過去或補記帳的日期。
+ * 新增「日曆」分頁：
+   * 底部導覽列新增 「🗓️ 日曆」 分頁。
+   * 提供完整的當月日曆視圖，點擊日曆上的任何一天，下方會即時顯示該日期的所有支出明細與當日總花費。
+📄 更新版 HTML 程式碼
+請複製下方程式碼覆蓋 index.html 即可：
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -52,9 +61,19 @@
         .tx-item:last-child { border-bottom: none; }
         .tx-icon { font-size: 20px; margin-right: 12px; width: 36px; height: 36px; background: #f1f5f9; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
 
+        /* Calendar Styles */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; margin-bottom: 12px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .cal-day-head { font-size: 12px; color: var(--sub); font-weight: 600; padding: 6px 0; }
+        .cal-day { font-size: 14px; padding: 8px 0; border-radius: 10px; cursor: pointer; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .cal-day.active-day { background: var(--primary); color: white; font-weight: 700; }
+        .cal-day.today { border: 1px solid var(--primary); }
+        .cal-dot { width: 4px; height: 4px; background: var(--danger); border-radius: 2px; margin-top: 2px; }
+        .cal-day.active-day .cal-dot { background: white; }
+
         /* Bottom Nav Tab */
         .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; height: 65px; background: #ffffff; display: flex; border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.03); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--sub); font-weight: 600; cursor: pointer; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--sub); font-weight: 600; cursor: pointer; }
         .nav-item.active { color: var(--primary); }
         .nav-item span { font-size: 18px; margin-bottom: 2px; }
     </style>
@@ -69,10 +88,12 @@
     <div id="page-home" class="page active">
         <!-- 月總預算概況卡片 -->
         <div class="card" style="background: #f1f5f9; padding: 14px 20px; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <span class="card-title" style="margin: 0;">🗓️ 本月總預算：<b>NT$ 15,000</b></span>
                 <span style="font-size: 12px; color: var(--primary); font-weight: 600;" id="weeklyCalcTag">視週期分算</span>
             </div>
+            <!-- 一、新增：本週日期區間標示 -->
+            <div style="font-size: 12px; color: var(--sub); font-weight: 600;" id="weekRangeText">本週區間：--</div>
         </div>
 
         <div class="card">
@@ -122,6 +143,12 @@
     <div id="page-add" class="page">
         <div class="card">
             <div class="card-title" style="margin-bottom: 16px;">快速新增支出</div>
+
+            <!-- 二、新增：明確日期選擇 -->
+            <div class="input-group">
+                <label>支出日期</label>
+                <input type="date" id="txDate">
+            </div>
             
             <div class="input-group">
                 <label>支出扣款來源</label>
@@ -157,7 +184,22 @@
         </div>
     </div>
 
-    <!-- 3. 分析頁面 -->
+    <!-- 3. 日曆頁面 (二、新增當月日曆視圖) -->
+    <div id="page-calendar" class="page">
+        <div class="card">
+            <div class="calendar-header">
+                <span id="calMonthTitle">2026年 8月</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" id="selectedDateTitle">點擊日曆查看當日明細</div>
+            <div id="calendarDayTxList"></div>
+        </div>
+    </div>
+
+    <!-- 4. 分析頁面 -->
     <div id="page-analytics" class="page">
         <div class="card">
             <div class="card-title">📊 本週分類花費</div>
@@ -165,7 +207,7 @@
         </div>
     </div>
 
-    <!-- 4. 存款頁面 -->
+    <!-- 5. 存款頁面 -->
     <div id="page-savings" class="page">
         <div class="card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
             <div class="card-title" style="color: #ecfdf5;">💰 累積存款總額</div>
@@ -187,6 +229,9 @@
         <div class="nav-item" onclick="switchPage('add', this)">
             <span>➕</span>記帳
         </div>
+        <div class="nav-item" onclick="switchPage('calendar', this)">
+            <span>🗓️</span>日曆
+        </div>
         <div class="nav-item" onclick="switchPage('analytics', this)">
             <span>📊</span>分析
         </div>
@@ -205,6 +250,11 @@
             reserveSpent: 0
         };
 
+        // 初始化當前日期 (格式 YYYY-MM-DD)
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('txDate').value = todayStr;
+        let selectedCalDate = todayStr;
+
         function getWeeksInMonth() {
             const now = new Date();
             const year = now.getFullYear();
@@ -219,6 +269,25 @@
             const weeks = getWeeksInMonth();
             const availableForWeeks = MONTHLY_TOTAL - RESERVE_BUDGET;
             return Math.floor(availableForWeeks / weeks);
+        }
+
+        // 計算本週日期區間 (一)
+        function getWeekRangeText() {
+            const now = new Date();
+            const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+            
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - (dayOfWeek - 1));
+            
+            const sunday = new Date(now);
+            sunday.setDate(now.getDate() + (7 - dayOfWeek));
+
+            const mMonth = monday.getMonth() + 1;
+            const mDate = monday.getDate();
+            const sMonth = sunday.getMonth() + 1;
+            const sDate = sunday.getDate();
+
+            return `本週區間：${mMonth}/${mDate} (一) - ${sMonth}/${sDate} (日)`;
         }
 
         function saveState() {
@@ -240,10 +309,16 @@
         }
 
         function addTransaction() {
+            const date = document.getElementById('txDate').value;
             const amount = parseFloat(document.getElementById('txAmount').value);
             const category = document.getElementById('txCategory').value;
             const note = document.getElementById('txNote').value.trim();
             const type = document.getElementById('txType').value;
+
+            if (!date) {
+                alert('請選擇日期！');
+                return;
+            }
 
             if (isNaN(amount) || amount <= 0) {
                 alert('請輸入有效金額！');
@@ -261,7 +336,7 @@
                 amount,
                 category,
                 note,
-                date: new Date().toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
+                date: date // 使用選取的完整日期 YYYY-MM-DD
             });
 
             if (type === 'reserve') {
@@ -276,11 +351,103 @@
             switchPage('home', document.querySelectorAll('.nav-item')[0]);
         }
 
+        // 渲染日曆 (二)
+        function renderCalendar() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            document.getElementById('calMonthTitle').innerText = `${year}年 ${month + 1}月`;
+
+            const days = ['日', '一', '二', '三', '四', '五', '六'];
+            days.forEach(d => {
+                const head = document.createElement('div');
+                head.className = 'cal-day-head';
+                head.innerText = d;
+                calendarGrid.appendChild(head);
+            });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'cal-day';
+                if (dateStr === todayStr) dayDiv.classList.add('today');
+                if (dateStr === selectedCalDate) dayDiv.classList.add('active-day');
+
+                dayDiv.innerText = day;
+
+                const hasTx = state.transactions.some(t => t.date === dateStr);
+                if (hasTx) {
+                    const dot = document.createElement('div');
+                    dot.className = 'cal-dot';
+                    dayDiv.appendChild(dot);
+                }
+
+                dayDiv.onclick = () => {
+                    selectedCalDate = dateStr;
+                    renderCalendar();
+                    renderCalendarDayDetails(dateStr);
+                };
+
+                calendarGrid.appendChild(dayDiv);
+            }
+
+            renderCalendarDayDetails(selectedCalDate);
+        }
+
+        function renderCalendarDayDetails(dateStr) {
+            document.getElementById('selectedDateTitle').innerText = `${dateStr} 支出明細`;
+            const list = document.getElementById('calendarDayTxList');
+            list.innerHTML = '';
+
+            const txs = state.transactions.filter(t => t.date === dateStr);
+            if (txs.length === 0) {
+                list.innerHTML = '<div style="font-size:13px; color:var(--sub); padding:10px 0;">當日無支出紀錄</div>';
+                return;
+            }
+
+            let total = 0;
+            txs.forEach(t => {
+                total += t.amount;
+                const item = document.createElement('div');
+                item.className = 'tx-item';
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <div class="tx-icon">${t.category.split(' ')[0]}</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 14px;">${t.note || t.category}</div>
+                            <div style="font-size: 11px; color: var(--sub);">${t.type === 'reserve' ? '🛟 預備金' : '日常預算'}</div>
+                        </div>
+                    </div>
+                    <div style="font-weight: 700; color: var(--danger);">-NT$ ${t.amount.toLocaleString()}</div>
+                `;
+                list.appendChild(item);
+            });
+
+            const sumDiv = document.createElement('div');
+            sumDiv.style.cssText = 'text-align:right; font-weight:700; font-size:14px; margin-top:12px; color:var(--text);';
+            sumDiv.innerText = `當日總計：NT$ ${total.toLocaleString()}`;
+            list.appendChild(sumDiv);
+        }
+
         function render() {
             const weeklyTarget = getWeeklyTarget();
             const weeklySpent = getWeeklySpent();
             const remaining = weeklyTarget - weeklySpent;
             const percent = Math.min(100, Math.round((weeklySpent / weeklyTarget) * 100));
+
+            // 一、顯示本週區間
+            document.getElementById('weekRangeText').innerText = getWeekRangeText();
 
             document.getElementById('weeklyCalcTag').innerText = `本月包含 ${getWeeksInMonth()} 週 (每週約 $${weeklyTarget.toLocaleString()})`;
             document.getElementById('weeklyTarget').innerText = `NT$ ${weeklyTarget.toLocaleString()}`;
@@ -335,9 +502,12 @@
                 `;
                 analyticsList.appendChild(div);
             }
+
+            renderCalendar();
         }
 
         render();
     </script>
 </body>
 </html>
+
