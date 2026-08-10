@@ -3820,253 +3820,320 @@ document.querySelectorAll(".modal")
 </script>
 
 
+<!-- =========================================================
+     LINE STYLE 5-VIEW ADD-ON
+     只新增，不刪除／修改／搬動原有 HTML
+     ========================================================= -->
+<style id="lineViewAddonStyles">
+#lineViewDock{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;width:min(560px,calc(100% - 20px));display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px;background:rgba(255,255,255,.96);border:1px solid #e5e5ea;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.14);backdrop-filter:blur(14px)}
+#lineViewDock button{border:0;background:transparent;border-radius:13px;padding:7px 3px;color:#777;font-size:10px;font-weight:600}
+#lineViewDock button.active{background:#eef5ff;color:#1677ff}
+#lineViewDock .lv-icon{display:block;font-size:20px;line-height:22px;margin-bottom:2px}
+#lineViewStage{display:none}
+#lineViewStage.active{display:block}
+#lineViewStage .lv-page{display:none}
+#lineViewStage .lv-page.active{display:block}
+.lv-page{padding-bottom:92px}
+.lv-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:2px 2px}
+.lv-page-head h2{margin:0;font-size:24px}
+.lv-page-head p{margin:4px 0 0;color:#777;font-size:12px}
+.lv-card{background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 3px 14px rgba(0,0,0,.04)}
+.lv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.lv-stat{padding:14px;border-radius:14px;background:#f7f8fa}
+.lv-stat small{display:block;color:#777;font-size:11px}
+.lv-stat strong{display:block;margin-top:5px;font-size:22px}
+.lv-primary{color:#1677ff}
+.lv-good{color:#18a558}
+.lv-bad{color:#e53935}
+.lv-warn{color:#c47a00}
+.lv-big-btn{width:100%;border:0;border-radius:14px;padding:14px;background:#1677ff;color:white;font-weight:800;font-size:16px}
+.lv-list{display:grid;gap:9px}
+.lv-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px;border-radius:13px;background:#f7f8fa}
+.lv-row-title{font-weight:750}
+.lv-row-sub{margin-top:3px;color:#777;font-size:11px}
+.lv-empty{text-align:center;color:#888;padding:28px 10px}
+.lv-progress{height:8px;background:#eceef2;border-radius:99px;overflow:hidden;margin-top:10px}
+.lv-progress i{display:block;height:100%;background:#ff9500;border-radius:inherit}
+.lv-section-title{font-weight:800;margin-bottom:10px}
+.lv-note{padding:11px 12px;border-radius:12px;background:#f5f7fb;color:#666;font-size:12px;line-height:1.65}
+@media(max-width:600px){#lineViewDock{bottom:8px}.lv-page-head h2{font-size:21px}.lv-grid{grid-template-columns:1fr 1fr}.lv-stat strong{font-size:18px}}
 
-<!-- ================= 新增：LINE 式分頁導覽（不移動既有 HTML） ================= -->
-<style id="lineStyleOnlyAdd">
-    .line-page-hidden{display:none !important;}
-    .line-bottom-nav{
-        position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
-        z-index:2500;width:min(680px,calc(100% - 20px));
-        display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
-        padding:7px;background:rgba(255,255,255,.96);
-        border:1px solid #e5e7eb;border-radius:20px;
-        box-shadow:0 10px 35px rgba(0,0,0,.14);backdrop-filter:blur(14px);
-    }
-    .line-nav-btn{
-        border:0;background:transparent;border-radius:14px;padding:8px 3px;
-        color:#6e6e73;font-size:11px;font-weight:600;
-    }
-    .line-nav-btn .line-nav-icon{display:block;font-size:21px;line-height:1.1;margin-bottom:3px;}
-    .line-nav-btn.active{background:#eaf4ff;color:#007aff;font-weight:800;}
-    .app{padding-bottom:105px;}
-    @media(max-width:600px){.line-bottom-nav{bottom:8px}.line-nav-btn{font-size:10px}}
+/* 真正的分頁：原本內容仍存在，但由新增 View 控制顯示 */
+body.line-view-active{padding-bottom:0}
+body.line-view-active .app{display:none}
+body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto;padding:18px 14px 0}
 </style>
 
-<nav class="line-bottom-nav" id="lineBottomNav" aria-label="主要導覽">
-    <button class="line-nav-btn active" data-page="home"><span class="line-nav-icon">🏠</span>首頁</button>
-    <button class="line-nav-btn" data-page="budget"><span class="line-nav-icon">📊</span>預算</button>
-    <button class="line-nav-btn" data-page="record"><span class="line-nav-icon">＋</span>記帳</button>
-    <button class="line-nav-btn" data-page="future"><span class="line-nav-icon">🏝️</span>支出</button>
-    <button class="line-nav-btn" data-page="settings"><span class="line-nav-icon">⚙️</span>設定</button>
+<div id="lineViewStage">
+  <section class="lv-page active" data-page="home">
+    <div class="lv-page-head"><div><h2>🏠 首頁</h2><p>今天只看最重要的預算資訊</p></div></div>
+    <div class="lv-card">
+      <div class="lv-section-title">本月預算</div>
+      <div class="lv-grid">
+        <div class="lv-stat"><small>本月剩餘</small><strong class="lv-primary" id="lvHomeRemaining">$0</strong></div>
+        <div class="lv-stat"><small>今日可用</small><strong id="lvHomeToday">$0</strong></div>
+        <div class="lv-stat"><small>本月已存</small><strong class="lv-good" id="lvHomeSaved">$0</strong></div>
+        <div class="lv-stat"><small>本月超支</small><strong class="lv-bad" id="lvHomeOver">$0</strong></div>
+      </div>
+    </div>
+    <div class="lv-card"><div class="lv-section-title">☀️ 今日狀態</div><div id="lvHomeTodayStatus" class="lv-note"></div></div>
+    <div class="lv-card"><div class="lv-section-title">🧾 最近記帳</div><div id="lvHomeRecords" class="lv-list"></div></div>
+  </section>
+
+  <section class="lv-page" data-page="budget">
+    <div class="lv-page-head"><div><h2>📊 預算</h2><p>月預算、每日預算與每週分配</p></div></div>
+    <div class="lv-card"><div class="lv-grid">
+      <div class="lv-stat"><small>固定月預算</small><strong>$15,000</strong></div>
+      <div class="lv-stat"><small>每日基準</small><strong id="lvBudgetBase">$0</strong></div>
+      <div class="lv-stat"><small>未來預留</small><strong class="lv-warn" id="lvBudgetFuture">$0</strong></div>
+      <div class="lv-stat"><small>重新分配後今日</small><strong class="lv-primary" id="lvBudgetToday">$0</strong></div>
+    </div></div>
+    <div class="lv-card"><div class="lv-section-title">📆 每週預算</div><div id="lvBudgetWeeks" class="lv-list"></div></div>
+    <div class="lv-card"><div class="lv-section-title">🗓️ 當月每日可用</div><div id="lvBudgetDays" class="lv-list"></div></div>
+  </section>
+
+  <section class="lv-page" data-page="record">
+    <div class="lv-page-head"><div><h2>➕ 記帳</h2><p>獨立記帳頁，不和其他功能擠在一起</p></div></div>
+    <div class="lv-card"><button class="lv-big-btn" onclick="openRecordModal()">＋ 新增一筆記帳</button></div>
+    <div class="lv-card"><div class="lv-section-title">🧾 本月記帳</div><div id="lvRecordList" class="lv-list"></div></div>
+  </section>
+
+  <section class="lv-page" data-page="future">
+    <div class="lv-page-head"><div><h2>🏝️ 支出</h2><p>未來支出獨立管理，會提前影響每日自由可用額</p></div></div>
+    <div class="lv-card"><button class="lv-big-btn" onclick="openFutureModal()">＋ 新增未來支出</button></div>
+    <div class="lv-card"><div class="lv-section-title">已預留金額</div><strong class="lv-warn" id="lvFutureTotal">$0</strong></div>
+    <div class="lv-card"><div id="lvFutureList" class="lv-list"></div></div>
+  </section>
+
+  <section class="lv-page" data-page="settings">
+    <div class="lv-page-head"><div><h2>⚙️ 設定</h2><p>只保留預算與資料管理</p></div></div>
+    <div class="lv-card"><div class="lv-section-title">每月固定預算</div><strong>$15,000</strong><div class="lv-note" style="margin-top:10px">固定月預算不可由每日剩餘或超支改變。省下直接列入存款，超支才重新分配。</div></div>
+    <div class="lv-card"><div class="lv-section-title">💾 資料</div><button class="lv-big-btn" onclick="backupData()">下載備份</button><label class="lv-big-btn" style="display:block;text-align:center;margin-top:8px;background:#f2f3f5;color:#222">匯入備份<input type="file" accept="application/json,.json" onchange="restoreData(event)" style="display:none"></label></div>
+  </section>
+</div>
+
+<nav id="lineViewDock">
+  <button data-go="home" class="active"><span class="lv-icon">🏠</span>首頁</button>
+  <button data-go="budget"><span class="lv-icon">📊</span>預算</button>
+  <button data-go="record"><span class="lv-icon">＋</span>記帳</button>
+  <button data-go="future"><span class="lv-icon">🏝️</span>支出</button>
+  <button data-go="settings"><span class="lv-icon">⚙️</span>設定</button>
 </nav>
 
-<script id="linePageAndFutureFix">
+<script id="lineViewAddonScript">
 (function(){
-    /* =========================================================
-       新增 1：LINE 式五頁切換
-       不刪除、不修改、不移動原有 HTML，只控制顯示。
-       ========================================================= */
-    function findCardById(id){
-        const el=document.getElementById(id);
-        return el ? el.closest('.card') : null;
+  const stage=document.getElementById('lineViewStage');
+  const dock=document.getElementById('lineViewDock');
+  const pages=[...stage.querySelectorAll('.lv-page')];
+  const buttons=[...dock.querySelectorAll('button')];
+  function money(n){return '$'+Math.round(Number(n)||0).toLocaleString('zh-TW')}
+  function key(d){const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')}
+  function monthKey(){return currentMonth.getFullYear()+'-'+String(currentMonth.getMonth()+1).padStart(2,'0')}
+  function monthDays(){const y=currentMonth.getFullYear(),m=currentMonth.getMonth();const n=new Date(y,m+1,0).getDate();return Array.from({length:n},(_,i)=>new Date(y,m,i+1))}
+  function spentOn(k){return (data.records||[]).filter(r=>r.date===k).reduce((s,r)=>s+Number(r.amount||0),0)}
+  function futureItems(){return (data.futureExpenses||[]).filter(x=>x.date&&String(x.date).startsWith(monthKey()))}
+  function futureSpent(item){const same=futureItems().filter(x=>x.date===item.date).sort((a,b)=>String(a.id).localeCompare(String(b.id)));let avail=spentOn(item.date);for(const x of same){const used=Math.max(0,Math.min(Number(x.total||0),avail));if(x.id===item.id)return used;avail=Math.max(0,avail-Number(x.total||0))}return 0}
+  function reservedFrom(d){return futureItems().filter(x=>key(x.date)>=key(d)).reduce((s,x)=>s+Math.max(0,Number(x.total||0)-futureSpent(x)),0)}
+  function allowance(d){
+    const days=monthDays(), idx=days.findIndex(x=>key(x)===key(d)); if(idx<0)return 0;
+    const base=15000/days.length; const before=days.slice(0,idx).reduce((s,x)=>s+spentOn(key(x)),0);
+    const remainingDays=days.length-idx;
+    const freePool=Math.max(0,15000-before-reservedFrom(d));
+    return Math.min(base,freePool/remainingDays);
+  }
+  function refresh(){
+    const today=new Date(); const td=key(today).startsWith(monthKey())?today:monthDays()[0];
+    const days=monthDays(); const todayAllowance=allowance(td); const spent=days.filter(d=>d<=td).reduce((s,d)=>s+spentOn(key(d)),0);
+    const remaining=Math.max(0,15000-spent-reservedFrom(td));
+    const saved=days.filter(d=>d<=td).reduce((s,d)=>s+Math.max(0,allowance(d)-spentOn(key(d))),0);
+    const over=days.filter(d=>d<=td).reduce((s,d)=>s+Math.max(0,spentOn(key(d))-allowance(d)),0);
+    document.getElementById('lvHomeRemaining').textContent=money(remaining);
+    document.getElementById('lvHomeToday').textContent=money(todayAllowance);
+    document.getElementById('lvHomeSaved').textContent=money(saved);
+    document.getElementById('lvHomeOver').textContent=money(over);
+    const tSpent=spentOn(key(td)); const tFuture=futureItems().filter(x=>key(x.date)===key(td));
+    document.getElementById('lvHomeTodayStatus').innerHTML=`今日可用 <strong>${money(todayAllowance)}</strong>｜已花 ${money(tSpent)}${tSpent>todayAllowance?`｜<span class="lv-bad">超支 ${money(tSpent-todayAllowance)}</span>`:`｜剩餘 ${money(Math.max(0,todayAllowance-tSpent))}`} ${tFuture.length?`<br>⚠️ 今日預留 ${money(tFuture.reduce((s,x)=>s+Math.max(0,Number(x.total||0)-futureSpent(x)),0))}`:''}`;
+    const rec=(data.records||[]).filter(r=>String(r.date||'').startsWith(monthKey())).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5);
+    document.getElementById('lvHomeRecords').innerHTML=rec.length?rec.map(r=>`<div class="lv-row"><div><div class="lv-row-title">${esc(r.name||r.category||'支出')}</div><div class="lv-row-sub">${esc(r.date||'')}</div></div><strong>${money(r.amount)}</strong></div>`).join(''):'<div class="lv-empty">本月還沒有記帳</div>';
+    document.getElementById('lvRecordList').innerHTML=rec.length?rec.map(r=>`<div class="lv-row"><div><div class="lv-row-title">${esc(r.name||r.category||'支出')}</div><div class="lv-row-sub">${esc(r.date||'')} · ${esc(r.category||'')}</div></div><strong>${money(r.amount)}</strong></div>`).join(''):'<div class="lv-empty">本月還沒有記帳</div>';
+    document.getElementById('lvBudgetBase').textContent=money(15000/days.length);
+    document.getElementById('lvBudgetFuture').textContent=money(futureItems().reduce((s,x)=>s+Math.max(0,Number(x.total||0)-futureSpent(x)),0));
+    document.getElementById('lvBudgetToday').textContent=money(todayAllowance);
+    document.getElementById('lvBudgetDays').innerHTML=days.map(d=>{const a=allowance(d),sp=spentOn(key(d));return `<div class="lv-row"><div><div class="lv-row-title">${d.getMonth()+1}/${d.getDate()}</div><div class="lv-row-sub">預算 ${money(a)} · 已花 ${money(sp)}</div></div><strong class="${sp>a?'lv-bad': 'lv-good'}">${sp>a?'超支 '+money(sp-a):'可用 '+money(a-sp)}</strong></div>`}).join('');
+    const weeks=[];let start=0;while(start<days.length){const end=Math.min(days.length,start+6);weeks.push(days.slice(start,end));start=end}document.getElementById('lvBudgetWeeks').innerHTML=weeks.map((w,i)=>{const b=w.reduce((s,d)=>s+allowance(d),0),sp=w.reduce((s,d)=>s+spentOn(key(d)),0),fu=futureItems().filter(x=>key(x.date)>=key(w[0])&&key(x.date)<=key(w[w.length-1])).reduce((s,x)=>s+Math.max(0,Number(x.total||0)-futureSpent(x)),0);return `<div class="lv-row"><div><div class="lv-row-title">第 ${i+1} 週 · ${w[0].getMonth()+1}/${w[0].getDate()}–${w[w.length-1].getMonth()+1}/${w[w.length-1].getDate()}</div><div class="lv-row-sub">預算 ${money(b)} · 已花 ${money(sp)} · 預留 ${money(fu)}</div></div><strong>${money(Math.max(0,b-sp-fu))}</strong></div>`}).join('');
+    const fi=futureItems().slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))); const ft=fi.reduce((s,x)=>s+Math.max(0,Number(x.total||0)-futureSpent(x)),0);document.getElementById('lvFutureTotal').textContent=money(ft);document.getElementById('lvFutureList').innerHTML=fi.length?fi.map(x=>{const total=Number(x.total||0),sp=futureSpent(x),rem=Math.max(0,total-sp),pct=total?Math.min(100,sp/total*100):0;return `<div class="lv-row" style="display:block"><div style="display:flex;justify-content:space-between"><div><div class="lv-row-title">${esc(x.name||'未來支出')}</div><div class="lv-row-sub">${esc(x.date)}</div></div><strong>${money(total)}</strong></div><div class="lv-progress"><i style="width:${pct}%"></i></div><div class="lv-row-sub" style="margin-top:6px">已花 ${money(sp)} · 剩餘預留 ${money(rem)}</div></div>`}).join(''):'<div class="lv-empty">目前沒有未來支出</div>';
+  }
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function go(page){document.body.classList.add('line-view-active');pages.forEach(p=>p.classList.toggle('active',p.dataset.page===page));buttons.forEach(b=>b.classList.toggle('active',b.dataset.go===page));refresh();window.scrollTo({top:0,behavior:'smooth'});}
+  buttons.forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+  window.lineViewRefresh=refresh;
+  const oldRender=window.render; window.render=function(){if(typeof oldRender==='function')oldRender();setTimeout(refresh,0)};
+  document.addEventListener('click',e=>{if(e.target.closest('.add-btn,.quick-btn'))setTimeout(refresh,80)});
+  go('home');
+})();
+</script>
+
+<script id="futureReservationOverride">
+(function(){
+  function apply(){
+    if(typeof window.v2DailyAllowance !== 'function') return;
+  }
+  // The LINE views use their own reservation-aware allowance calculation above.
+  // Existing V2 HTML remains untouched as required.
+  apply();
+})();
+</script>
+
+
+<!-- =========================================================
+     ONLY BUDGET CALENDAR VIEW ADD-ON
+     只新增預算分頁月曆，不動其他分頁
+     ========================================================= -->
+<style id="budgetCalendarOnlyStyles">
+/* 預算頁只把原本的每日列表換成月曆；其他分頁完全不變 */
+#lineViewStage .lv-page[data-page="budget"] #lvBudgetDays,
+#lineViewStage .lv-page[data-page="budget"] #lvBudgetWeeks{
+  display:none;
+}
+#lineViewStage .lv-budget-calendar-card{display:block}
+.lv-cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.lv-cal-title{font-size:20px;font-weight:850}
+.lv-cal-nav{display:flex;gap:6px}
+.lv-cal-nav button{border:0;border-radius:10px;background:#f2f3f5;padding:8px 11px;font-weight:750}
+.lv-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.lv-cal-weekday{text-align:center;color:#888;font-size:11px;font-weight:750;padding:4px 0}
+.lv-cal-day{min-height:104px;border:1px solid #e7e8ec;border-radius:12px;background:#fff;padding:7px;overflow:hidden}
+.lv-cal-day.empty{background:#fafafa;border-color:transparent}
+.lv-cal-day.today{border:2px solid #1677ff;background:#f7fbff}
+.lv-cal-day.over{background:#fff5f5;border-color:#ffcaca}
+.lv-cal-day.saved{background:#f4fff8;border-color:#c9efd8}
+.lv-cal-num{font-size:12px;font-weight:850}
+.lv-cal-budget{margin-top:5px;font-size:11px;color:#1677ff;font-weight:750}
+.lv-cal-spent{margin-top:3px;font-size:11px;font-weight:750}
+.lv-cal-result{margin-top:3px;font-size:10px;font-weight:750}
+.lv-cal-result.good{color:#18a558}
+.lv-cal-result.bad{color:#e53935}
+.lv-cal-reserve{margin-top:5px;padding:3px 5px;border-radius:6px;background:#fff6df;color:#b86f00;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-cal-future{margin-top:4px;font-size:9px;color:#b86f00;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:600px){
+  .lv-cal-grid{gap:3px}
+  .lv-cal-day{min-height:82px;padding:5px;border-radius:9px}
+  .lv-cal-budget,.lv-cal-spent{font-size:9px}
+  .lv-cal-result{font-size:8px}
+  .lv-cal-reserve,.lv-cal-future{font-size:8px}
+  .lv-cal-title{font-size:18px}
+}
+</style>
+
+<script id="budgetCalendarOnlyScript">
+(function(){
+  const stage=document.getElementById('lineViewStage');
+  if(!stage) return;
+  const budgetPage=stage.querySelector('.lv-page[data-page="budget"]');
+  if(!budgetPage) return;
+
+  const oldCard=budgetPage.querySelector('#lvBudgetDays')?.closest('.lv-card');
+  if(oldCard){
+    oldCard.style.display='none';
+  }
+
+  const calendarCard=document.createElement('div');
+  calendarCard.className='lv-card lv-budget-calendar-card';
+  calendarCard.innerHTML=`
+    <div class="lv-cal-head">
+      <div class="lv-cal-title" id="lvBudgetCalendarTitle"></div>
+      <div class="lv-cal-nav">
+        <button type="button" id="lvBudgetPrev">‹</button>
+        <button type="button" id="lvBudgetToday">今天</button>
+        <button type="button" id="lvBudgetNext">›</button>
+      </div>
+    </div>
+    <div class="lv-cal-grid" id="lvBudgetCalendarGrid"></div>
+  `;
+  const weeksCard=budgetPage.querySelector('#lvBudgetWeeks')?.closest('.lv-card');
+  if(weeksCard) weeksCard.insertAdjacentElement('afterend',calendarCard);
+  else budgetPage.appendChild(calendarCard);
+
+  let calDate = (typeof currentMonth!=='undefined' && currentMonth instanceof Date) ? new Date(currentMonth) : new Date();
+
+  const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('zh-TW');
+  const key=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+  const daysInMonth=d=>new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  const monthKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const spentOn=k=>(data.records||[]).filter(r=>r.date===k).reduce((s,r)=>s+Number(r.amount||0),0);
+  const futureItems=d=>(data.futureExpenses||[]).filter(x=>x.date&&String(x.date).startsWith(monthKey(d)));
+  const futureSpentFor=item=>{
+    const same=(data.futureExpenses||[]).filter(x=>x.date===item.date).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+    let avail=spentOn(item.date);
+    for(const x of same){
+      const used=Math.max(0,Math.min(Number(x.total||0),avail));
+      if(x.id===item.id) return used;
+      avail=Math.max(0,avail-Number(x.total||0));
     }
+    return 0;
+  };
+  const reserveOn=k=>(data.futureExpenses||[]).filter(x=>x.date===k).reduce((s,x)=>s+Math.max(0,Number(x.total||0)-futureSpentFor(x)),0);
+  const reserveFrom=k=>(data.futureExpenses||[]).filter(x=>x.date&&x.date>=k).reduce((s,x)=>s+Math.max(0,Number(x.total||0)-futureSpentFor(x)),0);
 
-    function getPageTargets(){
-        return {
-            home:[
-                document.querySelector('.summary-grid'),
-                document.querySelector('.week-hero'),
-                document.querySelector('.today-card'),
-                findCardById('recordList')
-            ],
-            budget:[
-                document.querySelector('.week-hero'),
-                findCardById('budgetV2Panel'),
-                findCardById('weekList'),
-                findCardById('calendar'),
-                findCardById('savingsList')
-            ],
-            future:[
-                findCardById('futureList')
-            ],
-            settings:[
-                findCardById('restoreFile')
-            ]
-        };
+  function allowance(d){
+    const total=daysInMonth(d);
+    const todayKey=key(new Date());
+    const dk=key(d);
+    const idx=d.getDate()-1;
+    let spentBefore=0;
+    for(let i=1;i<=idx;i++) spentBefore+=spentOn(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(i).padStart(2,'0'));
+    const remainingDays=Math.max(1,total-idx+1);
+    const reserved=reserveFrom(dk);
+    const pool=Math.max(0,15000-spentBefore-reserved);
+    const base=15000/total;
+    return Math.min(base,pool/remainingDays);
+  }
+
+  function renderCalendar(){
+    const title=document.getElementById('lvBudgetCalendarTitle');
+    const grid=document.getElementById('lvBudgetCalendarGrid');
+    if(!title||!grid)return;
+    title.textContent=calDate.getFullYear()+' 年 '+(calDate.getMonth()+1)+' 月';
+    const weekdays=['日','一','二','三','四','五','六'];
+    let html=weekdays.map(w=>`<div class="lv-cal-weekday">${w}</div>`).join('');
+    const first=new Date(calDate.getFullYear(),calDate.getMonth(),1).getDay();
+    for(let i=0;i<first;i++) html+='<div class="lv-cal-day empty"></div>';
+    const total=daysInMonth(calDate);
+    const today=key(new Date());
+    for(let day=1;day<=total;day++){
+      const d=new Date(calDate.getFullYear(),calDate.getMonth(),day);
+      const k=key(d);
+      const budget=allowance(d);
+      const spent=spentOn(k);
+      const diff=budget-spent;
+      const reserve=reserveOn(k);
+      const future=(data.futureExpenses||[]).filter(x=>x.date===k);
+      const cls=['lv-cal-day'];
+      if(k===today)cls.push('today');
+      if(diff<0)cls.push('over');
+      else if(diff>0 && k<today)cls.push('saved');
+      html+=`<div class="${cls.join(' ')}">
+        <div class="lv-cal-num">${day}</div>
+        <div class="lv-cal-budget">可用 ${money(budget)}</div>
+        <div class="lv-cal-spent">已花 ${money(spent)}</div>
+        <div class="lv-cal-result ${diff<0?'bad':'good'}">${diff<0?'超支 '+money(-diff):'剩 '+money(diff)}</div>
+        ${reserve>0?`<div class="lv-cal-reserve">🏝️ 預留 ${money(reserve)}</div>`:''}
+        ${future.length?`<div class="lv-cal-future">${future.length>1?'多筆':(future[0].name||'未來支出')}</div>`:''}
+      </div>`;
     }
+    grid.innerHTML=html;
+  }
 
-    function setVisible(el,visible){
-        if(!el) return;
-        el.classList.toggle('line-page-hidden',!visible);
-    }
+  document.getElementById('lvBudgetPrev').onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar();};
+  document.getElementById('lvBudgetNext').onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar();};
+  document.getElementById('lvBudgetToday').onclick=()=>{calDate=new Date();renderCalendar();};
 
-    function activatePage(page){
-        const targets=getPageTargets();
-        const all=new Set();
-        Object.values(targets).forEach(arr=>arr.forEach(el=>{if(el) all.add(el)}));
-        all.forEach(el=>setVisible(el,false));
-        (targets[page]||targets.home).forEach(el=>setVisible(el,true));
-
-        document.querySelectorAll('.line-nav-btn').forEach(btn=>{
-            btn.classList.toggle('active',btn.dataset.page===page);
-        });
-
-        if(page==='record'){
-            if(typeof window.openRecordModal==='function') window.openRecordModal();
-            return;
-        }
-
-        window.__lineCurrentPage=page;
-        window.scrollTo({top:0,behavior:'smooth'});
-    }
-
-    document.querySelectorAll('.line-nav-btn').forEach(btn=>{
-        btn.addEventListener('click',()=>activatePage(btn.dataset.page));
-    });
-
-    window.__lineActivatePage=activatePage;
-
-    /* render() 每次重繪時，新增的 V2 Panel 可能剛被建立，
-       因此下一個事件循環再套一次目前分頁狀態。 */
-    const oldRender=window.render;
-    if(typeof oldRender==='function'){
-        window.render=function(){
-            oldRender();
-            try{ refreshFutureAffectedAmounts(); }catch(error){ console.error('未來預算重新分配更新失敗：',error); }
-            setTimeout(()=>activatePage(window.__lineCurrentPage||'home'),0);
-        };
-    }
-
-    /* =========================================================
-       新增 2：未來支出真正影響「未來每日自由可用額」
-       規則：
-       - 未來支出不是已花，所以不直接加到 actual spent。
-       - 但需要提前從未來日期前的可自由支出額中預留。
-       - 例如 8/21 有 $1,000 未來支出，系統會從現在到 8/21
-         之間的剩餘天數平均預留，讓每天可自由花費額下降。
-       - 實際記帳後，仍由原本的實際支出邏輯處理。
-       ========================================================= */
-    function futureItemsForCurrentMonth(){
-        const key=monthKey();
-        return (data.futureExpenses||[]).filter(item=>
-            item && item.date && String(item.date).startsWith(key)
-        );
-    }
-
-    function futureRemainingForItem(item){
-        const total=Number(item.total||0);
-        const spent=typeof window.v2FutureSpentForItem==='function'
-            ? Number(window.v2FutureSpentForItem(item)||0)
-            : Number(item.spent||0);
-        return Math.max(0,total-spent);
-    }
-
-    function baseV2Allowance(date){
-        const days=getMonthDays();
-        const idx=days.findIndex(d=>dateKey(d)===dateKey(date));
-        if(idx<0) return 0;
-        const base=15000/days.length;
-        const spentBefore=days.slice(0,idx).reduce((sum,d)=>sum+getSpentOnDate(d),0);
-        const baseAllowedBefore=base*idx;
-        const overage=Math.max(0,spentBefore-baseAllowedBefore);
-        if(overage<=0) return base;
-        const remainingBudget=Math.max(0,15000-spentBefore);
-        const remainingDays=days.length-idx;
-        return remainingDays>0?Math.min(base,remainingBudget/remainingDays):0;
-    }
-
-    function futureReserveForDate(date){
-        const days=getMonthDays();
-        const today=v2SafeToday();
-        const startIdx=days.findIndex(d=>dateKey(d)===dateKey(today));
-        const idx=days.findIndex(d=>dateKey(d)===dateKey(date));
-        if(idx<0 || startIdx<0 || idx<startIdx) return 0;
-
-        let reserve=0;
-        futureItemsForCurrentMonth().forEach(item=>{
-            const eventDate=parseDate(item.date);
-            const eventIdx=days.findIndex(d=>dateKey(d)===dateKey(eventDate));
-            if(eventIdx<startIdx || eventIdx<idx) return;
-            const remaining=futureRemainingForItem(item);
-            const daysToEvent=eventIdx-startIdx+1;
-            if(daysToEvent>0) reserve += remaining/daysToEvent;
-        });
-        return reserve;
-    }
-
-    function freeDailyAllowanceWithFuture(date){
-        const baseAllowance=baseV2Allowance(date);
-        const days=getMonthDays();
-        const today=v2SafeToday();
-        const idx=days.findIndex(d=>dateKey(d)===dateKey(date));
-        const todayIdx=days.findIndex(d=>dateKey(d)===dateKey(today));
-        if(idx<0 || todayIdx<0 || idx<todayIdx) return baseAllowance;
-
-        /* 未來支出會從今天起提前分攤到該筆支出發生日前，
-           因此該期間每天「自由可用」會下降；未來支出本身仍會在支出頁
-           另外顯示，不會被當成已經發生的實際記帳。 */
-        const reserve=futureReserveForDate(date);
-        return Math.max(0,baseAllowance-reserve);
-    }
-
-    window.__lineFutureDailyAllowance=freeDailyAllowanceWithFuture;
-
-    function refreshFutureAffectedAmounts(){
-        const days=getMonthDays();
-        const today=v2SafeToday();
-        const todayKey=dateKey(today);
-        const todayNode=document.getElementById('todayMoney');
-
-        const todayBase=freeDailyAllowanceWithFuture(today);
-        const todaySpent=getSpentOnDate(today);
-        const todayFree=Math.max(0,todayBase-todaySpent);
-        if(todayNode) todayNode.textContent=formatMoney(todayFree);
-
-        const status=document.getElementById('todayStatus');
-        if(status){
-            const diff=todayBase-todaySpent;
-            if(diff>=0){
-                status.className='today-status good';
-                status.textContent=`✓ 今日已使用 ${formatMoney(todaySpent)}，扣除未來預留後還可以使用 ${formatMoney(diff)}`;
-            }else{
-                status.className='today-status over';
-                status.textContent=`⚠️ 今日超支 ${formatMoney(Math.abs(diff))}；後續每日預算將重新分配`;
-            }
-        }
-
-        const summaryToday=document.getElementById('summaryToday');
-        if(summaryToday) summaryToday.textContent=formatMoney(todayFree);
-
-        const calendar=document.getElementById('calendar');
-        if(calendar){
-            const nodes=Array.from(calendar.querySelectorAll('.calendar-day')).filter(n=>!n.classList.contains('empty'));
-            days.forEach((day,i)=>{
-                const node=nodes[i];
-                if(!node) return;
-                const money=node.querySelector('.calendar-day-money');
-                if(money){
-                    const allowance=freeDailyAllowanceWithFuture(day);
-                    money.textContent=`可 ${formatMoney(allowance)}`;
-                }
-            });
-        }
-
-        const weekList=document.getElementById('weekList');
-        if(weekList){
-            getWeeks().forEach((week,i)=>{
-                const node=weekList.children[i];
-                if(!node) return;
-                const future=week.days.reduce((sum,d)=>{
-                    return sum+futureItemsForCurrentMonth().filter(item=>item.date===dateKey(d)).reduce((s,item)=>s+futureRemainingForItem(item),0);
-                },0);
-                const available=week.days.reduce((sum,d)=>sum+freeDailyAllowanceWithFuture(d),0);
-                const amount=node.querySelector('.week-amount strong');
-                if(amount) amount.textContent=formatMoney(Math.max(0,available-week.days.reduce((s,d)=>getSpentOnDate(d),0)));
-                const bottom=node.querySelector('.week-bottom span:last-child');
-                if(bottom && future>0) bottom.textContent=`已預留 ${formatMoney(future)}`;
-            });
-        }
-    }
-
-    /* 覆寫 V2 的每日顯示函式，只增加未來預留因素。原函式仍保留。 */
-    const oldV2Daily=window.v2DailyAllowance;
-    window.v2DailyAllowanceWithFuture=freeDailyAllowanceWithFuture;
-
-    /* 初次套用；未來資料新增／修改／刪除後，原 render() 會再刷新。 */
-    setTimeout(()=>{
-        refreshFutureAffectedAmounts();
-        activatePage('home');
-    },0);
+  const oldRefresh=window.lineViewRefresh;
+  window.lineViewRefresh=function(){
+    if(typeof oldRefresh==='function')oldRefresh();
+    renderCalendar();
+  };
+  renderCalendar();
 })();
 </script>
 
