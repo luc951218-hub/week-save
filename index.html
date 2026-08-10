@@ -1,27 +1,29 @@
-```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>週週記 - 個人記帳與預算管理</title>
+<title>週週記｜個人記帳</title>
 
 <style>
 :root {
     --primary: #007aff;
     --primary-light: #eaf4ff;
-    --success: #34c759;
-    --danger: #ff3b30;
-    --warning: #ff9500;
-    --purple: #af52de;
+    --green: #34c759;
+    --green-light: #e9f9ee;
+    --orange: #ff9500;
+    --orange-light: #fff4df;
+    --red: #ff3b30;
+    --red-light: #ffe9e7;
+    --purple: #8e5cff;
+    --purple-light: #f1ebff;
 
-    --bg: #f5f5f7;
+    --bg: #f5f6f8;
     --card: #ffffff;
     --text: #1c1c1e;
     --sub: #8e8e93;
     --border: #e5e5ea;
-
-    --shadow: 0 4px 16px rgba(0,0,0,0.05);
+    --shadow: 0 4px 18px rgba(0,0,0,.06);
     --radius: 18px;
 }
 
@@ -36,7 +38,8 @@ body {
         BlinkMacSystemFont,
         "SF Pro Display",
         "PingFang TC",
-        "Noto Sans TC",
+        "Microsoft JhengHei",
+        Arial,
         sans-serif;
     background: var(--bg);
     color: var(--text);
@@ -52,369 +55,584 @@ button {
     cursor: pointer;
 }
 
-/* =========================
-   Layout
-========================= */
-
 .app {
-    max-width: 1100px;
+    width: min(1200px, calc(100% - 28px));
     margin: 0 auto;
-    padding: 24px 18px 100px;
+    padding-bottom: 60px;
 }
+
+/* =========================
+   Header
+========================= */
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    padding: 28px 0 20px;
 }
 
-.logo h1 {
+.brand h1 {
     margin: 0;
     font-size: 28px;
     letter-spacing: -1px;
 }
 
-.logo p {
+.brand p {
     margin: 5px 0 0;
     color: var(--sub);
-    font-size: 13px;
+    font-size: 14px;
 }
 
-.month-selector {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 9px 12px;
-    color: var(--text);
-}
-
-/* =========================
-   Navigation
-========================= */
-
-.tabs {
+.month-control {
     display: flex;
+    align-items: center;
     gap: 8px;
-    overflow-x: auto;
-    margin-bottom: 20px;
-    padding-bottom: 2px;
 }
 
-.tab {
+.month-control button {
+    width: 38px;
+    height: 38px;
     border: none;
-    background: #e9e9ee;
-    color: #555;
-    padding: 10px 16px;
+    background: white;
     border-radius: 12px;
-    white-space: nowrap;
-}
-
-.tab.active {
-    background: var(--primary);
-    color: white;
-}
-
-/* =========================
-   Cards
-========================= */
-
-.card {
-    background: var(--card);
-    border-radius: var(--radius);
-    padding: 18px;
     box-shadow: var(--shadow);
-    margin-bottom: 16px;
+    font-size: 18px;
 }
 
-.card-title {
-    font-size: 16px;
+.month-title {
+    min-width: 110px;
+    text-align: center;
     font-weight: 700;
-    margin-bottom: 14px;
-}
-
-.grid {
-    display: grid;
-    gap: 14px;
-}
-
-.grid-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.grid-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.grid-4 {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 /* =========================
    Summary
 ========================= */
 
-.summary-card {
-    padding: 18px;
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr 1fr;
+    gap: 14px;
 }
 
-.summary-label {
-    font-size: 13px;
+.card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.budget-card {
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+}
+
+.budget-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.label {
     color: var(--sub);
+    font-size: 13px;
 }
 
-.summary-value {
-    font-size: 25px;
-    font-weight: 700;
-    margin-top: 7px;
+.amount {
+    font-size: 29px;
+    font-weight: 800;
+    margin-top: 5px;
+    letter-spacing: -1px;
 }
 
-.summary-value.primary {
+.fixed-badge {
+    background: var(--primary-light);
     color: var(--primary);
+    padding: 5px 9px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
 }
-
-.summary-value.success {
-    color: var(--success);
-}
-
-.summary-value.danger {
-    color: var(--danger);
-}
-
-.summary-value.warning {
-    color: var(--warning);
-}
-
-/* =========================
-   Progress
-========================= */
 
 .progress {
-    height: 9px;
-    background: var(--border);
+    margin-top: 18px;
+    height: 10px;
+    background: #edf0f3;
     border-radius: 10px;
     overflow: hidden;
-    margin-top: 10px;
 }
 
 .progress-fill {
     height: 100%;
-    width: 0%;
+    width: 0;
+    border-radius: 10px;
     background: var(--primary);
-    transition: width .3s;
+    transition: width .3s ease;
 }
 
-.progress-fill.danger {
-    background: var(--danger);
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: var(--sub);
+    font-size: 12px;
 }
 
-.progress-fill.success {
-    background: var(--success);
+.stat-card {
+    padding: 20px;
+    min-height: 145px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-.progress-fill.warning {
-    background: var(--warning);
+.stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+}
+
+.blue {
+    background: var(--primary-light);
+}
+
+.green {
+    background: var(--green-light);
+}
+
+.orange {
+    background: var(--orange-light);
+}
+
+.purple {
+    background: var(--purple-light);
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.stat-desc {
+    color: var(--sub);
+    font-size: 12px;
 }
 
 /* =========================
-   Today Plan
+   Weekly budget
 ========================= */
 
-.today-plan-card {
-    background: #ffffff;
-    border: 0.5px solid rgba(0,122,255,.2);
-    border-radius: 18px;
-    padding: 16px;
-    margin-bottom: 14px;
-    box-shadow: var(--shadow);
+.section {
+    margin-top: 20px;
 }
 
-.today-plan-header {
+.section-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
-.today-plan-item {
+.section-title h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.section-title span {
+    color: var(--sub);
+    font-size: 12px;
+}
+
+.week-card {
+    padding: 20px;
+}
+
+.week-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.week-name {
+    font-weight: 800;
+}
+
+.week-date {
+    color: var(--sub);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.week-available {
+    text-align: right;
+}
+
+.week-available .small {
+    color: var(--sub);
+    font-size: 11px;
+}
+
+.week-available .big {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.week-progress {
+    height: 10px;
+    margin: 16px 0 12px;
+    background: #edf0f3;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.week-progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 10px;
+}
+
+.week-details {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 10px;
+}
+
+.week-detail {
     background: #f8f8fa;
     border-radius: 12px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    border: 0.5px solid rgba(0,0,0,.04);
+    padding: 10px;
 }
 
-.today-plan-item .item-title {
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-}
-
-.today-plan-item .item-status {
-    font-size: 12px;
+.week-detail span {
+    display: block;
     color: var(--sub);
-    display: flex;
-    justify-content: space-between;
-}
-
-.status-badge {
-    padding: 2px 8px;
-    border-radius: 10px;
     font-size: 11px;
-    font-weight: 600;
 }
 
-.status-badge.ok {
-    background: #e1f8eb;
-    color: #34c759;
-}
-
-.status-badge.over {
-    background: #ffe5e5;
-    color: #ff3b30;
-}
-
-.status-badge.warning {
-    background: #fff3dc;
-    color: #ff9500;
+.week-detail strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
 }
 
 /* =========================
-   AI
+   Dashboard grid
+========================= */
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 1.35fr .9fr;
+    gap: 18px;
+    margin-top: 20px;
+}
+
+/* =========================
+   Calendar
+========================= */
+
+.calendar-card {
+    padding: 20px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calendar-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.calendar-header button {
+    border: none;
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-weekdays div {
+    text-align: center;
+    color: var(--sub);
+    font-size: 11px;
+    padding-bottom: 8px;
+}
+
+.day {
+    min-height: 75px;
+    border: 1px solid #f0f0f2;
+    padding: 7px;
+    position: relative;
+    background: white;
+}
+
+.day.empty {
+    background: #fafafa;
+}
+
+.day.today {
+    background: var(--primary-light);
+}
+
+.day-number {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.day-expense {
+    font-size: 11px;
+    margin-top: 10px;
+    color: var(--text);
+}
+
+.day-expense.high {
+    color: var(--red);
+    font-weight: 700;
+}
+
+.future-dot {
+    position: absolute;
+    right: 7px;
+    top: 7px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--purple);
+}
+
+.day:hover {
+    background: #f4f8ff;
+}
+
+/* =========================
+   Weekly visual
+========================= */
+
+.chart-card {
+    padding: 20px;
+}
+
+.chart {
+    height: 220px;
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+    padding-top: 25px;
+}
+
+.bar-wrap {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+}
+
+.bar {
+    width: 100%;
+    max-width: 34px;
+    border-radius: 8px 8px 3px 3px;
+    background: var(--primary);
+    min-height: 4px;
+    transition: height .3s ease;
+}
+
+.bar-label {
+    position: absolute;
+    bottom: -23px;
+    font-size: 10px;
+    color: var(--sub);
+}
+
+.bar-value {
+    position: absolute;
+    top: -20px;
+    font-size: 9px;
+    color: var(--sub);
+}
+
+/* =========================
+   Future plans
+========================= */
+
+.future-card {
+    padding: 20px;
+}
+
+.future-total {
+    background: var(--purple-light);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+
+.future-total span {
+    color: #7650d9;
+    font-size: 12px;
+}
+
+.future-total strong {
+    display: block;
+    color: var(--purple);
+    font-size: 25px;
+    margin-top: 3px;
+}
+
+.future-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.future-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fafafa;
+    border-radius: 13px;
+    padding: 12px;
+}
+
+.future-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.future-icon {
+    width: 38px;
+    height: 38px;
+    background: white;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.future-title {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.future-date {
+    color: var(--sub);
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+.future-money {
+    font-weight: 800;
+    color: var(--purple);
+}
+
+.delete-btn {
+    border: none;
+    background: transparent;
+    color: #aaa;
+    font-size: 14px;
+    margin-left: 5px;
+}
+
+/* =========================
+   AI card
 ========================= */
 
 .ai-card {
-    background: linear-gradient(135deg, #e3f2fd, #ffffff);
-    border: 1px solid #bbdefb;
+    margin-top: 18px;
+    padding: 20px;
+    background: linear-gradient(135deg,#e9f4ff,#fff);
+    border: 1px solid #cfe5ff;
 }
 
 .ai-title {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 700;
-    margin-bottom: 12px;
+    font-weight: 800;
 }
 
 .ai-content {
+    margin-top: 12px;
     line-height: 1.7;
-    font-size: 14px;
+    font-size: 13px;
 }
 
-.ai-item {
-    background: rgba(255,255,255,.75);
-    padding: 11px 12px;
-    border-radius: 12px;
-    margin-top: 8px;
+.ai-highlight {
+    color: var(--primary);
+    font-weight: 800;
 }
 
 /* =========================
-   Forms
+   Transactions
 ========================= */
 
-.form-group {
-    margin-bottom: 14px;
+.transaction-card {
+    margin-top: 20px;
+    padding: 20px;
 }
 
-.form-group label {
-    display: block;
-    font-size: 13px;
-    color: var(--sub);
-    margin-bottom: 6px;
-}
-
-input,
-select {
-    width: 100%;
-    border: 1px solid var(--border);
-    background: #fff;
-    padding: 11px 12px;
-    border-radius: 11px;
-    outline: none;
-}
-
-input:focus,
-select:focus {
-    border-color: var(--primary);
-}
-
-.btn {
+.add-btn {
     border: none;
-    border-radius: 12px;
-    padding: 11px 16px;
-    transition: .2s;
-}
-
-.btn-primary {
     background: var(--primary);
     color: white;
+    border-radius: 12px;
+    padding: 9px 14px;
+    font-weight: 700;
+    font-size: 12px;
 }
 
-.btn-success {
-    background: var(--success);
-    color: white;
-}
-
-.btn-danger {
-    background: var(--danger);
-    color: white;
-}
-
-.btn-secondary {
-    background: #e9e9ee;
-    color: var(--text);
-}
-
-.btn:hover {
-    opacity: .85;
-}
-
-.form-actions {
+.transaction-list {
     display: flex;
+    flex-direction: column;
     gap: 8px;
-    margin-top: 16px;
 }
-
-/* =========================
-   Transaction List
-========================= */
 
 .transaction {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 13px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.transaction:last-child {
-    border-bottom: none;
+    align-items: center;
+    padding: 13px;
+    border-radius: 13px;
+    background: #fafafa;
 }
 
 .transaction-left {
     display: flex;
-    align-items: center;
     gap: 11px;
+    align-items: center;
 }
 
 .transaction-icon {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 12px;
-    background: var(--primary-light);
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .transaction-name {
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 13px;
 }
 
 .transaction-date {
@@ -423,140 +641,15 @@ select:focus {
     margin-top: 3px;
 }
 
-.transaction-amount {
-    font-weight: 700;
+.transaction-money {
+    font-weight: 800;
 }
 
-.income {
-    color: var(--success);
-}
-
-.expense {
-    color: var(--danger);
-}
-
-.delete-btn {
-    margin-left: 8px;
-    border: none;
-    background: transparent;
+.empty {
+    text-align: center;
     color: var(--sub);
-    font-size: 15px;
-}
-
-/* =========================
-   Trip
-========================= */
-
-.trip-card {
-    border: 1px solid var(--border);
-    border-radius: 15px;
-    padding: 15px;
-    margin-bottom: 12px;
-}
-
-.trip-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.trip-name {
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.trip-date {
-    font-size: 12px;
-    color: var(--sub);
-    margin-top: 3px;
-}
-
-.trip-budget {
-    color: var(--primary);
-    font-weight: 700;
-}
-
-.trip-details {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-top: 14px;
-}
-
-.trip-detail {
-    background: #f7f7f9;
-    border-radius: 10px;
-    padding: 9px;
-}
-
-.trip-detail span {
-    display: block;
-    font-size: 11px;
-    color: var(--sub);
-}
-
-.trip-detail strong {
-    display: block;
-    margin-top: 4px;
+    padding: 25px;
     font-size: 13px;
-}
-
-/* =========================
-   Alert
-========================= */
-
-.alert {
-    padding: 13px 15px;
-    border-radius: 13px;
-    margin-bottom: 12px;
-    font-size: 13px;
-    line-height: 1.6;
-}
-
-.alert-success {
-    background: #eaf8ef;
-    color: #227a40;
-}
-
-.alert-warning {
-    background: #fff4df;
-    color: #9a5c00;
-}
-
-.alert-danger {
-    background: #ffeaea;
-    color: #b42318;
-}
-
-.alert-info {
-    background: #eaf4ff;
-    color: #135fa8;
-}
-
-/* =========================
-   Table
-========================= */
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th,
-td {
-    padding: 11px 8px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-}
-
-th {
-    color: var(--sub);
-    font-weight: 500;
 }
 
 /* =========================
@@ -567,8 +660,8 @@ th {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.45);
-    z-index: 1000;
+    background: rgba(0,0,0,.35);
+    z-index: 100;
     align-items: center;
     justify-content: center;
     padding: 20px;
@@ -578,99 +671,149 @@ th {
     display: flex;
 }
 
-.modal-content {
+.modal-box {
+    width: min(450px,100%);
     background: white;
-    width: 100%;
-    max-width: 520px;
-    max-height: 90vh;
-    overflow-y: auto;
-    border-radius: 20px;
-    padding: 20px;
+    border-radius: 22px;
+    padding: 23px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.18);
 }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
+.modal-box h2 {
+    margin-top: 0;
 }
 
-.modal-header h2 {
-    margin: 0;
-    font-size: 20px;
+.form-group {
+    margin-top: 14px;
 }
 
-.close {
-    border: none;
-    background: #eeeef2;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-}
-
-/* =========================
-   Empty
-========================= */
-
-.empty {
-    text-align: center;
+.form-group label {
+    display: block;
+    font-size: 12px;
     color: var(--sub);
-    padding: 35px 15px;
-    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    outline: none;
+    background: white;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 11px;
+    border-radius: 11px;
+    border: none;
+    font-weight: 700;
+}
+
+.cancel {
+    background: #eee;
+}
+
+.confirm {
+    background: var(--primary);
+    color: white;
 }
 
 /* =========================
-   Mobile
+   Toast
 ========================= */
 
-@media (max-width: 700px) {
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 25px;
+    transform: translateX(-50%) translateY(20px);
+    background: #222;
+    color: white;
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: .25s;
+    z-index: 200;
+}
 
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media(max-width:900px) {
+    .summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media(max-width:600px) {
     .app {
-        padding: 18px 12px 80px;
+        width: min(100% - 20px, 600px);
     }
 
     .header {
         align-items: flex-start;
+        gap: 10px;
     }
 
-    .grid-2,
-    .grid-3,
-    .grid-4 {
+    .brand h1 {
+        font-size: 24px;
+    }
+
+    .month-control {
+        margin-top: 2px;
+    }
+
+    .summary-grid {
         grid-template-columns: 1fr 1fr;
     }
 
-    .trip-details {
-        grid-template-columns: 1fr 1fr;
+    .budget-card {
+        grid-column: span 2;
     }
 
-    .summary-value {
-        font-size: 21px;
-    }
-}
-
-@media (max-width: 450px) {
-
-    .grid-2,
-    .grid-3,
-    .grid-4 {
-        grid-template-columns: 1fr 1fr;
+    .stat-card {
+        min-height: 125px;
     }
 
-    .header {
-        flex-direction: column;
-        gap: 12px;
+    .day {
+        min-height: 58px;
+        padding: 5px;
     }
 
-    .month-selector {
-        width: 100%;
+    .day-expense {
+        font-size: 9px;
+        margin-top: 7px;
     }
 
-    .form-actions {
-        flex-direction: column;
-    }
-
-    .form-actions button {
-        width: 100%;
+    .week-details {
+        grid-template-columns: 1fr 1fr 1fr;
     }
 }
 </style>
@@ -682,282 +825,216 @@ th {
 
     <!-- Header -->
     <header class="header">
-        <div class="logo">
+        <div class="brand">
             <h1>週週記</h1>
-            <p>記錄每一筆支出，也規劃接下來的生活</p>
+            <p>把每個月的 $15,000 用得更剛好</p>
         </div>
 
-        <input
-            type="month"
-            id="monthSelector"
-            class="month-selector"
-        >
+        <div class="month-control">
+            <button onclick="changeMonth(-1)">‹</button>
+            <div class="month-title" id="monthTitle"></div>
+            <button onclick="changeMonth(1)">›</button>
+        </div>
     </header>
 
-    <!-- Navigation -->
-    <nav class="tabs">
-        <button class="tab active" onclick="switchTab('home', this)">首頁概況</button>
-        <button class="tab" onclick="switchTab('transactions', this)">記帳</button>
-        <button class="tab" onclick="switchTab('budget', this)">月預算</button>
-        <button class="tab" onclick="switchTab('trips', this)">未來行程</button>
-    </nav>
 
+    <!-- 月度總覽 -->
+    <section class="summary-grid">
 
-    <!-- =========================
-         HOME
-    ========================= -->
-
-    <section id="home" class="page">
-
-        <div class="grid grid-4">
-
-            <div class="card summary-card">
-                <div class="summary-label">本月收入</div>
-                <div id="summaryIncome" class="summary-value success">$0</div>
-            </div>
-
-            <div class="card summary-card">
-                <div class="summary-label">本月支出</div>
-                <div id="summaryExpense" class="summary-value danger">$0</div>
-            </div>
-
-            <div class="card summary-card">
-                <div class="summary-label">剩餘可用預算</div>
-                <div id="summaryRemaining" class="summary-value primary">$0</div>
-            </div>
-
-            <div class="card summary-card">
-                <div class="summary-label">今日還能花</div>
-                <div id="summaryToday" class="summary-value warning">$0</div>
-            </div>
-
-        </div>
-
-
-        <!-- Monthly Budget -->
-        <div class="card">
-            <div class="card-title">本月預算使用狀況</div>
-
-            <div class="grid grid-3">
-
+        <div class="card budget-card">
+            <div class="budget-top">
                 <div>
-                    <div class="summary-label">本月總預算</div>
-                    <div id="homeBudget">$0</div>
+                    <div class="label">本月固定預算</div>
+                    <div class="amount">$15,000</div>
                 </div>
-
-                <div>
-                    <div class="summary-label">已使用</div>
-                    <div id="homeUsed">$0</div>
-                </div>
-
-                <div>
-                    <div class="summary-label">未來行程保留</div>
-                    <div id="homeTripReserve">$0</div>
-                </div>
-
+                <div class="fixed-badge">固定預算</div>
             </div>
 
             <div class="progress">
-                <div id="homeProgress" class="progress-fill"></div>
+                <div class="progress-fill" id="monthProgress"></div>
             </div>
 
-            <div id="budgetStatusText"
-                 style="font-size:12px;color:var(--sub);margin-top:8px;">
+            <div class="progress-info">
+                <span id="spentPercent">已使用 0%</span>
+                <span id="remainingText">$15,000 剩餘</span>
             </div>
         </div>
 
-
-        <!-- Today -->
-        <div class="today-plan-card">
-
-            <div class="today-plan-header">
-                <span>📅 今日規劃</span>
-                <span id="todayDate"></span>
+        <div class="card stat-card">
+            <div class="stat-icon blue">💸</div>
+            <div>
+                <div class="stat-number" id="monthSpent">$0</div>
+                <div class="stat-desc">本月已支出</div>
             </div>
-
-            <div id="todayPlanContent"></div>
-
         </div>
 
-
-        <!-- Future trip impact -->
-        <div class="card">
-
-            <div class="card-title">
-                ✈️ 未來行程對本月預算的影響
+        <div class="card stat-card">
+            <div class="stat-icon purple">🔮</div>
+            <div>
+                <div class="stat-number" id="futureTotal">$0</div>
+                <div class="stat-desc">未來預留支出</div>
             </div>
-
-            <div id="tripImpact"></div>
-
         </div>
 
-
-        <!-- AI -->
-        <div class="card ai-card">
-
-            <div class="ai-title">
-                🤖 AI 預算建議
+        <div class="card stat-card">
+            <div class="stat-icon green">🏦</div>
+            <div>
+                <div class="stat-number" id="savingTotal">$0</div>
+                <div class="stat-desc">本月預估存款</div>
             </div>
-
-            <div id="aiAdvice" class="ai-content"></div>
-
-        </div>
-
-
-        <!-- Recent -->
-        <div class="card">
-
-            <div class="card-title">
-                最近紀錄
-            </div>
-
-            <div id="recentTransactions"></div>
-
         </div>
 
     </section>
 
 
-    <!-- =========================
-         TRANSACTIONS
-    ========================= -->
+    <!-- 本週預算 -->
+    <section class="section">
 
-    <section id="transactions" class="page" style="display:none;">
+        <div class="section-title">
+            <h2>📆 本週可以花多少？</h2>
+            <span>以週為單位管理預算</span>
+        </div>
 
-        <div class="card">
+        <div class="card week-card">
 
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                margin-bottom:14px;
-            ">
-                <div class="card-title" style="margin:0;">
-                    帳務紀錄
+            <div class="week-header">
+                <div>
+                    <div class="week-name" id="currentWeekName">本週</div>
+                    <div class="week-date" id="currentWeekDate"></div>
                 </div>
 
-                <button
-                    class="btn btn-primary"
-                    onclick="openTransactionModal()">
-                    ＋ 新增
-                </button>
+                <div class="week-available">
+                    <div class="small">本週剩餘可用</div>
+                    <div class="big" id="weekAvailable">$0</div>
+                </div>
             </div>
 
-            <div id="transactionList"></div>
+            <div class="week-progress">
+                <div class="week-progress-fill" id="weekProgress"></div>
+            </div>
+
+            <div class="week-details">
+
+                <div class="week-detail">
+                    <span>本週預算</span>
+                    <strong id="weekBudget">$0</strong>
+                </div>
+
+                <div class="week-detail">
+                    <span>本週已花</span>
+                    <strong id="weekSpent">$0</strong>
+                </div>
+
+                <div class="week-detail">
+                    <span>預計存下</span>
+                    <strong id="weekSaving">$0</strong>
+                </div>
+
+            </div>
 
         </div>
 
     </section>
 
 
-    <!-- =========================
-         BUDGET
-    ========================= -->
+    <!-- 主要區域 -->
+    <div class="main-grid">
 
-    <section id="budget" class="page" style="display:none;">
+        <!-- 左側 -->
+        <div>
 
-        <div class="card">
+            <!-- 日曆 -->
+            <div class="card calendar-card">
 
-            <div class="card-title">
-                本月預算設定
+                <div class="calendar-header">
+                    <h2>📅 <span id="calendarTitle"></span></h2>
+                    <button onclick="goToday()">回到今天</button>
+                </div>
+
+                <div class="calendar-weekdays">
+                    <div>日</div>
+                    <div>一</div>
+                    <div>二</div>
+                    <div>三</div>
+                    <div>四</div>
+                    <div>五</div>
+                    <div>六</div>
+                </div>
+
+                <div class="calendar-grid" id="calendar"></div>
+
             </div>
 
-            <div class="form-group">
-                <label>本月生活預算</label>
-                <input
-                    type="number"
-                    id="monthlyBudgetInput"
-                    min="0"
-                    placeholder="例如 15000">
+
+            <!-- 週支出圖 -->
+            <div class="card chart-card section">
+
+                <div class="section-title">
+                    <h2>📊 每週花費</h2>
+                    <span>看哪一週花最多</span>
+                </div>
+
+                <div class="chart" id="weeklyChart"></div>
+
             </div>
 
-            <button
-                class="btn btn-primary"
-                onclick="saveMonthlyBudget()">
-                儲存預算
+        </div>
+
+
+        <!-- 右側 -->
+        <div>
+
+            <!-- 未來預算 -->
+            <div class="card future-card">
+
+                <div class="section-title">
+                    <h2>🔮 未來支出</h2>
+                    <button class="add-btn" onclick="openFutureModal()">＋ 新增</button>
+                </div>
+
+                <div class="future-total">
+                    <span>這些錢會先從本月預算保留下來</span>
+                    <strong id="futureTotal2">$0</strong>
+                </div>
+
+                <div class="future-list" id="futureList"></div>
+
+            </div>
+
+
+            <!-- AI -->
+            <div class="card ai-card">
+
+                <div class="ai-title">
+                    🤖 AI 預算建議
+                </div>
+
+                <div class="ai-content" id="aiAdvice">
+                    正在分析你的預算狀況……
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- 記帳 -->
+    <section class="card transaction-card">
+
+        <div class="section-title">
+            <div>
+                <h2>💳 最近支出</h2>
+                <span>記錄每一筆花費</span>
+            </div>
+
+            <button class="add-btn" onclick="openExpenseModal()">
+                ＋ 記一筆
             </button>
-
         </div>
 
-
-        <div class="card">
-
-            <div class="card-title">
-                預算分配
-            </div>
-
-            <div class="grid grid-2">
-
-                <div>
-                    <div class="summary-label">
-                        日常可用
-                    </div>
-
-                    <div
-                        id="budgetDaily"
-                        class="summary-value primary">
-                        $0
-                    </div>
-                </div>
-
-                <div>
-                    <div class="summary-label">
-                        未來行程
-                    </div>
-
-                    <div
-                        id="budgetTrips"
-                        class="summary-value warning">
-                        $0
-                    </div>
-                </div>
-
-            </div>
-
-            <div
-                id="budgetAllocationText"
-                style="
-                    font-size:13px;
-                    color:var(--sub);
-                    line-height:1.7;
-                    margin-top:15px;">
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         TRIPS
-    ========================= -->
-
-    <section id="trips" class="page" style="display:none;">
-
-        <div class="card">
-
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                margin-bottom:14px;
-            ">
-
-                <div class="card-title" style="margin:0;">
-                    未來行程預算
-                </div>
-
-                <button
-                    class="btn btn-primary"
-                    onclick="openTripModal()">
-                    ＋ 新增行程
-                </button>
-
-            </div>
-
-            <div id="tripList"></div>
-
-        </div>
+        <div class="transaction-list" id="transactionList"></div>
 
     </section>
 
@@ -965,91 +1042,50 @@ th {
 
 
 <!-- =========================
-     TRANSACTION MODAL
+     支出 Modal
 ========================= -->
 
-<div id="transactionModal" class="modal">
+<div class="modal" id="expenseModal">
 
-    <div class="modal-content">
+    <div class="modal-box">
 
-        <div class="modal-header">
-            <h2>新增記帳</h2>
-
-            <button
-                class="close"
-                onclick="closeModal('transactionModal')">
-                ×
-            </button>
-        </div>
-
-        <div class="form-group">
-            <label>類型</label>
-
-            <select id="transactionType">
-                <option value="expense">支出</option>
-                <option value="income">收入</option>
-            </select>
-        </div>
+        <h2>新增支出</h2>
 
         <div class="form-group">
             <label>日期</label>
-
-            <input
-                type="date"
-                id="transactionDate">
+            <input type="date" id="expenseDate">
         </div>
 
         <div class="form-group">
             <label>項目</label>
-
-            <input
-                type="text"
-                id="transactionName"
-                placeholder="例如：午餐">
+            <input type="text" id="expenseName" placeholder="例如：午餐、交通、購物">
         </div>
 
-        <div class="form-group">
-            <label>分類</label>
+        <div class="form-row">
 
-            <select id="transactionCategory">
+            <div class="form-group">
+                <label>金額</label>
+                <input type="number" id="expenseAmount" placeholder="0">
+            </div>
 
-                <option value="餐飲">🍱 餐飲</option>
-                <option value="交通">🚌 交通</option>
-                <option value="娛樂">🎮 娛樂</option>
-                <option value="購物">🛍️ 購物</option>
-                <option value="生活">🏠 生活</option>
-                <option value="學習">📚 學習</option>
-                <option value="旅遊">✈️ 旅遊</option>
-                <option value="其他">📦 其他</option>
-
-            </select>
+            <div class="form-group">
+                <label>分類</label>
+                <select id="expenseCategory">
+                    <option value="🍜">飲食</option>
+                    <option value="🚌">交通</option>
+                    <option value="🛍️">購物</option>
+                    <option value="🎮">娛樂</option>
+                    <option value="📚">學習</option>
+                    <option value="💊">生活</option>
+                    <option value="📦">其他</option>
+                </select>
+            </div>
 
         </div>
 
-        <div class="form-group">
-            <label>金額</label>
-
-            <input
-                type="number"
-                id="transactionAmount"
-                min="0"
-                placeholder="0">
-        </div>
-
-        <div class="form-actions">
-
-            <button
-                class="btn btn-secondary"
-                onclick="closeModal('transactionModal')">
-                取消
-            </button>
-
-            <button
-                class="btn btn-primary"
-                onclick="saveTransaction()">
-                儲存
-            </button>
-
+        <div class="modal-actions">
+            <button class="cancel" onclick="closeModal('expenseModal')">取消</button>
+            <button class="confirm" onclick="addExpense()">新增</button>
         </div>
 
     </div>
@@ -1058,114 +1094,49 @@ th {
 
 
 <!-- =========================
-     TRIP MODAL
+     未來支出 Modal
 ========================= -->
 
-<div id="tripModal" class="modal">
+<div class="modal" id="futureModal">
 
-    <div class="modal-content">
+    <div class="modal-box">
 
-        <div class="modal-header">
+        <h2>新增未來支出</h2>
 
-            <h2>新增未來行程</h2>
-
-            <button
-                class="close"
-                onclick="closeModal('tripModal')">
-                ×
-            </button>
-
+        <div class="form-group">
+            <label>日期</label>
+            <input type="date" id="futureDate">
         </div>
 
         <div class="form-group">
-            <label>行程名稱</label>
-
-            <input
-                type="text"
-                id="tripName"
-                placeholder="例如：小琉球">
+            <label>預計用途</label>
+            <input type="text" id="futureName" placeholder="例如：小琉球、聚餐、電影">
         </div>
 
-        <div class="grid grid-2">
+        <div class="form-row">
 
             <div class="form-group">
-                <label>開始日期</label>
-
-                <input
-                    type="date"
-                    id="tripStart">
+                <label>預計金額</label>
+                <input type="number" id="futureAmount" placeholder="0">
             </div>
 
             <div class="form-group">
-                <label>結束日期</label>
-
-                <input
-                    type="date"
-                    id="tripEnd">
+                <label>圖示</label>
+                <select id="futureIcon">
+                    <option value="🧳">旅遊</option>
+                    <option value="🍜">聚餐</option>
+                    <option value="🛍️">購物</option>
+                    <option value="🎬">娛樂</option>
+                    <option value="🚌">交通</option>
+                    <option value="📦">其他</option>
+                </select>
             </div>
 
         </div>
 
-        <div class="form-group">
-            <label>交通預算</label>
-
-            <input
-                type="number"
-                id="tripTransport"
-                min="0"
-                placeholder="0">
-        </div>
-
-        <div class="form-group">
-            <label>餐飲預算</label>
-
-            <input
-                type="number"
-                id="tripFood"
-                min="0"
-                placeholder="0">
-        </div>
-
-        <div class="form-group">
-            <label>娛樂／景點預算</label>
-
-            <input
-                type="number"
-                id="tripEntertainment"
-                min="0"
-                placeholder="0">
-        </div>
-
-        <div class="form-group">
-            <label>其他預算</label>
-
-            <input
-                type="number"
-                id="tripOther"
-                min="0"
-                placeholder="0">
-        </div>
-
-        <div
-            id="tripTotalPreview"
-            class="alert alert-info">
-            行程預算：$0
-        </div>
-
-        <div class="form-actions">
-
-            <button
-                class="btn btn-secondary"
-                onclick="closeModal('tripModal')">
-                取消
-            </button>
-
-            <button
-                class="btn btn-primary"
-                onclick="saveTrip()">
-                儲存行程
-            </button>
-
+        <div class="modal-actions">
+            <button class="cancel" onclick="closeModal('futureModal')">取消</button>
+            <button class="confirm" onclick="addFuture()">新增</button>
         </div>
 
     </div>
@@ -1173,851 +1144,789 @@ th {
 </div>
 
 
+<div class="toast" id="toast"></div>
+
+
 <script>
 
-/* =========================================================
-   週週記 - 資料系統
-========================================================= */
+/* =====================================================
+   週週記
+   核心設定
+===================================================== */
 
-const STORAGE_KEY = "weeklyDiaryData_v1";
+const MONTHLY_BUDGET = 15000;
 
-let data = loadData();
+let currentDate = new Date();
 
-let currentMonth =
-    new Date().toISOString().slice(0, 7);
+let data = JSON.parse(
+    localStorage.getItem("weeklyNoteData") ||
+    '{"expenses":[],"future":[],"savings":0}'
+);
 
 
-/* =========================================================
-   初始資料
-========================================================= */
+/* =====================================================
+   工具
+===================================================== */
 
-function createDefaultData() {
-
-    return {
-        transactions: [],
-        budgets: {},
-        trips: []
-    };
-
+function money(number) {
+    return "$" + Math.round(number).toLocaleString("zh-TW");
 }
 
+function dateKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,"0");
+    const d = String(date.getDate()).padStart(2,"0");
 
-/* =========================================================
-   LocalStorage
-========================================================= */
-
-function loadData() {
-
-    try {
-
-        const saved =
-            localStorage.getItem(STORAGE_KEY);
-
-        if (!saved) {
-            return createDefaultData();
-        }
-
-        const parsed = JSON.parse(saved);
-
-        return {
-            transactions:
-                parsed.transactions || [],
-
-            budgets:
-                parsed.budgets || {},
-
-            trips:
-                parsed.trips || []
-        };
-
-    } catch (error) {
-
-        console.error(error);
-
-        return createDefaultData();
-
-    }
-
+    return `${y}-${m}-${d}`;
 }
 
+function monthKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
+}
 
 function saveData() {
-
     localStorage.setItem(
-        STORAGE_KEY,
+        "weeklyNoteData",
         JSON.stringify(data)
     );
+}
 
+function showToast(message) {
+
+    const toast = document.getElementById("toast");
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 1800);
 }
 
 
-/* =========================================================
-   Utility
-========================================================= */
+/* =====================================================
+   月份資料
+===================================================== */
 
-function money(value) {
+function getMonthExpenses() {
 
-    return "$" +
-        Math.round(Number(value || 0))
-        .toLocaleString("zh-TW");
+    const key = monthKey(currentDate);
 
+    return data.expenses.filter(
+        x => x.date.startsWith(key)
+    );
+}
+
+function getMonthFuture() {
+
+    const key = monthKey(currentDate);
+
+    return data.future.filter(
+        x => x.date.startsWith(key)
+    );
+}
+
+function getMonthSpent() {
+
+    return getMonthExpenses()
+        .reduce((sum,x) => sum + Number(x.amount),0);
+}
+
+function getFutureTotal() {
+
+    return getMonthFuture()
+        .reduce((sum,x) => sum + Number(x.amount),0);
 }
 
 
-function formatDate(date) {
+/* =====================================================
+   月份切換
+===================================================== */
 
-    if (!date) return "";
+function changeMonth(offset) {
 
-    return date.replaceAll("-", "/");
+    currentDate.setMonth(
+        currentDate.getMonth() + offset
+    );
 
+    render();
+}
+
+function goToday() {
+
+    currentDate = new Date();
+
+    render();
 }
 
 
-function todayString() {
+/* =====================================================
+   日曆
+===================================================== */
 
-    const d = new Date();
+function renderCalendar() {
 
-    const y =
-        d.getFullYear();
+    const calendar =
+        document.getElementById("calendar");
 
-    const m =
-        String(d.getMonth() + 1)
-        .padStart(2, "0");
+    calendar.innerHTML = "";
 
-    const day =
-        String(d.getDate())
-        .padStart(2, "0");
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
 
-    return `${y}-${m}-${day}`;
+    document.getElementById("calendarTitle").textContent =
+        `${year} 年 ${month+1} 月`;
 
-}
+    const firstDay =
+        new Date(year,month,1).getDay();
 
+    const daysInMonth =
+        new Date(year,month+1,0).getDate();
 
-function monthOf(date) {
+    for(let i=0;i<firstDay;i++) {
 
-    return String(date).slice(0, 7);
+        const empty = document.createElement("div");
 
-}
+        empty.className = "day empty";
 
-
-function daysInMonth(month) {
-
-    const [year, mon] =
-        month.split("-").map(Number);
-
-    return new Date(
-        year,
-        mon,
-        0
-    ).getDate();
-
-}
-
-
-function daysPassed(month) {
-
-    const today = new Date();
-
-    const target =
-        today.getFullYear() +
-        "-" +
-        String(today.getMonth() + 1)
-            .padStart(2, "0");
-
-    if (month !== target) {
-
-        return daysInMonth(month);
-
+        calendar.appendChild(empty);
     }
 
-    return today.getDate();
+    for(let day=1;day<=daysInMonth;day++) {
 
+        const date =
+            new Date(year,month,day);
+
+        const key = dateKey(date);
+
+        const cell =
+            document.createElement("div");
+
+        cell.className = "day";
+
+        const todayKey =
+            dateKey(new Date());
+
+        if(key === todayKey) {
+            cell.classList.add("today");
+        }
+
+        const expenses =
+            data.expenses.filter(
+                x => x.date === key
+            );
+
+        const spent =
+            expenses.reduce(
+                (sum,x) => sum + Number(x.amount),
+                0
+            );
+
+        const futures =
+            data.future.filter(
+                x => x.date === key
+            );
+
+        cell.innerHTML = `
+            <div class="day-number">${day}</div>
+
+            ${
+                spent > 0
+                ? `<div class="day-expense ${spent > 500 ? "high":""}">
+                    ${money(spent)}
+                   </div>`
+                : ""
+            }
+
+            ${
+                futures.length > 0
+                ? `<div class="future-dot"
+                        title="有未來預算">
+                   </div>`
+                : ""
+            }
+        `;
+
+        cell.onclick = () => {
+
+            if(expenses.length === 0) {
+
+                showToast(`${month+1}/${day} 尚無支出`);
+
+            } else {
+
+                showToast(
+                    `${month+1}/${day} 共花 ${money(spent)}`
+                );
+            }
+
+        };
+
+        calendar.appendChild(cell);
+    }
 }
 
 
-/* =========================================================
-   Budget
-========================================================= */
+/* =====================================================
+   月度總覽
+===================================================== */
 
-function getMonthlyBudget(month = currentMonth) {
+function renderSummary() {
 
-    return Number(
-        data.budgets[month] || 0
-    );
+    const spent = getMonthSpent();
+    const future = getFutureTotal();
 
-}
-
-
-function getMonthTransactions(month = currentMonth) {
-
-    return data.transactions.filter(
-        item => monthOf(item.date) === month
-    );
-
-}
-
-
-function getMonthIncome(month = currentMonth) {
-
-    return getMonthTransactions(month)
-        .filter(x => x.type === "income")
-        .reduce(
-            (sum, x) =>
-                sum + Number(x.amount),
-            0
+    const available =
+        Math.max(
+            0,
+            MONTHLY_BUDGET - spent - future
         );
 
-}
-
-
-function getMonthExpense(month = currentMonth) {
-
-    return getMonthTransactions(month)
-        .filter(x => x.type === "expense")
-        .reduce(
-            (sum, x) =>
-                sum + Number(x.amount),
-            0
+    const percent =
+        Math.min(
+            100,
+            (spent / MONTHLY_BUDGET) * 100
         );
 
+    document.getElementById("monthSpent")
+        .textContent = money(spent);
+
+    document.getElementById("futureTotal")
+        .textContent = money(future);
+
+    document.getElementById("futureTotal2")
+        .textContent = money(future);
+
+    document.getElementById("monthProgress")
+        .style.width = percent + "%";
+
+    document.getElementById("spentPercent")
+        .textContent =
+        `已使用 ${Math.round(percent)}%`;
+
+    document.getElementById("remainingText")
+        .textContent =
+        `${money(available)} 可自由分配`;
 }
 
 
-/* =========================================================
-   Future Trip
-========================================================= */
+/* =====================================================
+   週計算
+===================================================== */
 
-function getMonthTrips(month = currentMonth) {
+function getWeekRange(date) {
 
-    return data.trips.filter(trip => {
+    const d = new Date(date);
 
-        return monthOf(trip.start) === month ||
-               monthOf(trip.end) === month;
+    const day = d.getDay();
 
-    });
+    const start =
+        new Date(d);
 
-}
-
-
-function getTripTotal(trip) {
-
-    return (
-        Number(trip.transport || 0) +
-        Number(trip.food || 0) +
-        Number(trip.entertainment || 0) +
-        Number(trip.other || 0)
+    start.setDate(
+        d.getDate() - day
     );
 
-}
+    start.setHours(0,0,0,0);
 
+    const end =
+        new Date(start);
 
-function getTripReserve(month = currentMonth) {
-
-    return getMonthTrips(month)
-        .reduce(
-            (sum, trip) =>
-                sum + getTripTotal(trip),
-            0
-        );
-
-}
-
-
-/* =========================================================
-   Real available budget
-========================================================= */
-
-function getRemainingBudget(month = currentMonth) {
-
-    const budget =
-        getMonthlyBudget(month);
-
-    const expense =
-        getMonthExpense(month);
-
-    const tripReserve =
-        getTripReserve(month);
-
-    /*
-       核心邏輯：
-
-       本月總預算
-       - 已經花掉的
-       - 未來行程預留
-       = 真正可以自由使用的錢
-    */
-
-    return Math.max(
-        0,
-        budget -
-        expense -
-        tripReserve
+    end.setDate(
+        start.getDate()+6
     );
 
+    end.setHours(23,59,59,999);
+
+    return {start,end};
 }
 
 
-/* =========================================================
-   Daily budget
-========================================================= */
+function getWeeksOfMonth() {
 
-function getTodayActualExpense() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const weeks = [];
+
+    let date =
+        new Date(year,month,1);
+
+    while(date.getMonth() === month) {
+
+        const range =
+            getWeekRange(date);
+
+        const start =
+            new Date(
+                Math.max(
+                    range.start.getTime(),
+                    new Date(year,month,1).getTime()
+                )
+            );
+
+        const end =
+            new Date(
+                Math.min(
+                    range.end.getTime(),
+                    new Date(year,month+1,0,23,59,59,999).getTime()
+                )
+            );
+
+        weeks.push({
+            start,
+            end
+        });
+
+        date =
+            new Date(range.end);
+
+        date.setDate(date.getDate()+1);
+    }
+
+    return weeks;
+}
+
+
+/*
+    預算分配邏輯：
+
+    月預算 15,000
+
+    先扣：
+    1. 已發生支出
+    2. 未來預計支出
+
+    剩餘的錢，再依「剩餘週數」
+    平均分配到未來週。
+*/
+
+function getWeekBudgetForCurrentWeek() {
+
+    const weeks =
+        getWeeksOfMonth();
 
     const today =
-        todayString();
+        new Date();
 
-    return data.transactions
-        .filter(x =>
-            x.date === today &&
-            x.type === "expense"
-        )
-        .reduce(
-            (sum, x) =>
-                sum + Number(x.amount),
+    const monthExpenses =
+        getMonthExpenses();
+
+    const monthFuture =
+        getMonthFuture();
+
+    const totalFuture =
+        monthFuture.reduce(
+            (sum,x)=>sum+Number(x.amount),
             0
         );
 
-}
-
-
-function getDailyAvailable() {
-
-    const remaining =
-        getRemainingBudget();
-
-    const passed =
-        daysPassed(currentMonth);
-
-    const totalDays =
-        daysInMonth(currentMonth);
-
-    const remainingDays =
-        Math.max(
-            1,
-            totalDays - passed + 1
+    const currentIndex =
+        weeks.findIndex(
+            w =>
+                today >= w.start &&
+                today <= w.end
         );
 
-    return remaining /
-        remainingDays;
+    let index = currentIndex;
 
-}
+    if(index === -1) {
 
-
-/* =========================================================
-   Render Home
-========================================================= */
-
-function renderHome() {
-
-    const income =
-        getMonthIncome();
-
-    const expense =
-        getMonthExpense();
-
-    const budget =
-        getMonthlyBudget();
-
-    const tripReserve =
-        getTripReserve();
-
-    const remaining =
-        getRemainingBudget();
-
-    const todayActual =
-        getTodayActualExpense();
-
-    const daily =
-        getDailyAvailable();
-
-
-    document.getElementById(
-        "summaryIncome"
-    ).textContent =
-        money(income);
-
-
-    document.getElementById(
-        "summaryExpense"
-    ).textContent =
-        money(expense);
-
-
-    document.getElementById(
-        "summaryRemaining"
-    ).textContent =
-        money(remaining);
-
-
-    document.getElementById(
-        "summaryToday"
-    ).textContent =
-        money(
-            Math.max(
-                0,
-                daily - todayActual
-            )
-        );
-
-
-    document.getElementById(
-        "homeBudget"
-    ).textContent =
-        money(budget);
-
-
-    document.getElementById(
-        "homeUsed"
-    ).textContent =
-        money(expense);
-
-
-    document.getElementById(
-        "homeTripReserve"
-    ).textContent =
-        money(tripReserve);
-
-
-    const progress =
-        budget > 0
-        ? Math.min(
-            100,
-            ((expense + tripReserve) /
-                budget) * 100
-        )
-        : 0;
-
-
-    const progressElement =
-        document.getElementById(
-            "homeProgress"
-        );
-
-    progressElement.style.width =
-        progress + "%";
-
-
-    progressElement.className =
-        "progress-fill " +
-        (
-            progress >= 90
-            ? "danger"
-            : progress >= 70
-            ? "warning"
-            : ""
-        );
-
-
-    let status = "";
-
-    if (budget <= 0) {
-
-        status =
-            "尚未設定本月預算。";
-
-    } else if (
-        expense + tripReserve > budget
-    ) {
-
-        status =
-            "⚠️ 目前支出加上未來行程已超過本月預算。";
-
-    } else {
-
-        status =
-            `目前已使用 ${Math.round(progress)}%，`
-            + `還有 ${money(remaining)} 可以自由安排。`;
-
+        index =
+            weeks.findIndex(
+                w =>
+                    currentDate >= w.start &&
+                    currentDate <= w.end
+            );
     }
 
-    document.getElementById(
-        "budgetStatusText"
-    ).textContent =
-        status;
+    if(index === -1) {
+        index = 0;
+    }
 
+    /*
+      已發生的花費不應再次分配。
+    */
 
-    renderTodayPlan();
-    renderTripImpact();
-    renderAI();
-    renderRecentTransactions();
-
-}
-
-
-/* =========================================================
-   Today Plan
-========================================================= */
-
-function renderTodayPlan() {
-
-    const actual =
-        getTodayActualExpense();
-
-    const daily =
-        getDailyAvailable();
+    const totalSpent =
+        monthExpenses.reduce(
+            (sum,x)=>sum+Number(x.amount),
+            0
+        );
 
     const remaining =
         Math.max(
             0,
-            daily - actual
+            MONTHLY_BUDGET -
+            totalSpent -
+            totalFuture
         );
 
-    const percentage =
-        daily > 0
-        ? (actual / daily) * 100
-        : 0;
+    const futureWeeks =
+        Math.max(
+            1,
+            weeks.length - index
+        );
 
-
-    let badge = "";
-    let message = "";
-
-    if (actual > daily) {
-
-        badge =
-            `<span class="status-badge over">
-                已超支
-             </span>`;
-
-        message =
-            `今天已多花 ${money(actual - daily)}。`;
-
-    } else if (percentage >= 80) {
-
-        badge =
-            `<span class="status-badge warning">
-                接近上限
-             </span>`;
-
-        message =
-            `今天建議剩餘支出控制在 ${money(remaining)} 內。`;
-
-    } else {
-
-        badge =
-            `<span class="status-badge ok">
-                正常
-             </span>`;
-
-        message =
-            `今天還可以安心使用 ${money(remaining)}。`;
-
-    }
-
-
-    document.getElementById(
-        "todayDate"
-    ).textContent =
-        todayString().replaceAll("-", "/");
-
-
-    document.getElementById(
-        "todayPlanContent"
-    ).innerHTML = `
-
-        <div class="today-plan-item">
-
-            <div class="item-title">
-                <span>今日建議額度</span>
-                <span>${money(daily)}</span>
-            </div>
-
-            <div class="item-status">
-                <span>今天已花 ${money(actual)}</span>
-                ${badge}
-            </div>
-
-        </div>
-
-        <div class="today-plan-item">
-
-            <div class="item-title">
-                <span>今天剩餘</span>
-                <span>${money(remaining)}</span>
-            </div>
-
-            <div class="item-status">
-                <span>${message}</span>
-            </div>
-
-        </div>
-    `;
-
+    return remaining / futureWeeks;
 }
 
 
-/* =========================================================
-   Trip Impact
-========================================================= */
+function getCurrentWeekExpenses() {
 
-function renderTripImpact() {
+    const range =
+        getWeekRange(new Date());
 
-    const trips =
-        getMonthTrips();
+    return data.expenses.filter(x => {
 
-    const container =
-        document.getElementById(
-            "tripImpact"
+        const d =
+            new Date(x.date);
+
+        return d >= range.start &&
+               d <= range.end &&
+               d.getMonth() === currentDate.getMonth();
+    });
+}
+
+
+function renderWeek() {
+
+    const today =
+        new Date();
+
+    const range =
+        getWeekRange(today);
+
+    const weekExpenses =
+        getCurrentWeekExpenses();
+
+    const spent =
+        weekExpenses.reduce(
+            (sum,x)=>sum+Number(x.amount),
+            0
         );
 
-    if (!trips.length) {
+    const budget =
+        getWeekBudgetForCurrentWeek();
 
-        container.innerHTML = `
-            <div class="empty">
-                目前沒有設定未來行程。
+    const available =
+        Math.max(
+            0,
+            budget - spent
+        );
+
+    const percent =
+        budget === 0
+        ? 0
+        : Math.min(
+            100,
+            spent / budget * 100
+        );
+
+    document.getElementById("currentWeekName")
+        .textContent = "本週預算";
+
+    document.getElementById("currentWeekDate")
+        .textContent =
+        `${range.start.getMonth()+1}/${range.start.getDate()} ～ ${range.end.getMonth()+1}/${range.end.getDate()}`;
+
+    document.getElementById("weekAvailable")
+        .textContent = money(available);
+
+    document.getElementById("weekBudget")
+        .textContent = money(budget);
+
+    document.getElementById("weekSpent")
+        .textContent = money(spent);
+
+    document.getElementById("weekSaving")
+        .textContent = money(available);
+
+    document.getElementById("weekProgress")
+        .style.width = percent + "%";
+}
+
+
+/* =====================================================
+   未來支出
+===================================================== */
+
+function renderFuture() {
+
+    const list =
+        document.getElementById("futureList");
+
+    list.innerHTML = "";
+
+    const future =
+        getMonthFuture()
+        .sort(
+            (a,b) =>
+            new Date(a.date) -
+            new Date(b.date)
+        );
+
+    if(future.length === 0) {
+
+        list.innerHTML =
+            `<div class="empty">
+                還沒有未來支出 🎉<br>
+                可以先把旅遊、聚餐等預算加進來
+             </div>`;
+
+        return;
+    }
+
+    future.forEach(item => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "future-item";
+
+        div.innerHTML = `
+
+            <div class="future-left">
+
+                <div class="future-icon">
+                    ${item.icon}
+                </div>
+
+                <div>
+                    <div class="future-title">
+                        ${escapeHTML(item.name)}
+                    </div>
+
+                    <div class="future-date">
+                        ${item.date}
+                    </div>
+                </div>
+
+            </div>
+
+            <div>
+                <span class="future-money">
+                    ${money(item.amount)}
+                </span>
+
+                <button
+                    class="delete-btn"
+                    onclick="deleteFuture('${item.id}')">
+                    ×
+                </button>
             </div>
         `;
 
-        return;
-
-    }
-
-
-    const reserve =
-        getTripReserve();
-
-    const remainingBeforeTrip =
-        getMonthlyBudget() -
-        getMonthExpense();
-
-
-    container.innerHTML = `
-
-        <div class="alert ${
-            reserve > remainingBeforeTrip
-            ? "alert-danger"
-            : "alert-info"
-        }">
-
-            未來行程預計需要
-            <strong>${money(reserve)}</strong>。
-
-            <br>
-
-            扣除目前支出後，
-            本月原本還有
-            <strong>${money(
-                Math.max(
-                    0,
-                    remainingBeforeTrip
-                )
-            )}</strong>。
-
-            <br>
-
-            ${
-                reserve > remainingBeforeTrip
-                ? "⚠️ 未來行程預算可能不足，建議調整支出。"
-                : "✓ 已先替未來行程保留預算，避免現在不小心花掉。"
-            }
-
-        </div>
-    `;
-
+        list.appendChild(div);
+    });
 }
 
 
-/* =========================================================
-   AI Advice
-========================================================= */
+/* =====================================================
+   每週圖表
+===================================================== */
+
+function renderWeeklyChart() {
+
+    const chart =
+        document.getElementById("weeklyChart");
+
+    chart.innerHTML = "";
+
+    const weeks =
+        getWeeksOfMonth();
+
+    const values =
+        weeks.map((week,index)=>{
+
+            return data.expenses
+                .filter(x=>{
+
+                    const d =
+                        new Date(x.date);
+
+                    return d >= week.start &&
+                           d <= week.end &&
+                           d.getMonth() === currentDate.getMonth();
+
+                })
+                .reduce(
+                    (sum,x)=>sum+Number(x.amount),
+                    0
+                );
+        });
+
+    const max =
+        Math.max(
+            100,
+            ...values
+        );
+
+    values.forEach((value,index)=>{
+
+        const wrap =
+            document.createElement("div");
+
+        wrap.className =
+            "bar-wrap";
+
+        const height =
+            Math.max(
+                3,
+                value / max * 160
+            );
+
+        wrap.innerHTML = `
+
+            <div class="bar-value">
+                ${value > 0 ? "$"+Math.round(value) : ""}
+            </div>
+
+            <div class="bar"
+                 style="height:${height}px">
+            </div>
+
+            <div class="bar-label">
+                第${index+1}週
+            </div>
+        `;
+
+        chart.appendChild(wrap);
+    });
+}
+
+
+/* =====================================================
+   AI 建議
+===================================================== */
 
 function renderAI() {
 
-    const budget =
-        getMonthlyBudget();
+    const advice =
+        document.getElementById("aiAdvice");
 
-    const expense =
-        getMonthExpense();
+    const spent =
+        getMonthSpent();
 
-    const trips =
-        getTripReserve();
-
-    const remaining =
-        getRemainingBudget();
-
-    const daily =
-        getDailyAvailable();
+    const future =
+        getFutureTotal();
 
     const today =
-        getTodayActualExpense();
+        new Date();
 
+    const year =
+        currentDate.getFullYear();
 
-    let html = "";
+    const month =
+        currentDate.getMonth();
 
+    const days =
+        new Date(
+            year,
+            month+1,
+            0
+        ).getDate();
 
-    if (budget <= 0) {
+    const currentDay =
+        today.getMonth() === month
+        ? today.getDate()
+        : 1;
 
-        html += `
-            <div class="ai-item">
-                💡 建議先設定本月生活預算，
-                系統才能幫你計算每天可以使用多少錢。
-            </div>
+    const remainingDays =
+        Math.max(
+            1,
+            days-currentDay+1
+        );
+
+    const available =
+        Math.max(
+            0,
+            MONTHLY_BUDGET -
+            spent -
+            future
+        );
+
+    const daily =
+        available / remainingDays;
+
+    let status = "";
+
+    if(available <= 0) {
+
+        status = `
+            🔴 <strong>目前預算已經非常緊繃。</strong>
+            未來支出已經幾乎吃掉本月剩餘預算，
+            建議暫停非必要消費。
+        `;
+
+    } else if(daily < 250) {
+
+        status = `
+            🟡 目前預算需要稍微注意。
+            扣除未來預支出後，
+            接下來平均每天約可使用
+            <span class="ai-highlight">${money(daily)}</span>。
         `;
 
     } else {
 
-        const usage =
-            ((expense + trips) /
-                budget) * 100;
-
-
-        if (usage >= 100) {
-
-            html += `
-                <div class="ai-item">
-                    🚨 目前本月支出加上未來行程已超過預算，
-                    建議優先降低非必要消費。
-                </div>
-            `;
-
-        } else if (usage >= 80) {
-
-            html += `
-                <div class="ai-item">
-                    ⚠️ 本月預算使用率已達
-                    ${Math.round(usage)}%，
-                    接下來可以稍微控制購物與娛樂支出。
-                </div>
-            `;
-
-        } else {
-
-            html += `
-                <div class="ai-item">
-                    ✓ 目前預算狀況穩定，
-                    加上未來行程預留後，
-                    還有 ${money(remaining)} 可以安排。
-                </div>
-            `;
-
-        }
-
-
-        html += `
-            <div class="ai-item">
-                📅 以目前剩餘天數計算，
-                每天平均約可使用
-                <strong>${money(daily)}</strong>。
-            </div>
+        status = `
+            🟢 目前預算狀況良好。
+            扣除未來支出後，
+            接下來平均每天約可使用
+            <span class="ai-highlight">${money(daily)}</span>。
         `;
-
-
-        if (today > daily) {
-
-            html += `
-                <div class="ai-item">
-                    🔴 今天已超過建議額度
-                    ${money(today - daily)}，
-                    明天可以稍微降低支出。
-                </div>
-            `;
-
-        } else {
-
-            html += `
-                <div class="ai-item">
-                    🟢 今天目前花費
-                    ${money(today)}，
-                    還在建議範圍內。
-                </div>
-            `;
-
-        }
-
-
-        if (trips > 0) {
-
-            html += `
-                <div class="ai-item">
-                    ✈️ 已經替未來行程保留
-                    ${money(trips)}，
-                    因此現在的「可自由使用預算」
-                    不會把這筆錢算進去。
-                </div>
-            `;
-
-        }
-
     }
 
-
-    document.getElementById(
-        "aiAdvice"
-    ).innerHTML =
-        html;
-
+    advice.innerHTML = status;
 }
 
 
-/* =========================================================
-   Recent Transactions
-========================================================= */
+/* =====================================================
+   記帳列表
+===================================================== */
 
-function renderRecentTransactions() {
+function renderTransactions() {
 
     const list =
-        getMonthTransactions()
+        document.getElementById("transactionList");
+
+    list.innerHTML = "";
+
+    const expenses =
+        getMonthExpenses()
         .sort(
             (a,b) =>
-                b.date.localeCompare(a.date)
-        )
-        .slice(0, 8);
-
-
-    const container =
-        document.getElementById(
-            "recentTransactions"
+            new Date(b.date) -
+            new Date(a.date)
         );
 
+    if(expenses.length === 0) {
 
-    if (!list.length) {
-
-        container.innerHTML = `
-            <div class="empty">
-                本月還沒有記帳紀錄。
-            </div>
-        `;
+        list.innerHTML =
+            `<div class="empty">
+                本月還沒有記帳紀錄 ✨
+             </div>`;
 
         return;
-
     }
 
+    expenses.slice(0,20)
+        .forEach(item => {
 
-    container.innerHTML =
-        list.map(
-            item => transactionHTML(item)
-        ).join("");
+        const div =
+            document.createElement("div");
 
-}
+        div.className =
+            "transaction";
 
-
-/* =========================================================
-   Transaction
-========================================================= */
-
-function transactionHTML(item) {
-
-    const iconMap = {
-
-        "餐飲": "🍱",
-        "交通": "🚌",
-        "娛樂": "🎮",
-        "購物": "🛍️",
-        "生活": "🏠",
-        "學習": "📚",
-        "旅遊": "✈️",
-        "其他": "📦"
-
-    };
-
-
-    return `
-
-        <div class="transaction">
+        div.innerHTML = `
 
             <div class="transaction-left">
 
                 <div class="transaction-icon">
-                    ${iconMap[item.category] || "💰"}
+                    ${item.category}
                 </div>
 
                 <div>
@@ -2027,9 +1936,7 @@ function transactionHTML(item) {
                     </div>
 
                     <div class="transaction-date">
-                        ${formatDate(item.date)}
-                        ・
-                        ${escapeHTML(item.category)}
+                        ${item.date}
                     </div>
 
                 </div>
@@ -2037,779 +1944,270 @@ function transactionHTML(item) {
             </div>
 
             <div>
-
-                <span class="transaction-amount ${
-                    item.type === "income"
-                    ? "income"
-                    : "expense"
-                }">
-
-                    ${
-                        item.type === "income"
-                        ? "+"
-                        : "-"
-                    }
-
-                    ${money(item.amount)}
-
+                <span class="transaction-money">
+                    -${money(item.amount)}
                 </span>
 
                 <button
                     class="delete-btn"
-                    onclick="deleteTransaction('${item.id}')">
-
+                    onclick="deleteExpense('${item.id}')">
                     ×
-
                 </button>
-
-            </div>
-
-        </div>
-    `;
-
-}
-
-
-function renderTransactions() {
-
-    const list =
-        getMonthTransactions()
-        .sort(
-            (a,b) =>
-                b.date.localeCompare(a.date)
-        );
-
-
-    const container =
-        document.getElementById(
-            "transactionList"
-        );
-
-
-    if (!list.length) {
-
-        container.innerHTML = `
-            <div class="empty">
-                本月還沒有任何記帳。
-                <br><br>
-                點擊右上角「＋ 新增」開始記帳。
             </div>
         `;
 
-        return;
+        list.appendChild(div);
 
-    }
-
-
-    container.innerHTML =
-        list.map(
-            item => transactionHTML(item)
-        ).join("");
-
+    });
 }
 
 
-/* =========================================================
-   Add Transaction
-========================================================= */
+/* =====================================================
+   新增支出
+===================================================== */
 
-function openTransactionModal() {
+function openExpenseModal() {
 
-    document.getElementById(
-        "transactionModal"
-    ).classList.add("show");
+    document.getElementById("expenseModal")
+        .classList.add("show");
 
-
-    document.getElementById(
-        "transactionDate"
-    ).value =
-        todayString();
-
-
-    document.getElementById(
-        "transactionName"
-    ).value = "";
-
-
-    document.getElementById(
-        "transactionAmount"
-    ).value = "";
-
+    document.getElementById("expenseDate")
+        .value = dateKey(new Date());
 }
 
-
-function saveTransaction() {
-
-    const type =
-        document.getElementById(
-            "transactionType"
-        ).value;
-
+function addExpense() {
 
     const date =
-        document.getElementById(
-            "transactionDate"
-        ).value;
-
+        document.getElementById("expenseDate").value;
 
     const name =
-        document.getElementById(
-            "transactionName"
-        ).value.trim();
-
-
-    const category =
-        document.getElementById(
-            "transactionCategory"
-        ).value;
-
+        document.getElementById("expenseName").value.trim();
 
     const amount =
         Number(
-            document.getElementById(
-                "transactionAmount"
-            ).value
+            document.getElementById("expenseAmount").value
         );
 
+    const category =
+        document.getElementById("expenseCategory").value;
 
-    if (!date ||
-        !name ||
-        amount <= 0) {
+    if(!date || !name || amount <= 0) {
 
-        alert("請完整填寫日期、項目與金額。");
+        showToast("請完整填寫資料");
 
         return;
-
     }
 
-
-    data.transactions.push({
+    data.expenses.push({
 
         id:
             Date.now().toString(),
 
-        type,
         date,
+
         name,
-        category,
-        amount
 
+        amount,
+
+        category
     });
 
+    saveData();
+
+    closeModal("expenseModal");
+
+    document.getElementById("expenseName").value = "";
+
+    document.getElementById("expenseAmount").value = "";
+
+    showToast("已新增支出");
+
+    render();
+}
+
+
+/* =====================================================
+   刪除支出
+===================================================== */
+
+function deleteExpense(id) {
+
+    data.expenses =
+        data.expenses.filter(
+            x => x.id !== id
+        );
 
     saveData();
 
-    closeModal("transactionModal");
+    showToast("已刪除支出");
 
-    refresh();
-
+    render();
 }
 
 
-/* =========================================================
-   Delete Transaction
-========================================================= */
+/* =====================================================
+   未來支出
+===================================================== */
 
-function deleteTransaction(id) {
+function openFutureModal() {
 
-    const ok =
-        confirm("確定要刪除這筆紀錄嗎？");
+    document.getElementById("futureModal")
+        .classList.add("show");
 
-    if (!ok) return;
-
-
-    data.transactions =
-        data.transactions.filter(
-            item => item.id !== id
+    document.getElementById("futureDate")
+        .value = dateKey(
+            new Date()
         );
-
-
-    saveData();
-
-    refresh();
-
 }
 
+function addFuture() {
 
-/* =========================================================
-   Monthly Budget
-========================================================= */
-
-function saveMonthlyBudget() {
-
-    const value =
-        Number(
-            document.getElementById(
-                "monthlyBudgetInput"
-            ).value
-        );
-
-
-    if (value < 0) {
-
-        alert("預算不能小於 0。");
-
-        return;
-
-    }
-
-
-    data.budgets[currentMonth] =
-        value;
-
-    saveData();
-
-    refresh();
-
-    alert("本月預算已更新。");
-
-}
-
-
-function renderBudget() {
-
-    const budget =
-        getMonthlyBudget();
-
-    const tripReserve =
-        getTripReserve();
-
-    const expense =
-        getMonthExpense();
-
-    const daily =
-        Math.max(
-            0,
-            budget -
-            expense -
-            tripReserve
-        );
-
-
-    document.getElementById(
-        "monthlyBudgetInput"
-    ).value =
-        budget || "";
-
-
-    document.getElementById(
-        "budgetDaily"
-    ).textContent =
-        money(daily);
-
-
-    document.getElementById(
-        "budgetTrips"
-    ).textContent =
-        money(tripReserve);
-
-
-    document.getElementById(
-        "budgetAllocationText"
-    ).innerHTML = `
-
-        本月預算：
-        <strong>${money(budget)}</strong>
-
-        <br>
-
-        已經花費：
-        <strong>${money(expense)}</strong>
-
-        <br>
-
-        未來行程預留：
-        <strong>${money(tripReserve)}</strong>
-
-        <br>
-
-        目前真正可以自由使用：
-        <strong>${money(daily)}</strong>
-
-        <br><br>
-
-        系統會先把未來行程的預算保留下來，
-        避免你現在看到帳戶還有錢，
-        卻在月底才發現旅遊費不夠。
-
-    `;
-
-}
-
-
-/* =========================================================
-   Trip
-========================================================= */
-
-function openTripModal() {
-
-    document.getElementById(
-        "tripModal"
-    ).classList.add("show");
-
-
-    document.getElementById(
-        "tripStart"
-    ).value =
-        todayString();
-
-
-    document.getElementById(
-        "tripEnd"
-    ).value =
-        todayString();
-
-
-    [
-        "tripName",
-        "tripTransport",
-        "tripFood",
-        "tripEntertainment",
-        "tripOther"
-    ].forEach(id => {
-
-        document.getElementById(id).value = "";
-
-    });
-
-
-    updateTripPreview();
-
-}
-
-
-function updateTripPreview() {
-
-    const total =
-        Number(
-            document.getElementById(
-                "tripTransport"
-            ).value
-        ) +
-
-        Number(
-            document.getElementById(
-                "tripFood"
-            ).value
-        ) +
-
-        Number(
-            document.getElementById(
-                "tripEntertainment"
-            ).value
-        ) +
-
-        Number(
-            document.getElementById(
-                "tripOther"
-            ).value
-        );
-
-
-    document.getElementById(
-        "tripTotalPreview"
-    ).innerHTML =
-        `行程預算：<strong>${money(total)}</strong>`;
-
-}
-
-
-[
-    "tripTransport",
-    "tripFood",
-    "tripEntertainment",
-    "tripOther"
-].forEach(id => {
-
-    document.getElementById(id)
-        .addEventListener(
-            "input",
-            updateTripPreview
-        );
-
-});
-
-
-function saveTrip() {
+    const date =
+        document.getElementById("futureDate").value;
 
     const name =
-        document.getElementById(
-            "tripName"
-        ).value.trim();
+        document.getElementById("futureName").value.trim();
 
+    const amount =
+        Number(
+            document.getElementById("futureAmount").value
+        );
 
-    const start =
-        document.getElementById(
-            "tripStart"
-        ).value;
+    const icon =
+        document.getElementById("futureIcon").value;
 
+    if(!date || !name || amount <= 0) {
 
-    const end =
-        document.getElementById(
-            "tripEnd"
-        ).value;
-
-
-    if (!name || !start || !end) {
-
-        alert("請完整填寫行程名稱與日期。");
+        showToast("請完整填寫資料");
 
         return;
-
     }
 
-
-    if (end < start) {
-
-        alert("結束日期不能早於開始日期。");
-
-        return;
-
-    }
-
-
-    const trip = {
+    data.future.push({
 
         id:
             Date.now().toString(),
 
+        date,
+
         name,
-        start,
-        end,
 
-        transport:
-            Number(
-                document.getElementById(
-                    "tripTransport"
-                ).value
-            ) || 0,
+        amount,
 
-        food:
-            Number(
-                document.getElementById(
-                    "tripFood"
-                ).value
-            ) || 0,
-
-        entertainment:
-            Number(
-                document.getElementById(
-                    "tripEntertainment"
-                ).value
-            ) || 0,
-
-        other:
-            Number(
-                document.getElementById(
-                    "tripOther"
-                ).value
-            ) || 0
-
-    };
-
-
-    data.trips.push(trip);
+        icon
+    });
 
     saveData();
 
-    closeModal("tripModal");
+    closeModal("futureModal");
 
-    refresh();
+    document.getElementById("futureName").value = "";
 
+    document.getElementById("futureAmount").value = "";
+
+    showToast("已加入未來預算");
+
+    render();
 }
 
 
-function renderTrips() {
+/* =====================================================
+   刪除未來支出
+===================================================== */
 
-    const list =
-        data.trips
-        .filter(trip =>
-            monthOf(trip.start) === currentMonth ||
-            monthOf(trip.end) === currentMonth
-        )
-        .sort(
-            (a,b) =>
-                a.start.localeCompare(b.start)
+function deleteFuture(id) {
+
+    data.future =
+        data.future.filter(
+            x => x.id !== id
         );
-
-
-    const container =
-        document.getElementById(
-            "tripList"
-        );
-
-
-    if (!list.length) {
-
-        container.innerHTML = `
-            <div class="empty">
-                目前沒有未來行程。
-            </div>
-        `;
-
-        return;
-
-    }
-
-
-    container.innerHTML =
-        list.map(trip => {
-
-            const total =
-                getTripTotal(trip);
-
-
-            return `
-
-                <div class="trip-card">
-
-                    <div class="trip-header">
-
-                        <div>
-
-                            <div class="trip-name">
-                                ✈️ ${escapeHTML(trip.name)}
-                            </div>
-
-                            <div class="trip-date">
-                                ${formatDate(trip.start)}
-                                -
-                                ${formatDate(trip.end)}
-                            </div>
-
-                        </div>
-
-                        <div class="trip-budget">
-                            ${money(total)}
-                        </div>
-
-                    </div>
-
-
-                    <div class="trip-details">
-
-                        <div class="trip-detail">
-                            <span>交通</span>
-                            <strong>${money(trip.transport)}</strong>
-                        </div>
-
-                        <div class="trip-detail">
-                            <span>餐飲</span>
-                            <strong>${money(trip.food)}</strong>
-                        </div>
-
-                        <div class="trip-detail">
-                            <span>娛樂</span>
-                            <strong>${money(trip.entertainment)}</strong>
-                        </div>
-
-                        <div class="trip-detail">
-                            <span>其他</span>
-                            <strong>${money(trip.other)}</strong>
-                        </div>
-
-                    </div>
-
-
-                    <div style="
-                        margin-top:12px;
-                        display:flex;
-                        justify-content:flex-end;
-                    ">
-
-                        <button
-                            class="btn btn-secondary"
-                            onclick="deleteTrip('${trip.id}')">
-
-                            刪除行程
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }).join("");
-
-}
-
-
-function deleteTrip(id) {
-
-    if (!confirm("確定要刪除這個行程嗎？")) {
-        return;
-    }
-
-
-    data.trips =
-        data.trips.filter(
-            trip => trip.id !== id
-        );
-
 
     saveData();
 
-    refresh();
+    showToast("已刪除未來支出");
 
+    render();
 }
 
 
-/* =========================================================
-   Tabs
-========================================================= */
-
-function switchTab(tabName, button) {
-
-    document.querySelectorAll(
-        ".page"
-    ).forEach(page => {
-
-        page.style.display =
-            "none";
-
-    });
-
-
-    document.getElementById(
-        tabName
-    ).style.display =
-        "block";
-
-
-    document.querySelectorAll(
-        ".tab"
-    ).forEach(tab => {
-
-        tab.classList.remove(
-            "active"
-        );
-
-    });
-
-
-    button.classList.add(
-        "active"
-    );
-
-
-    if (tabName === "transactions") {
-
-        renderTransactions();
-
-    }
-
-    if (tabName === "budget") {
-
-        renderBudget();
-
-    }
-
-    if (tabName === "trips") {
-
-        renderTrips();
-
-    }
-
-}
-
-
-/* =========================================================
+/* =====================================================
    Modal
-========================================================= */
+===================================================== */
 
 function closeModal(id) {
 
-    document.getElementById(id)
+    document
+        .getElementById(id)
         .classList.remove("show");
+}
 
+document.querySelectorAll(".modal")
+    .forEach(modal => {
+
+        modal.addEventListener(
+            "click",
+            e => {
+
+                if(e.target === modal) {
+
+                    modal.classList.remove("show");
+
+                }
+
+            }
+        );
+
+    });
+
+
+/* =====================================================
+   HTML 安全處理
+===================================================== */
+
+function escapeHTML(text) {
+
+    return String(text)
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 }
 
 
-window.addEventListener(
-    "click",
-    function(event) {
+/* =====================================================
+   主畫面
+===================================================== */
 
-        if (
-            event.target.classList.contains(
-                "modal"
-            )
-        ) {
+function render() {
 
-            event.target.classList.remove(
-                "show"
-            );
+    document.getElementById("monthTitle")
+        .textContent =
+        `${currentDate.getFullYear()} 年 ${currentDate.getMonth()+1} 月`;
 
-        }
+    renderSummary();
 
-    }
-);
+    renderWeek();
 
+    renderCalendar();
 
-/* =========================================================
-   Month
-========================================================= */
+    renderWeeklyChart();
 
-document.getElementById(
-    "monthSelector"
-).addEventListener(
-    "change",
-    function() {
+    renderFuture();
 
-        currentMonth =
-            this.value;
-
-        refresh();
-
-    }
-);
-
-
-/* =========================================================
-   Refresh
-========================================================= */
-
-function refresh() {
-
-    renderHome();
     renderTransactions();
-    renderBudget();
-    renderTrips();
 
+    renderAI();
 }
 
 
-/* =========================================================
-   HTML Escape
-========================================================= */
+/* =====================================================
+   初始化
+===================================================== */
 
-function escapeHTML(value) {
-
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
-}
-
-
-/* =========================================================
-   Initialize
-========================================================= */
-
-document.getElementById(
-    "monthSelector"
-).value =
-    currentMonth;
-
-
-refresh();
+render();
 
 </script>
 
 </body>
 </html>
-```
