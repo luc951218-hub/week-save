@@ -3819,6 +3819,257 @@ document.querySelectorAll(".modal")
 })();
 </script>
 
+
+
+<!-- ================= 新增：LINE 式分頁導覽（不移動既有 HTML） ================= -->
+<style id="lineStyleOnlyAdd">
+    .line-page-hidden{display:none !important;}
+    .line-bottom-nav{
+        position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+        z-index:2500;width:min(680px,calc(100% - 20px));
+        display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+        padding:7px;background:rgba(255,255,255,.96);
+        border:1px solid #e5e7eb;border-radius:20px;
+        box-shadow:0 10px 35px rgba(0,0,0,.14);backdrop-filter:blur(14px);
+    }
+    .line-nav-btn{
+        border:0;background:transparent;border-radius:14px;padding:8px 3px;
+        color:#6e6e73;font-size:11px;font-weight:600;
+    }
+    .line-nav-btn .line-nav-icon{display:block;font-size:21px;line-height:1.1;margin-bottom:3px;}
+    .line-nav-btn.active{background:#eaf4ff;color:#007aff;font-weight:800;}
+    .app{padding-bottom:105px;}
+    @media(max-width:600px){.line-bottom-nav{bottom:8px}.line-nav-btn{font-size:10px}}
+</style>
+
+<nav class="line-bottom-nav" id="lineBottomNav" aria-label="主要導覽">
+    <button class="line-nav-btn active" data-page="home"><span class="line-nav-icon">🏠</span>首頁</button>
+    <button class="line-nav-btn" data-page="budget"><span class="line-nav-icon">📊</span>預算</button>
+    <button class="line-nav-btn" data-page="record"><span class="line-nav-icon">＋</span>記帳</button>
+    <button class="line-nav-btn" data-page="future"><span class="line-nav-icon">🏝️</span>支出</button>
+    <button class="line-nav-btn" data-page="settings"><span class="line-nav-icon">⚙️</span>設定</button>
+</nav>
+
+<script id="linePageAndFutureFix">
+(function(){
+    /* =========================================================
+       新增 1：LINE 式五頁切換
+       不刪除、不修改、不移動原有 HTML，只控制顯示。
+       ========================================================= */
+    function findCardById(id){
+        const el=document.getElementById(id);
+        return el ? el.closest('.card') : null;
+    }
+
+    function getPageTargets(){
+        return {
+            home:[
+                document.querySelector('.summary-grid'),
+                document.querySelector('.week-hero'),
+                document.querySelector('.today-card'),
+                findCardById('recordList')
+            ],
+            budget:[
+                document.querySelector('.week-hero'),
+                findCardById('budgetV2Panel'),
+                findCardById('weekList'),
+                findCardById('calendar'),
+                findCardById('savingsList')
+            ],
+            future:[
+                findCardById('futureList')
+            ],
+            settings:[
+                findCardById('restoreFile')
+            ]
+        };
+    }
+
+    function setVisible(el,visible){
+        if(!el) return;
+        el.classList.toggle('line-page-hidden',!visible);
+    }
+
+    function activatePage(page){
+        const targets=getPageTargets();
+        const all=new Set();
+        Object.values(targets).forEach(arr=>arr.forEach(el=>{if(el) all.add(el)}));
+        all.forEach(el=>setVisible(el,false));
+        (targets[page]||targets.home).forEach(el=>setVisible(el,true));
+
+        document.querySelectorAll('.line-nav-btn').forEach(btn=>{
+            btn.classList.toggle('active',btn.dataset.page===page);
+        });
+
+        if(page==='record'){
+            if(typeof window.openRecordModal==='function') window.openRecordModal();
+            return;
+        }
+
+        window.__lineCurrentPage=page;
+        window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    document.querySelectorAll('.line-nav-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>activatePage(btn.dataset.page));
+    });
+
+    window.__lineActivatePage=activatePage;
+
+    /* render() 每次重繪時，新增的 V2 Panel 可能剛被建立，
+       因此下一個事件循環再套一次目前分頁狀態。 */
+    const oldRender=window.render;
+    if(typeof oldRender==='function'){
+        window.render=function(){
+            oldRender();
+            try{ refreshFutureAffectedAmounts(); }catch(error){ console.error('未來預算重新分配更新失敗：',error); }
+            setTimeout(()=>activatePage(window.__lineCurrentPage||'home'),0);
+        };
+    }
+
+    /* =========================================================
+       新增 2：未來支出真正影響「未來每日自由可用額」
+       規則：
+       - 未來支出不是已花，所以不直接加到 actual spent。
+       - 但需要提前從未來日期前的可自由支出額中預留。
+       - 例如 8/21 有 $1,000 未來支出，系統會從現在到 8/21
+         之間的剩餘天數平均預留，讓每天可自由花費額下降。
+       - 實際記帳後，仍由原本的實際支出邏輯處理。
+       ========================================================= */
+    function futureItemsForCurrentMonth(){
+        const key=monthKey();
+        return (data.futureExpenses||[]).filter(item=>
+            item && item.date && String(item.date).startsWith(key)
+        );
+    }
+
+    function futureRemainingForItem(item){
+        const total=Number(item.total||0);
+        const spent=typeof window.v2FutureSpentForItem==='function'
+            ? Number(window.v2FutureSpentForItem(item)||0)
+            : Number(item.spent||0);
+        return Math.max(0,total-spent);
+    }
+
+    function baseV2Allowance(date){
+        const days=getMonthDays();
+        const idx=days.findIndex(d=>dateKey(d)===dateKey(date));
+        if(idx<0) return 0;
+        const base=15000/days.length;
+        const spentBefore=days.slice(0,idx).reduce((sum,d)=>sum+getSpentOnDate(d),0);
+        const baseAllowedBefore=base*idx;
+        const overage=Math.max(0,spentBefore-baseAllowedBefore);
+        if(overage<=0) return base;
+        const remainingBudget=Math.max(0,15000-spentBefore);
+        const remainingDays=days.length-idx;
+        return remainingDays>0?Math.min(base,remainingBudget/remainingDays):0;
+    }
+
+    function futureReserveForDate(date){
+        const days=getMonthDays();
+        const today=v2SafeToday();
+        const startIdx=days.findIndex(d=>dateKey(d)===dateKey(today));
+        const idx=days.findIndex(d=>dateKey(d)===dateKey(date));
+        if(idx<0 || startIdx<0 || idx<startIdx) return 0;
+
+        let reserve=0;
+        futureItemsForCurrentMonth().forEach(item=>{
+            const eventDate=parseDate(item.date);
+            const eventIdx=days.findIndex(d=>dateKey(d)===dateKey(eventDate));
+            if(eventIdx<startIdx || eventIdx<idx) return;
+            const remaining=futureRemainingForItem(item);
+            const daysToEvent=eventIdx-startIdx+1;
+            if(daysToEvent>0) reserve += remaining/daysToEvent;
+        });
+        return reserve;
+    }
+
+    function freeDailyAllowanceWithFuture(date){
+        const baseAllowance=baseV2Allowance(date);
+        const days=getMonthDays();
+        const today=v2SafeToday();
+        const idx=days.findIndex(d=>dateKey(d)===dateKey(date));
+        const todayIdx=days.findIndex(d=>dateKey(d)===dateKey(today));
+        if(idx<0 || todayIdx<0 || idx<todayIdx) return baseAllowance;
+
+        /* 未來支出會從今天起提前分攤到該筆支出發生日前，
+           因此該期間每天「自由可用」會下降；未來支出本身仍會在支出頁
+           另外顯示，不會被當成已經發生的實際記帳。 */
+        const reserve=futureReserveForDate(date);
+        return Math.max(0,baseAllowance-reserve);
+    }
+
+    window.__lineFutureDailyAllowance=freeDailyAllowanceWithFuture;
+
+    function refreshFutureAffectedAmounts(){
+        const days=getMonthDays();
+        const today=v2SafeToday();
+        const todayKey=dateKey(today);
+        const todayNode=document.getElementById('todayMoney');
+
+        const todayBase=freeDailyAllowanceWithFuture(today);
+        const todaySpent=getSpentOnDate(today);
+        const todayFree=Math.max(0,todayBase-todaySpent);
+        if(todayNode) todayNode.textContent=formatMoney(todayFree);
+
+        const status=document.getElementById('todayStatus');
+        if(status){
+            const diff=todayBase-todaySpent;
+            if(diff>=0){
+                status.className='today-status good';
+                status.textContent=`✓ 今日已使用 ${formatMoney(todaySpent)}，扣除未來預留後還可以使用 ${formatMoney(diff)}`;
+            }else{
+                status.className='today-status over';
+                status.textContent=`⚠️ 今日超支 ${formatMoney(Math.abs(diff))}；後續每日預算將重新分配`;
+            }
+        }
+
+        const summaryToday=document.getElementById('summaryToday');
+        if(summaryToday) summaryToday.textContent=formatMoney(todayFree);
+
+        const calendar=document.getElementById('calendar');
+        if(calendar){
+            const nodes=Array.from(calendar.querySelectorAll('.calendar-day')).filter(n=>!n.classList.contains('empty'));
+            days.forEach((day,i)=>{
+                const node=nodes[i];
+                if(!node) return;
+                const money=node.querySelector('.calendar-day-money');
+                if(money){
+                    const allowance=freeDailyAllowanceWithFuture(day);
+                    money.textContent=`可 ${formatMoney(allowance)}`;
+                }
+            });
+        }
+
+        const weekList=document.getElementById('weekList');
+        if(weekList){
+            getWeeks().forEach((week,i)=>{
+                const node=weekList.children[i];
+                if(!node) return;
+                const future=week.days.reduce((sum,d)=>{
+                    return sum+futureItemsForCurrentMonth().filter(item=>item.date===dateKey(d)).reduce((s,item)=>s+futureRemainingForItem(item),0);
+                },0);
+                const available=week.days.reduce((sum,d)=>sum+freeDailyAllowanceWithFuture(d),0);
+                const amount=node.querySelector('.week-amount strong');
+                if(amount) amount.textContent=formatMoney(Math.max(0,available-week.days.reduce((s,d)=>getSpentOnDate(d),0)));
+                const bottom=node.querySelector('.week-bottom span:last-child');
+                if(bottom && future>0) bottom.textContent=`已預留 ${formatMoney(future)}`;
+            });
+        }
+    }
+
+    /* 覆寫 V2 的每日顯示函式，只增加未來預留因素。原函式仍保留。 */
+    const oldV2Daily=window.v2DailyAllowance;
+    window.v2DailyAllowanceWithFuture=freeDailyAllowanceWithFuture;
+
+    /* 初次套用；未來資料新增／修改／刪除後，原 render() 會再刷新。 */
+    setTimeout(()=>{
+        refreshFutureAffectedAmounts();
+        activatePage('home');
+    },0);
+})();
+</script>
+
 </body>
 </html>
 ```
