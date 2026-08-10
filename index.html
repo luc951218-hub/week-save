@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>個人記帳與預算管理</title>
+    <title>週週記 - 個人記帳與每週預算管理</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -247,7 +247,7 @@
 <body>
 
     <div class="header">
-        <h1 id="pageTitle">首頁概況</h1>
+        <h1 id="pageTitle">週週記 - 首頁概況</h1>
         <button onclick="exportData()" style="width: auto; padding: 6px 12px; font-size: 12px;">匯出</button>
     </div>
 
@@ -264,6 +264,15 @@
                     <span id="todayPlanDate" style="font-size:12px; color:var(--sub);"></span>
                 </div>
                 <div id="todayPlanList"></div>
+            </div>
+
+            <div class="card" style="border: 1px solid rgba(52, 199, 89, 0.3); background: #f6ffed;">
+                <div class="card-title" style="color: #27823b; font-weight: 600;">📅 本週分配預算實時控管</div>
+                <div class="amount-large" id="weeklyBudgetSpentText" style="color: #1b5226;">NT$ 0 / 0</div>
+                <div style="font-size: 12px; color: #52825a; margin-top: 4px;" id="weeklyBudgetSubtext">本週剩餘可花費: NT$ 0</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="weeklyBudgetProgress" style="background: var(--success);"></div>
+                </div>
             </div>
 
             <div class="card">
@@ -319,15 +328,30 @@
 
         <div id="page-budget" class="page">
             <div class="card">
-                <div class="card-title">每月總預算設定</div>
+                <div class="card-title">每月預算與預備金設定</div>
                 <div class="form-group">
-                    <input type="number" id="monthlyBudgetInput" placeholder="設定總預算">
+                    <label>月總預算</label>
+                    <input type="number" id="monthlyBudgetInput" value="15000" placeholder="例如: 15000">
                 </div>
-                <button onclick="setMonthlyBudget()">儲存預算</button>
+                <div class="form-group">
+                    <label>預備金 (不納入每週分配)</label>
+                    <input type="number" id="reserveFundInput" value="1000" placeholder="例如: 1000">
+                </div>
+                <button onclick="setMonthlyBudget()">儲存設定並自動計算週預算</button>
             </div>
 
             <div class="card">
-                <div class="card-title">預算消耗進度</div>
+                <div class="card-title">自動每週預算拆解</div>
+                <div style="font-size: 13px; color: var(--sub); margin-bottom: 8px;" id="weeklyCalcDetail">
+                    當月共有 - 週 | 預備金: NT$ 1,000
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: var(--primary);" id="weeklyBudgetAmount">
+                    每週可用預算: NT$ 0
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">本月總預算消耗進度</div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                     <span id="budgetSpent">已花費: NT$ 0</span>
                     <span id="budgetTotal">預算: NT$ 0</span>
@@ -355,449 +379,4 @@
             <div class="card">
                 <div class="card-title">新增特別預期支出 (未來活動)</div>
                 <div class="form-group"><input type="text" id="planTitle" placeholder="活動名稱 (例: 日本旅遊)"></div>
-                <div class="form-group"><input type="number" id="planAmount" placeholder="預估總金額"></div>
-                <div class="form-group"><input type="date" id="planDate"></div>
-                
-                <div style="margin: 10px 0; font-size: 12px; color: var(--sub);">活動預算細項拆解 (選填)</div>
-                <div id="planItemsContainer">
-                    <div class="grid-2" style="margin-bottom: 8px;">
-                        <input type="text" placeholder="細項 (例: 車費)" class="plan-item-name">
-                        <input type="number" placeholder="金額" class="plan-item-amount">
-                    </div>
-                </div>
-                <button onclick="addPlanItemInput()" style="background: var(--sub); margin-bottom: 10px;">+ 新增細項</button>
-                <button onclick="addPlannedExpense()">新增預期支出</button>
-            </div>
-
-            <div class="card">
-                <div class="card-title">預期支出列表</div>
-                <div id="plannedList"></div>
-            </div>
-        </div>
-
-        <div id="page-history" class="page">
-            <div class="card">
-                <div class="card-title">交易紀錄</div>
-                <div id="transactionList"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="switchPage('home', '首頁概況')">
-            <div>📊</div>概況
-        </div>
-        <div class="nav-item" onclick="switchPage('add', '新增記帳')">
-            <div>➕</div>記帳
-        </div>
-        <div class="nav-item" onclick="switchPage('budget', '預算管理')">
-            <div>🎯</div>預算
-        </div>
-        <div class="nav-item" onclick="switchPage('plans', '規劃與儲蓄')">
-            <div>📅</div>規劃
-        </div>
-        <div class="nav-item" onclick="switchPage('history', '歷史明細')">
-            <div>📑</div>明細
-        </div>
-    </div>
-
-    <script>
-        // 資料狀態結構
-        let state = {
-            transactions: JSON.parse(localStorage.getItem('transactions')) || [],
-            budget: parseFloat(localStorage.getItem('budget')) || 0,
-            savingsGoals: JSON.parse(localStorage.getItem('savingsGoals')) || [],
-            plannedExpenses: JSON.parse(localStorage.getItem('plannedExpenses')) || []
-        };
-
-        const categories = {
-            expense: ['🍔 餐飲', '🚗 交通', '🏠 居住', '🎮 娛樂', '🛍️ 購物', '醫療', '其他'],
-            income: ['💰 薪資', '📈 投資', '🎁 紅利', '其他']
-        };
-
-        let chartInstance = null;
-
-        // 初始化日期
-        document.getElementById('transDate').valueAsDate = new Date();
-
-        function saveData() {
-            localStorage.setItem('transactions', JSON.stringify(state.transactions));
-            localStorage.setItem('budget', state.budget);
-            localStorage.setItem('savingsGoals', JSON.stringify(state.savingsGoals));
-            localStorage.setItem('plannedExpenses', JSON.stringify(state.plannedExpenses));
-            render();
-        }
-
-        function switchPage(pageId, title) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById(`page-${pageId}`).classList.add('active');
-            document.getElementById('pageTitle').innerText = title;
-            
-            const event = window.event;
-            if(event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
-            }
-        }
-
-        function updateCategories() {
-            const type = document.getElementById('transType').value;
-            const select = document.getElementById('transCategory');
-            select.innerHTML = categories[type].map(c => `<option value="${c}">${c}</option>`).join('');
-        }
-        updateCategories();
-
-        function addTransaction() {
-            const amount = parseFloat(document.getElementById('transAmount').value);
-            if (!amount) return alert('請輸入金額');
-
-            const trans = {
-                id: Date.now(),
-                type: document.getElementById('transType').value,
-                amount: amount,
-                category: document.getElementById('transCategory').value,
-                date: document.getElementById('transDate').value,
-                note: document.getElementById('transNote').value
-            };
-
-            state.transactions.unshift(trans);
-            document.getElementById('transAmount').value = '';
-            document.getElementById('transNote').value = '';
-            saveData();
-            switchPage('home', '首頁概況');
-        }
-
-        function deleteTransaction(id) {
-            state.transactions = state.transactions.filter(t => t.id !== id);
-            saveData();
-        }
-
-        function setMonthlyBudget() {
-            const b = parseFloat(document.getElementById('monthlyBudgetInput').value);
-            if (b) {
-                state.budget = b;
-                saveData();
-                alert('預算已設定');
-            }
-        }
-
-        function addSavingsGoal() {
-            const name = document.getElementById('savingsName').value;
-            const target = parseFloat(document.getElementById('savingsTarget').value);
-            const current = parseFloat(document.getElementById('savingsCurrent').value) || 0;
-
-            if (name && target) {
-                state.savingsGoals.push({ id: Date.now(), name, target, current });
-                document.getElementById('savingsName').value = '';
-                document.getElementById('savingsTarget').value = '';
-                document.getElementById('savingsCurrent').value = '';
-                saveData();
-            }
-        }
-
-        function addPlanItemInput() {
-            const container = document.getElementById('planItemsContainer');
-            const div = document.createElement('div');
-            div.className = 'grid-2';
-            div.style.marginBottom = '8px';
-            div.innerHTML = `
-                <input type="text" placeholder="細項" class="plan-item-name">
-                <input type="number" placeholder="金額" class="plan-item-amount">
-            `;
-            container.appendChild(div);
-        }
-
-        function addPlannedExpense() {
-            const title = document.getElementById('planTitle').value;
-            const amount = parseFloat(document.getElementById('planAmount').value);
-            const date = document.getElementById('planDate').value;
-
-            const itemNames = document.querySelectorAll('.plan-item-name');
-            const itemAmounts = document.querySelectorAll('.plan-item-amount');
-            let items = [];
-
-            itemNames.forEach((input, index) => {
-                if (input.value && itemAmounts[index].value) {
-                    items.push({
-                        name: input.value,
-                        amount: parseFloat(itemAmounts[index].value)
-                    });
-                }
-            });
-
-            if (title && amount && date) {
-                state.plannedExpenses.push({
-                    id: Date.now(), title, amount, date, items, completed: false
-                });
-                document.getElementById('planTitle').value = '';
-                document.getElementById('planAmount').value = '';
-                document.getElementById('planDate').value = '';
-                document.getElementById('planItemsContainer').innerHTML = `
-                    <div class="grid-2" style="margin-bottom: 8px;">
-                        <input type="text" placeholder="細項 (例: 車費)" class="plan-item-name">
-                        <input type="number" placeholder="金額" class="plan-item-amount">
-                    </div>`;
-                saveData();
-            }
-        }
-
-        function togglePlanComplete(id) {
-            const plan = state.plannedExpenses.find(p => p.id === id);
-            if (plan) {
-                plan.completed = !plan.completed;
-                saveData();
-            }
-        }
-
-        function deletePlan(id) {
-            state.plannedExpenses = state.plannedExpenses.filter(p => p.id !== id);
-            saveData();
-        }
-
-        function deleteSavingsGoal(id) {
-            state.savingsGoals = state.savingsGoals.filter(s => s.id !== id);
-            saveData();
-        }
-
-        function render() {
-            renderOverview();
-            renderTransactions();
-            renderBudget();
-            renderSavings();
-            renderPlannedExpenses();
-            renderAI();
-            renderCategoryChart();
-            renderTodayPlanMonitor();
-        }
-
-        function renderOverview() {
-            const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-            const monthTrans = state.transactions.filter(t => t.date.startsWith(currentMonth));
-            
-            const exp = monthTrans.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-            const inc = monthTrans.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-
-            document.getElementById('totalExpense').innerText = `NT$ ${exp.toLocaleString()}`;
-            document.getElementById('totalIncome').innerText = `NT$ ${inc.toLocaleString()}`;
-            document.getElementById('netSavings').innerText = `NT$ ${(inc - exp).toLocaleString()}`;
-        }
-
-        function renderTransactions() {
-            const container = document.getElementById('transactionList');
-            if (state.transactions.length === 0) {
-                container.innerHTML = '<div style="color:var(--sub); text-align:center;">尚無交易紀錄</div>';
-                return;
-            }
-            container.innerHTML = state.transactions.map(t => `
-                <div class="list-item">
-                    <div>
-                        <div style="font-weight: 600;">${t.category}</div>
-                        <div style="font-size: 12px; color: var(--sub);">${t.date} ${t.note ? '• ' + t.note : ''}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 600; color: ${t.type === 'expense' ? 'var(--text)' : 'var(--success)'};">
-                            ${t.type === 'expense' ? '-' : '+'} NT$ ${t.amount.toLocaleString()}
-                        </div>
-                        <div style="font-size: 10px; color: var(--danger); cursor: pointer;" onclick="deleteTransaction(${t.id})">刪除</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderBudget() {
-            const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const exp = state.transactions
-                .filter(t => t.type === 'expense' && t.date.startsWith(currentMonth))
-                .reduce((sum, t) => sum + t.amount, 0);
-
-            document.getElementById('monthlyBudgetInput').value = state.budget || '';
-            document.getElementById('budgetSpent').innerText = `已花費: NT$ ${exp.toLocaleString()}`;
-            document.getElementById('budgetTotal').innerText = `預算: NT$ ${state.budget.toLocaleString()}`;
-
-            const pct = state.budget > 0 ? Math.min((exp / state.budget) * 100, 100) : 0;
-            const progressEl = document.getElementById('budgetProgress');
-            progressEl.style.width = `${pct}%`;
-            progressEl.style.background = pct > 90 ? 'var(--danger)' : 'var(--primary)';
-        }
-
-        function renderSavings() {
-            const container = document.getElementById('savingsList');
-            container.innerHTML = state.savingsGoals.map(s => {
-                const pct = Math.min((s.current / s.target) * 100, 100);
-                return `
-                    <div style="margin-bottom: 12px;">
-                        <div style="display:flex; justify-content:space-between; font-size:14px;">
-                            <span>${s.name}</span>
-                            <span>NT$ ${s.current} / ${s.target}</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width:${pct}%; background:var(--success);"></div>
-                        </div>
-                        <div style="text-align:right; margin-top:4px;">
-                            <span style="font-size:10px; color:var(--danger); cursor:pointer;" onclick="deleteSavingsGoal(${s.id})">刪除</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderPlannedExpenses() {
-            const container = document.getElementById('plannedList');
-            container.innerHTML = state.plannedExpenses.map(p => `
-                <div class="list-item" style="opacity: ${p.completed ? '0.5' : '1'}">
-                    <div>
-                        <div style="font-weight:600; ${p.completed ? 'text-decoration:line-through;' : ''}">${p.title} - NT$ ${p.amount}</div>
-                        <div style="font-size:12px; color:var(--sub);">預計日期: ${p.date}</div>
-                        ${p.items && p.items.length ? `<div style="font-size:10px; color:var(--sub);">細項: ${p.items.map(i => `${i.name}:$${i.amount}`).join(', ')}</div>` : ''}
-                    </div>
-                    <div>
-                        <button onclick="togglePlanComplete(${p.id})" style="padding:4px 8px; font-size:10px; background:var(--sub);">${p.completed ? '取消完成' : '標記完成'}</button>
-                        <span style="font-size:10px; color:var(--danger); cursor:pointer; margin-left:5px;" onclick="deletePlan(${p.id})">刪除</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderAI() {
-            const msg = document.getElementById('aiMessage');
-            const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const exp = state.transactions.filter(t => t.type === 'expense' && t.date.startsWith(currentMonth)).reduce((s,t) => s+t.amount, 0);
-
-            if (state.budget > 0) {
-                const ratio = exp / state.budget;
-                if (ratio > 1) {
-                    msg.innerText = "⚠️ 警報：本月支出已超出預算！建議減少非必要娛樂與購物開支。";
-                } else if (ratio > 0.8) {
-                    msg.innerText = "💡 提醒：本月預算已使用超過 80%，請留意後續花費。";
-                } else {
-                    msg.innerText = "✅ 財務狀況良好，目前支出控制在預算範圍內，繼續保持！";
-                }
-            } else {
-                msg.innerText = "ℹ️ 您尚未設定每月預算，設定預算有助於 AI 提供更精準的財務建議。";
-            }
-        }
-
-        function renderCategoryChart() {
-            const ctx = document.getElementById('categoryChart').getContext('2d');
-            const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            
-            const catMap = {};
-            state.transactions
-                .filter(t => t.type === 'expense' && t.date.startsWith(currentMonth))
-                .forEach(t => {
-                    catMap[t.category] = (catMap[t.category] || 0) + t.amount;
-                });
-
-            const labels = Object.keys(catMap);
-            const data = Object.values(catMap);
-
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: ['#ff9500', '#007aff', '#ff3b30', '#34c759', '#af52de', '#5ac8fa', '#8e8e93']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        }
-
-        // 🔍 計算並渲染「今日規劃支出與實際比對」
-        function renderTodayPlanMonitor() {
-            const today = new Date().toISOString().split('T')[0];
-            const container = document.getElementById('todayPlanMonitor');
-            const listContainer = document.getElementById('todayPlanList');
-            const dateLabel = document.getElementById('todayPlanDate');
-
-            if (!container || !listContainer) return;
-
-            dateLabel.textContent = today;
-
-            // 1. 找出今日所有的預期活動
-            const todayPlans = state.plannedExpenses.filter(p => p.date === today && !p.completed);
-
-            if (todayPlans.length === 0) {
-                container.style.display = 'none';
-                return;
-            }
-
-            container.style.display = 'block';
-            listContainer.innerHTML = '';
-
-            // 2. 找出今日所有的實際花費
-            const todayTransactions = state.transactions.filter(t => t.date === today);
-
-            // 3. 處理每個活動與細項
-            todayPlans.forEach(plan => {
-                const itemsToTrack = (plan.items && plan.items.length > 0) 
-                    ? plan.items 
-                    : [{ name: plan.title, amount: plan.amount }];
-
-                itemsToTrack.forEach(item => {
-                    const planName = item.name.trim();
-                    const planBudget = parseFloat(item.amount) || 0;
-
-                    const spentToday = todayTransactions
-                        .filter(t => 
-                            (t.category && t.category.includes(planName)) || 
-                            (t.note && t.note.includes(planName)) ||
-                            ((planName.includes('車費') || planName.includes('交通')) && (t.category === '🚗 交通' || t.category === '交通'))
-                        )
-                        .reduce((sum, t) => sum + t.amount, 0);
-
-                    const remaining = planBudget - spentToday;
-                    const isOver = remaining < 0;
-                    const percent = Math.min(Math.round((spentToday / planBudget) * 100), 100);
-
-                    const itemEl = document.createElement('div');
-                    itemEl.className = 'today-plan-item';
-                    itemEl.innerHTML = `
-                        <div class="item-title">
-                            <span>${plan.title} - ${planName}</span>
-                            <span class="status-badge ${isOver ? 'over' : 'ok'}">
-                                ${isOver ? `⚠️ 超支 NT$ ${Math.abs(remaining)}` : `剩餘 NT$ ${remaining}`}
-                            </span>
-                        </div>
-                        <div class="item-status">
-                            <span>預算: NT$ ${planBudget} | 已花: NT$ ${spentToday}</span>
-                            <span>${percent}%</span>
-                        </div>
-                        <div class="progress-bar" style="margin: 6px 0 0; height: 5px;">
-                            <div class="progress-fill" style="width: ${percent}%; background: ${isOver ? 'var(--danger)' : 'var(--primary)'}"></div>
-                        </div>
-                    `;
-                    listContainer.appendChild(itemEl);
-                });
-            });
-        }
-
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `accounting_backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        // 初始渲染
-        render();
-    </script>
-</body>
-</html>
+                <div class="form-group"><input
