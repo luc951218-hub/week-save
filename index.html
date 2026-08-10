@@ -19,7 +19,7 @@
             --ai-border: #bae6fd;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 85px; max-width: 480px; margin: 0 auto; }
         
         /* Header */
         header { padding: 20px 16px 10px; text-align: center; background: #fff; border-bottom: 1px solid var(--border); }
@@ -52,7 +52,11 @@
         .input-group { margin-bottom: 12px; }
         label { font-size: 13px; color: var(--sub); font-weight: 600; display: block; margin-bottom: 6px; }
         input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; font-size: 16px; background: #f8fafc; outline: none; }
+        
+        /* Buttons */
         button.btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 700; margin-top: 8px; cursor: pointer; }
+        button.btn-secondary { width: 100%; background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; margin-top: 8px; cursor: pointer; }
+        button.btn-danger { width: 100%; background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; margin-top: 8px; cursor: pointer; }
 
         /* Transaction List */
         .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
@@ -93,7 +97,7 @@
             <div style="font-size: 12px; color: var(--sub); font-weight: 600;" id="weekRangeText">本週區間：--</div>
         </div>
 
-        <!-- 新增：AI 預算小幫手 (首頁即時建議) -->
+        <!-- AI 預算小幫手 (首頁即時建議) -->
         <div class="ai-card">
             <div class="ai-title">🤖 AI 預算小幫手建議</div>
             <div class="ai-text" id="aiHomeAdvice">正在計算您的消費動態...</div>
@@ -211,7 +215,7 @@
 
     <!-- 4. 分析頁面 -->
     <div id="page-analytics" class="page">
-        <!-- 新增：AI 深度診斷報告 -->
+        <!-- AI 深度診斷報告 -->
         <div class="ai-card">
             <div class="ai-title">🤖 AI 財務診斷與分析</div>
             <div class="ai-text" id="aiAnalyticsAdvice">分析中...</div>
@@ -251,6 +255,31 @@
         </div>
     </div>
 
+    <!-- 6. 新增：設定與備份頁面 -->
+    <div id="page-settings" class="page">
+        <div class="card">
+            <div class="card-title" style="margin-bottom: 12px;">📦 資料備份與還原</div>
+            <div style="font-size: 13px; color: var(--sub); margin-bottom: 16px; line-height: 1.5;">
+                建議定期匯出備份檔。未來網頁維護更新、更換手機或清除瀏覽器紀錄時，可隨時匯入還原所有資料。
+            </div>
+
+            <button class="btn-primary" onclick="exportData()">📥 匯出備份檔案 (.json)</button>
+            
+            <div style="margin-top: 12px;">
+                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importData(event)">
+                <button class="btn-secondary" onclick="document.getElementById('importFileInput').click()">📤 選擇檔案匯入還原</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="color: var(--danger);">⚠️ 危險區域</div>
+            <div style="font-size: 13px; color: var(--sub); margin-bottom: 12px;">
+                清空目前裝置上記錄的所有記帳與存款數據（請先做好備份）。
+            </div>
+            <button class="btn-danger" onclick="clearAllData()">🗑️ 清空所有記帳資料</button>
+        </div>
+    </div>
+
     <!-- 底部導覽列 -->
     <div class="nav-bar">
         <div class="nav-item active" onclick="switchPage('home', this)">
@@ -267,6 +296,9 @@
         </div>
         <div class="nav-item" onclick="switchPage('savings', this)">
             <span>💰</span>存款
+        </div>
+        <div class="nav-item" onclick="switchPage('settings', this)">
+            <span>⚙️</span>設定
         </div>
     </div>
 
@@ -381,9 +413,8 @@
             switchPage('home', document.querySelectorAll('.nav-item')[0]);
         }
 
-        // 🤖 新增：AI 建議演算法
+        // AI 建議演算法
         function generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories) {
-            // 首頁簡短建議
             let homeAdvice = "";
             if (remaining <= 0) {
                 homeAdvice = "🚨 本週預算已告罄！接下來幾天請盡量控制為零花費，或動用緊急預備金。";
@@ -396,7 +427,6 @@
             }
             document.getElementById('aiHomeAdvice').innerHTML = homeAdvice;
 
-            // 分析頁面診斷報告
             let topCategory = "無";
             let topAmount = 0;
             for (let cat in categories) {
@@ -419,6 +449,57 @@
                 analyticsAdvice += `• 整體消費控管得當，預計本週結算時可為您累積一筆額外存款！`;
             }
             document.getElementById('aiAnalyticsAdvice').innerHTML = analyticsAdvice;
+        }
+
+        // 📦 新增：匯出備份 JSON
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchor = document.createElement('a');
+            const dateStr = new Date().toISOString().split('T')[0];
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `週週存_備份檔_${dateStr}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // 📦 新增：匯入備份 JSON
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedState = JSON.parse(e.target.result);
+                    if (importedState && Array.isArray(importedState.transactions)) {
+                        state = importedState;
+                        saveState();
+                        alert('✅ 資料還原成功！');
+                        render();
+                        switchPage('home', document.querySelectorAll('.nav-item')[0]);
+                    } else {
+                        alert('❌ 備份檔案格式不正確！');
+                    }
+                } catch (err) {
+                    alert('❌ 解析備份檔案失敗！');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ⚠️ 清空所有資料
+        function clearAllData() {
+            if (confirm('確定要清空所有記帳資料嗎？此操作不可逆！')) {
+                state = {
+                    transactions: [],
+                    totalSavings: 0,
+                    reserveSpent: 0
+                };
+                saveState();
+                alert('已清空所有資料！');
+                render();
+            }
         }
 
         function renderCalendar() {
@@ -557,7 +638,7 @@
                 homeList.appendChild(item);
             });
 
-            // 分析統計渲染 (支付方式 + 分類)
+            // 分析統計渲染
             let cashTotal = 0;
             let cardTotal = 0;
             const categories = {};
@@ -585,7 +666,7 @@
                 analyticsList.appendChild(div);
             }
 
-            // 🤖 觸發 AI 建議更新
+            // 觸發 AI 建議更新
             generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories);
 
             renderCalendar();
