@@ -211,6 +211,19 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
         }
+        button.btn-success {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.25);
+        }
         button.btn-secondary {
             width: 100%;
             background: #e5e5ea;
@@ -525,11 +538,48 @@
         <div class="card" style="background: linear-gradient(135deg, #34c759 0%, #248a3d 100%); color: white; border: none;">
             <div class="card-title" style="color: rgba(255,255,255,0.8);">💰 累積存款總額</div>
             <div class="big-number" style="color: white;" id="totalSavings">NT$ 0</div>
-            <div style="margin-top: 10px; font-size: 12px; opacity: 0.9;">每週剩餘預算與月底預備金剩餘會自動存入此處</div>
+            <div style="margin-top: 10px; font-size: 12px; opacity: 0.9;">彈性管理個人存款與每週結算儲蓄</div>
+        </div>
+
+        <!-- 彈性新增/提取存款 -->
+        <div class="card">
+            <div class="card-title" style="margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--text);">➕ 彈性調整存款</div>
+            
+            <div class="input-group">
+                <label>操作類型</label>
+                <select id="savingsAction">
+                    <option value="deposit">➕ 存入存款</option>
+                    <option value="withdraw">➖ 提取存款</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>金額</label>
+                <input type="number" id="savingsAmount" placeholder="0" inputmode="decimal">
+            </div>
+
+            <div class="input-group">
+                <label>來源 / 分類</label>
+                <select id="savingsCategory">
+                    <option value="✨ 週預算結算">✨ 週預算結算</option>
+                    <option value="💵 額外收入">💵 額外收入</option>
+                    <option value="🎁 紅包/獎金">🎁 紅包/獎金</option>
+                    <option value="🏦 銀行利息">🏦 銀行利息</option>
+                    <option value="🛒 提取使用">🛒 提取使用</option>
+                    <option value="📦 其他">📦 其他</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>備註</label>
+                <input type="text" id="savingsNote" placeholder="例如：本週預算剩餘存入、買大件商品">
+            </div>
+
+            <button class="btn-success" onclick="addSavingsRecord()">確認更新存款</button>
         </div>
 
         <div class="card">
-            <div class="card-title" style="margin-bottom: 8px;">🗓️ 存款紀錄</div>
+            <div class="card-title" style="margin-bottom: 8px;">🗓️ 存款變動紀錄</div>
             <div id="savingsHistory"></div>
         </div>
     </div>
@@ -587,9 +637,12 @@
 
         let state = JSON.parse(localStorage.getItem('week_save_state')) || {
             transactions: [],
+            savingsRecords: [],
             totalSavings: 0,
             reserveSpent: 0
         };
+
+        if (!state.savingsRecords) state.savingsRecords = [];
 
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('txDate').value = todayStr;
@@ -692,6 +745,43 @@
             switchPage('home', document.querySelectorAll('.nav-item')[0]);
         }
 
+        // 💰 彈性新增／扣除存款紀錄
+        function addSavingsRecord() {
+            const action = document.getElementById('savingsAction').value;
+            const amount = parseFloat(document.getElementById('savingsAmount').value);
+            const category = document.getElementById('savingsCategory').value;
+            const note = document.getElementById('savingsNote').value.trim();
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('請輸入有效的存款金額！');
+                return;
+            }
+
+            if (action === 'withdraw' && amount > state.totalSavings) {
+                alert('提取金額不能大於目前累積存款總額！');
+                return;
+            }
+
+            const changeAmount = action === 'deposit' ? amount : -amount;
+            state.totalSavings += changeAmount;
+
+            state.savingsRecords.push({
+                id: Date.now(),
+                date: todayStr,
+                category,
+                note,
+                amount: changeAmount
+            });
+
+            saveState();
+
+            document.getElementById('savingsAmount').value = '';
+            document.getElementById('savingsNote').value = '';
+
+            alert(action === 'deposit' ? '✅ 成功存入資金！' : '✅ 成功提取資金！');
+            render();
+        }
+
         // AI 建議演算法
         function generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories) {
             let homeAdvice = "";
@@ -753,6 +843,7 @@
                     const importedState = JSON.parse(e.target.result);
                     if (importedState && Array.isArray(importedState.transactions)) {
                         state = importedState;
+                        if (!state.savingsRecords) state.savingsRecords = [];
                         saveState();
                         alert('✅ 資料還原成功！');
                         render();
@@ -772,6 +863,7 @@
             if (confirm('確定要清空所有記帳資料嗎？此操作不可逆！')) {
                 state = {
                     transactions: [],
+                    savingsRecords: [],
                     totalSavings: 0,
                     reserveSpent: 0
                 };
@@ -916,6 +1008,32 @@
                 `;
                 homeList.appendChild(item);
             });
+
+            // 存款紀錄渲染
+            const savingsHistory = document.getElementById('savingsHistory');
+            savingsHistory.innerHTML = '';
+            if (!state.savingsRecords || state.savingsRecords.length === 0) {
+                savingsHistory.innerHTML = '<div style="font-size:13px; color:var(--sub); padding:10px 0;">尚無存款紀錄</div>';
+            } else {
+                state.savingsRecords.slice().reverse().forEach(s => {
+                    const isPositive = s.amount > 0;
+                    const item = document.createElement('div');
+                    item.className = 'tx-item';
+                    item.innerHTML = `
+                        <div style="display: flex; align-items: center;">
+                            <div class="tx-icon">${isPositive ? '💰' : '🛒'}</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 14px;">${s.note || s.category}</div>
+                                <div style="font-size: 11px; color: var(--sub); margin-top:1px;">${s.date} · ${s.category}</div>
+                            </div>
+                        </div>
+                        <div style="font-weight: 600; color: ${isPositive ? 'var(--success)' : 'var(--danger)'}; font-variant-numeric: tabular-nums;">
+                            ${isPositive ? '+' : ''}NT$ ${s.amount.toLocaleString()}
+                        </div>
+                    `;
+                    savingsHistory.appendChild(item);
+                });
+            }
 
             // 分析統計渲染
             let cashTotal = 0;
