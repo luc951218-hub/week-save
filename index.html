@@ -3,28 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>週週記｜月度預算管理</title>
+<title>週週記｜每月預算管理</title>
 
 <style>
 :root {
     --primary: #007aff;
-    --primary-light: #eaf4ff;
+    --primary-light: #eaf3ff;
     --green: #34c759;
-    --green-light: #e8f8ed;
-    --red: #ff3b30;
-    --red-light: #fff0ef;
+    --green-light: #e9f9ee;
     --orange: #ff9500;
-    --orange-light: #fff5e6;
-    --purple: #af52de;
-    --purple-light: #f5e9fb;
+    --orange-light: #fff3df;
+    --red: #ff3b30;
+    --red-light: #ffebea;
 
-    --bg: #f5f6f8;
+    --bg: #f5f5f7;
     --card: #ffffff;
-    --text: #1c1c1e;
-    --sub: #6e6e73;
+    --text: #1d1d1f;
+    --sub: #86868b;
     --border: #e5e5ea;
 
-    --shadow: 0 4px 18px rgba(0,0,0,0.06);
+    --shadow: 0 4px 18px rgba(0,0,0,.06);
     --radius: 18px;
 }
 
@@ -34,7 +32,2999 @@
 
 body {
     margin: 0;
+    background: var(--bg);
+    color: var(--text);
     font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Noto Sans TC",
+        sans-serif;
+}
+
+button,
+input,
+select {
+    font-family: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 22px 18px 50px;
+}
+
+/* =========================
+   Header
+========================= */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+}
+
+.logo-title {
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.logo-sub {
+    color: var(--sub);
+    font-size: 13px;
+    margin-top: 3px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    border: 0;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 13px;
+    box-shadow: var(--shadow);
+}
+
+/* =========================
+   Month selector
+========================= */
+
+.month-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card);
+    padding: 13px 16px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+}
+
+.month-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.month-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.month-buttons button {
+    border: none;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 9px;
+    padding: 7px 12px;
+}
+
+/* =========================
+   Main weekly hero
+========================= */
+
+.hero {
+    background: linear-gradient(135deg, #007aff, #5ac8fa);
+    color: white;
+    border-radius: 25px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 25px rgba(0,122,255,.22);
+}
+
+.hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.hero-label {
+    font-size: 14px;
+    opacity: .85;
+}
+
+.hero-week {
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 3px;
+}
+
+.hero-main {
+    margin-top: 22px;
+}
+
+.hero-main-label {
+    font-size: 14px;
+    opacity: .9;
+}
+
+.hero-remaining {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.05;
+    margin-top: 4px;
+}
+
+.hero-remaining.over {
+    color: #ffe5e5;
+}
+
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.hero-stat {
+    background: rgba(255,255,255,.16);
+    border-radius: 13px;
+    padding: 11px;
+}
+
+.hero-stat-label {
+    font-size: 12px;
+    opacity: .8;
+}
+
+.hero-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 3px;
+}
+
+/* =========================
+   General cards
+========================= */
+
+.card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+}
+
+.card-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 750;
+    font-size: 17px;
+    margin-bottom: 14px;
+}
+
+.card-title small {
+    font-size: 12px;
+    color: var(--sub);
+    font-weight: 400;
+}
+
+/* =========================
+   Budget overview
+========================= */
+
+.budget-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.budget-box {
+    background: #f8f8fa;
+    border-radius: 14px;
+    padding: 13px;
+}
+
+.budget-box-label {
+    color: var(--sub);
+    font-size: 12px;
+}
+
+.budget-box-value {
+    font-size: 20px;
+    font-weight: 750;
+    margin-top: 5px;
+}
+
+.progress {
+    height: 8px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 14px;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--primary);
+    transition: .3s;
+}
+
+/* =========================
+   Calendar
+========================= */
+
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 12px;
+    color: var(--sub);
+    padding-bottom: 6px;
+}
+
+.calendar-day {
+    min-height: 62px;
+    background: #fafafa;
+    border-radius: 11px;
+    padding: 6px;
+    font-size: 12px;
+    position: relative;
+    border: 1px solid transparent;
+}
+
+.calendar-day.empty {
+    background: transparent;
+}
+
+.calendar-day.today {
+    border: 2px solid var(--primary);
+}
+
+.calendar-day-number {
+    font-weight: 700;
+}
+
+.calendar-day-amount {
+    margin-top: 9px;
+    font-size: 10px;
+    color: var(--sub);
+}
+
+.calendar-day.has-expense {
+    background: #fff8f7;
+}
+
+.calendar-day.has-plan {
+    box-shadow: inset 0 -3px 0 var(--orange);
+}
+
+/* =========================
+   Weekly cards
+========================= */
+
+.week-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.week-item {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 13px;
+}
+
+.week-item.current {
+    border: 2px solid var(--primary);
+    background: var(--primary-light);
+}
+
+.week-item-top {
+    display: flex;
+    justify-content: space-between;
+}
+
+.week-name {
+    font-weight: 700;
+}
+
+.week-date {
+    color: var(--sub);
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.week-money {
+    text-align: right;
+}
+
+.week-remaining {
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.week-remaining.red {
+    color: var(--red);
+}
+
+.week-progress {
+    margin-top: 10px;
+}
+
+/* =========================
+   Expense list
+========================= */
+
+.expense-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.expense-item:last-child {
+    border-bottom: none;
+}
+
+.expense-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.expense-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--primary-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.expense-name {
+    font-weight: 650;
+}
+
+.expense-date {
+    font-size: 12px;
+    color: var(--sub);
+    margin-top: 2px;
+}
+
+.expense-amount {
+    font-weight: 750;
+}
+
+/* =========================
+   Future plans
+========================= */
+
+.plan-item {
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 14px;
+    margin-bottom: 10px;
+}
+
+.plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.plan-name {
+    font-weight: 750;
+    font-size: 16px;
+}
+
+.plan-total {
+    font-weight: 800;
+}
+
+.plan-date {
+    color: var(--sub);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.plan-details {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.plan-actions {
+    display: flex;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+/* =========================
+   Savings
+========================= */
+
+.saving-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.saving-total {
+    background: var(--green-light);
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 10px;
+}
+
+.saving-total-label {
+    color: #248a42;
+    font-size: 12px;
+}
+
+.saving-total-value {
+    color: #248a42;
+    font-size: 25px;
+    font-weight: 800;
+}
+
+/* =========================
+   Buttons
+========================= */
+
+.btn {
+    border: none;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-weight: 650;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-secondary {
+    background: #f1f1f4;
+    color: var(--text);
+}
+
+.btn-danger {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+.btn-green {
+    background: var(--green-light);
+    color: #248a42;
+}
+
+/* =========================
+   Forms
+========================= */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--sub);
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 11px;
+    outline: none;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary);
+}
+
+/* =========================
+   Modal
+========================= */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 1000;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-box {
+    width: 100%;
+    max-width: 520px;
+    background: white;
+    border-radius: 22px;
+    padding: 20px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 15px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+/* =========================
+   Backup
+========================= */
+
+.backup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.backup-box {
+    background: #f8f8fa;
+    border-radius: 14px;
+    padding: 15px;
+}
+
+.backup-box strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.backup-box span {
+    font-size: 12px;
+    color: var(--sub);
+}
+
+/* =========================
+   Empty
+========================= */
+
+.empty {
+    text-align: center;
+    color: var(--sub);
+    padding: 20px 5px;
+    font-size: 13px;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 700px) {
+
+    .container {
+        padding: 15px 12px 40px;
+    }
+
+    .logo-title {
+        font-size: 23px;
+    }
+
+    .hero {
+        padding: 20px;
+    }
+
+    .hero-remaining {
+        font-size: 40px;
+    }
+
+    .hero-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .budget-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .backup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .calendar-day {
+        min-height: 52px;
+        padding: 5px;
+    }
+
+    .calendar-day-amount {
+        font-size: 9px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div>
+            <div class="logo-title">週週記</div>
+            <div class="logo-sub">每月預算 × 每週花費 × 存款</div>
+        </div>
+
+        <div class="header-actions">
+            <button class="icon-btn" onclick="openModal('backupModal')">💾</button>
+        </div>
+    </div>
+
+    <!-- MONTH -->
+    <div class="month-bar">
+        <div>
+            <div class="month-title" id="monthTitle"></div>
+        </div>
+
+        <div class="month-buttons">
+            <button onclick="changeMonth(-1)">‹</button>
+            <button onclick="goCurrentMonth()">今天</button>
+            <button onclick="changeMonth(1)">›</button>
+        </div>
+    </div>
+
+    <!-- MAIN WEEK HERO -->
+    <div class="hero">
+
+        <div class="hero-top">
+            <div>
+                <div class="hero-label">目前這一週</div>
+                <div class="hero-week" id="heroWeek"></div>
+            </div>
+
+            <div style="font-size:28px;">💰</div>
+        </div>
+
+        <div class="hero-main">
+            <div class="hero-main-label">本週還可以使用</div>
+
+            <div class="hero-remaining" id="heroRemaining">
+                $0
+            </div>
+        </div>
+
+        <div class="hero-stats">
+
+            <div class="hero-stat">
+                <div class="hero-stat-label">本週預算</div>
+                <div class="hero-stat-value" id="heroBudget">$0</div>
+            </div>
+
+            <div class="hero-stat">
+                <div class="hero-stat-label">本週已花</div>
+                <div class="hero-stat-value" id="heroSpent">$0</div>
+            </div>
+
+            <div class="hero-stat">
+                <div class="hero-stat-label">今日還可使用</div>
+                <div class="hero-stat-value" id="heroToday">$0</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MONTH OVERVIEW -->
+    <div class="card">
+
+        <div class="card-title">
+            本月預算
+            <small>固定預算 $15,000</small>
+        </div>
+
+        <div class="budget-grid">
+
+            <div class="budget-box">
+                <div class="budget-box-label">固定預算</div>
+                <div class="budget-box-value">$15,000</div>
+            </div>
+
+            <div class="budget-box">
+                <div class="budget-box-label">已花費</div>
+                <div class="budget-box-value" id="monthSpent">$0</div>
+            </div>
+
+            <div class="budget-box">
+                <div class="budget-box-label">剩餘預算</div>
+                <div class="budget-box-value" id="monthRemaining">$15,000</div>
+            </div>
+
+        </div>
+
+        <div class="progress">
+            <div class="progress-fill" id="monthProgress"></div>
+        </div>
+
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="card">
+
+        <div class="card-title">
+            當月日曆
+            <small>點擊日期查看當日花費</small>
+        </div>
+
+        <div class="calendar" id="calendar"></div>
+
+    </div>
+
+    <!-- WEEKLY BUDGET -->
+    <div class="card">
+
+        <div class="card-title">
+            每週預算
+            <small>依當月週數自動分配</small>
+        </div>
+
+        <div class="week-list" id="weekList"></div>
+
+    </div>
+
+    <!-- EXPENSE -->
+    <div class="card">
+
+        <div class="card-title">
+            記帳
+            <button class="btn btn-primary" onclick="openExpenseModal()">
+                ＋ 新增
+            </button>
+        </div>
+
+        <div id="expenseList"></div>
+
+    </div>
+
+    <!-- FUTURE PLANS -->
+    <div class="card">
+
+        <div class="card-title">
+            未來支出
+            <small>會提前影響每週預算</small>
+
+            <button class="btn btn-primary" onclick="openPlanModal()">
+                ＋ 新增
+            </button>
+        </div>
+
+        <div id="planList"></div>
+
+    </div>
+
+    <!-- SAVINGS -->
+    <div class="card">
+
+        <div class="card-title">
+            預計存款
+            <button class="btn btn-green" onclick="openSavingModal()">
+                ＋ 新增
+            </button>
+        </div>
+
+        <div class="saving-total">
+            <div class="saving-total-label">
+                系統自動累計＋自行新增
+            </div>
+
+            <div class="saving-total-value" id="savingTotal">
+                $0
+            </div>
+        </div>
+
+        <div id="savingList"></div>
+
+    </div>
+
+    <!-- BACKUP -->
+    <div class="card">
+
+        <div class="card-title">
+            資料備份
+            <small>避免更新頁面後資料消失</small>
+        </div>
+
+        <div class="backup-grid">
+
+            <div class="backup-box">
+                <strong>⬇️ 備份資料</strong>
+                <span>將目前所有資料下載成 JSON</span>
+                <br><br>
+                <button class="btn btn-primary" onclick="backupData()">
+                    下載備份
+                </button>
+            </div>
+
+            <div class="backup-box">
+                <strong>⬆️ 還原資料</strong>
+                <span>選擇之前下載的備份檔</span>
+                <br><br>
+                <button class="btn btn-secondary" onclick="document.getElementById('restoreFile').click()">
+                    選擇檔案
+                </button>
+
+                <input
+                    type="file"
+                    id="restoreFile"
+                    accept=".json"
+                    style="display:none"
+                    onchange="restoreData(event)"
+                >
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     Expense Modal
+========================= -->
+
+<div class="modal" id="expenseModal">
+
+    <div class="modal-box">
+
+        <div class="modal-title">
+            新增記帳
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>日期</label>
+                <input type="date" id="expenseDate">
+            </div>
+
+            <div class="form-group">
+                <label>金額</label>
+                <input type="number" id="expenseAmount" min="0">
+            </div>
+
+            <div class="form-group full">
+                <label>項目</label>
+                <input type="text" id="expenseName" placeholder="例如：午餐、交通、購物">
+            </div>
+
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal('expenseModal')">
+                取消
+            </button>
+
+            <button class="btn btn-primary" onclick="addExpense()">
+                儲存
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     Future Plan Modal
+========================= -->
+
+<div class="modal" id="planModal">
+
+    <div class="modal-box">
+
+        <div class="modal-title">
+            新增未來支出
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-group full">
+                <label>出遊／支出名稱</label>
+                <input
+                    type="text"
+                    id="planName"
+                    placeholder="例如：小琉球"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>日期</label>
+                <input type="date" id="planDate">
+            </div>
+
+            <div class="form-group">
+                <label>總預算</label>
+                <input
+                    type="number"
+                    id="planAmount"
+                    min="0"
+                    placeholder="例如 1000"
+                >
+            </div>
+
+        </div>
+
+        <div style="margin-top:10px;">
+
+            <div style="font-weight:700;margin-bottom:7px;">
+                細項
+            </div>
+
+            <div id="detailInputs"></div>
+
+            <button
+                class="btn btn-secondary"
+                onclick="addDetailInput()"
+            >
+                ＋ 新增細項
+            </button>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="closeModal('planModal')"
+            >
+                取消
+            </button>
+
+            <button
+                class="btn btn-primary"
+                onclick="addPlan()"
+            >
+                儲存
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     Saving Modal
+========================= -->
+
+<div class="modal" id="savingModal">
+
+    <div class="modal-box">
+
+        <div class="modal-title">
+            新增預計存款
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-group full">
+                <label>名稱</label>
+                <input
+                    type="text"
+                    id="savingName"
+                    placeholder="例如：旅遊基金"
+                >
+            </div>
+
+            <div class="form-group full">
+                <label>金額</label>
+                <input
+                    type="number"
+                    id="savingAmount"
+                    min="0"
+                >
+            </div>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="closeModal('savingModal')"
+            >
+                取消
+            </button>
+
+            <button
+                class="btn btn-green"
+                onclick="addSaving()"
+            >
+                新增
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     Backup Modal
+========================= -->
+
+<div class="modal" id="backupModal">
+
+    <div class="modal-box">
+
+        <div class="modal-title">
+            資料備份
+        </div>
+
+        <p style="color:#666;font-size:14px;line-height:1.7;">
+            建議定期下載備份檔案。
+            如果更換瀏覽器、清除網站資料或重新安裝系統，
+            可以透過備份檔重新還原。
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="closeModal('backupModal')"
+            >
+                關閉
+            </button>
+
+            <button
+                class="btn btn-primary"
+                onclick="backupData()"
+            >
+                下載備份
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   基本設定
+========================================================= */
+
+const FIXED_MONTHLY_BUDGET = 15000;
+
+let currentDate = new Date();
+
+let data = {
+    expenses: [],
+    plans: [],
+    savings: [],
+    autoSavings: []
+};
+
+
+/* =========================================================
+   LocalStorage
+========================================================= */
+
+function saveData() {
+
+    localStorage.setItem(
+        "weekly_budget_data_v1",
+        JSON.stringify(data)
+    );
+
+}
+
+
+function loadData() {
+
+    const saved = localStorage.getItem(
+        "weekly_budget_data_v1"
+    );
+
+    if (saved) {
+
+        try {
+
+            data = JSON.parse(saved);
+
+            if (!data.expenses) data.expenses = [];
+            if (!data.plans) data.plans = [];
+            if (!data.savings) data.savings = [];
+            if (!data.autoSavings) data.autoSavings = [];
+
+        } catch (error) {
+
+            console.error("資料讀取失敗", error);
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   Utilities
+========================================================= */
+
+function money(value) {
+
+    return "$" + Math.round(value || 0).toLocaleString();
+
+}
+
+
+function dateKey(date) {
+
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+
+    return `${y}-${m}-${d}`;
+
+}
+
+
+function parseDate(str) {
+
+    const [y,m,d] = str.split("-").map(Number);
+
+    return new Date(y, m - 1, d);
+
+}
+
+
+function sameMonth(date, year, month) {
+
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() === month
+    );
+
+}
+
+
+function formatDate(date) {
+
+    return `${date.getMonth()+1}/${date.getDate()}`;
+
+}
+
+
+function daysInMonth(year, month) {
+
+    return new Date(year, month + 1, 0).getDate();
+
+}
+
+
+/* =========================================================
+   Month
+========================================================= */
+
+function getCurrentYear() {
+
+    return currentDate.getFullYear();
+
+}
+
+
+function getCurrentMonth() {
+
+    return currentDate.getMonth();
+
+}
+
+
+function changeMonth(amount) {
+
+    currentDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + amount,
+        1
+    );
+
+    render();
+
+}
+
+
+function goCurrentMonth() {
+
+    currentDate = new Date();
+
+    render();
+
+}
+
+
+/* =========================================================
+   Weekly calculation
+========================================================= */
+
+/*
+    每月按照：
+    1-7
+    8-14
+    15-21
+    22-28
+    29-月底
+
+    切成週。
+*/
+
+function getWeeks(year, month) {
+
+    const totalDays = daysInMonth(year, month);
+
+    const weeks = [];
+
+    let start = 1;
+    let index = 1;
+
+    while (start <= totalDays) {
+
+        const end = Math.min(start + 6, totalDays);
+
+        weeks.push({
+            index,
+            start,
+            end
+        });
+
+        start = end + 1;
+        index++;
+
+    }
+
+    return weeks;
+
+}
+
+
+function getWeekForDay(day) {
+
+    return Math.floor((day - 1) / 7);
+
+}
+
+
+function getPlansForMonth(year, month) {
+
+    return data.plans.filter(plan => {
+
+        const date = parseDate(plan.date);
+
+        return sameMonth(date, year, month);
+
+    });
+
+}
+
+
+function getExpensesForMonth(year, month) {
+
+    return data.expenses.filter(expense => {
+
+        const date = parseDate(expense.date);
+
+        return sameMonth(date, year, month);
+
+    });
+
+}
+
+
+/*
+    未來支出會提前占用預算。
+*/
+
+function getPlanTotalForWeek(year, month, weekIndex) {
+
+    const plans = getPlansForMonth(year, month);
+
+    return plans.reduce((sum, plan) => {
+
+        const date = parseDate(plan.date);
+
+        const week = getWeekForDay(date.getDate());
+
+        if (week === weekIndex) {
+
+            return sum + Number(plan.amount || 0);
+
+        }
+
+        return sum;
+
+    }, 0);
+
+}
+
+
+/*
+    當月總預算會先扣掉所有未來支出，
+    剩下的才拿來做一般消費。
+
+    例如：
+
+    15000
+    - 小琉球 1000
+    = 14000
+
+    再平均分配到各週。
+*/
+
+function getMonthlyAvailableBudget(year, month) {
+
+    const plans = getPlansForMonth(year, month);
+
+    const futureTotal = plans.reduce(
+        (sum, plan) => sum + Number(plan.amount || 0),
+        0
+    );
+
+    return Math.max(
+        0,
+        FIXED_MONTHLY_BUDGET - futureTotal
+    );
+
+}
+
+
+function getWeeklyBudget(year, month, weekIndex) {
+
+    const weeks = getWeeks(year, month);
+
+    const available = getMonthlyAvailableBudget(
+        year,
+        month
+    );
+
+    if (!weeks.length) return 0;
+
+    /*
+        例如：
+        15000 / 5週 = 3000
+    */
+
+    const normalWeekly =
+        available / weeks.length;
+
+    return normalWeekly;
+
+}
+
+
+/*
+    未來支出本身也會被列出，
+    因此該週實際能自由花費的錢：
+
+    每週平均預算
+    -
+    該週未來支出
+*/
+
+function getFreeWeeklyBudget(year, month, weekIndex) {
+
+    const normalWeekly =
+        getWeeklyBudget(
+            year,
+            month,
+            weekIndex
+        );
+
+    const planned =
+        getPlanTotalForWeek(
+            year,
+            month,
+            weekIndex
+        );
+
+    return normalWeekly - planned;
+
+}
+
+
+function getWeekExpenses(year, month, weekIndex) {
+
+    return getExpensesForMonth(year, month)
+        .filter(expense => {
+
+            const date = parseDate(expense.date);
+
+            return getWeekForDay(date.getDate()) === weekIndex;
+
+        });
+
+}
+
+
+function getWeekSpent(year, month, weekIndex) {
+
+    return getWeekExpenses(
+        year,
+        month,
+        weekIndex
+    ).reduce(
+        (sum, expense) =>
+            sum + Number(expense.amount || 0),
+        0
+    );
+
+}
+
+
+/* =========================================================
+   Current week
+========================================================= */
+
+function getCurrentWeekInfo() {
+
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+
+    const weekIndex = getWeekForDay(day);
+
+    const weeks = getWeeks(year, month);
+
+    return {
+        year,
+        month,
+        day,
+        weekIndex,
+        week: weeks[weekIndex]
+    };
+
+}
+
+
+/* =========================================================
+   Today's available money
+========================================================= */
+
+function getTodayAvailable() {
+
+    const info = getCurrentWeekInfo();
+
+    const weeklyBudget =
+        getFreeWeeklyBudget(
+            info.year,
+            info.month,
+            info.weekIndex
+        );
+
+    const spent =
+        getWeekSpent(
+            info.year,
+            info.month,
+            info.weekIndex
+        );
+
+    const remaining =
+        weeklyBudget - spent;
+
+    const dayInWeek =
+        info.day -
+        info.week.start +
+        1;
+
+    const daysLeft =
+        Math.max(
+            1,
+            info.week.end - info.day + 1
+        );
+
+    /*
+        把剩餘的錢平均分配到
+        本週剩下的天數。
+    */
+
+    return remaining / daysLeft;
+
+}
+
+
+/* =========================================================
+   Hero
+========================================================= */
+
+function renderHero() {
+
+    const info = getCurrentWeekInfo();
+
+    const todayMonth = currentDate.getMonth();
+    const todayYear = currentDate.getFullYear();
+
+    let weekIndex = info.weekIndex;
+
+    /*
+        如果現在查看的不是當月，
+        Hero 仍顯示目前實際這週。
+    */
+
+    if (
+        todayYear !== info.year ||
+        todayMonth !== info.month
+    ) {
+        weekIndex = 0;
+    }
+
+    const week = getWeeks(
+        info.year,
+        info.month
+    )[weekIndex];
+
+    const budget =
+        getFreeWeeklyBudget(
+            info.year,
+            info.month,
+            weekIndex
+        );
+
+    const spent =
+        getWeekSpent(
+            info.year,
+            info.month,
+            weekIndex
+        );
+
+    const remaining =
+        budget - spent;
+
+    document.getElementById("heroWeek").textContent =
+        `${info.month + 1}/${week.start}－${info.month + 1}/${week.end}`;
+
+    document.getElementById("heroBudget").textContent =
+        money(budget);
+
+    document.getElementById("heroSpent").textContent =
+        money(spent);
+
+    document.getElementById("heroRemaining").textContent =
+        money(remaining);
+
+    document.getElementById("heroToday").textContent =
+        money(
+            todayYear === info.year &&
+            todayMonth === info.month
+                ? getTodayAvailable()
+                : 0
+        );
+
+    const heroRemaining =
+        document.getElementById("heroRemaining");
+
+    if (remaining < 0) {
+
+        heroRemaining.classList.add("over");
+
+    } else {
+
+        heroRemaining.classList.remove("over");
+
+    }
+
+}
+
+
+/* =========================================================
+   Month overview
+========================================================= */
+
+function renderMonthOverview() {
+
+    const year = getCurrentYear();
+    const month = getCurrentMonth();
+
+    const spent =
+        getExpensesForMonth(year, month)
+            .reduce(
+                (sum, expense) =>
+                    sum + Number(expense.amount || 0),
+                0
+            );
+
+    const remaining =
+        FIXED_MONTHLY_BUDGET - spent;
+
+    document.getElementById("monthSpent").textContent =
+        money(spent);
+
+    document.getElementById("monthRemaining").textContent =
+        money(remaining);
+
+    const progress =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                spent / FIXED_MONTHLY_BUDGET * 100
+            )
+        );
+
+    document.getElementById("monthProgress").style.width =
+        progress + "%";
+
+}
+
+
+/* =========================================================
+   Calendar
+========================================================= */
+
+function renderCalendar() {
+
+    const year = getCurrentYear();
+    const month = getCurrentMonth();
+
+    const container =
+        document.getElementById("calendar");
+
+    container.innerHTML = "";
+
+    const weekdays =
+        ["日","一","二","三","四","五","六"];
+
+    weekdays.forEach(day => {
+
+        const el =
+            document.createElement("div");
+
+        el.className =
+            "calendar-weekday";
+
+        el.textContent =
+            day;
+
+        container.appendChild(el);
+
+    });
+
+    const firstDay =
+        new Date(year, month, 1).getDay();
+
+    for (let i = 0; i < firstDay; i++) {
+
+        const empty =
+            document.createElement("div");
+
+        empty.className =
+            "calendar-day empty";
+
+        container.appendChild(empty);
+
+    }
+
+    const total =
+        daysInMonth(year, month);
+
+    for (let day = 1; day <= total; day++) {
+
+        const date =
+            new Date(year, month, day);
+
+        const key =
+            dateKey(date);
+
+        const dayExpenses =
+            data.expenses.filter(
+                e => e.date === key
+            );
+
+        const amount =
+            dayExpenses.reduce(
+                (sum, e) =>
+                    sum + Number(e.amount || 0),
+                0
+            );
+
+        const hasPlan =
+            data.plans.some(
+                p => p.date === key
+            );
+
+        const el =
+            document.createElement("div");
+
+        el.className =
+            "calendar-day";
+
+        if (amount > 0)
+            el.classList.add("has-expense");
+
+        if (hasPlan)
+            el.classList.add("has-plan");
+
+        const today =
+            new Date();
+
+        if (
+            today.getFullYear() === year &&
+            today.getMonth() === month &&
+            today.getDate() === day
+        ) {
+
+            el.classList.add("today");
+
+        }
+
+        el.innerHTML = `
+            <div class="calendar-day-number">
+                ${day}
+            </div>
+
+            ${
+                amount > 0
+                ? `<div class="calendar-day-amount">
+                    ${money(amount)}
+                   </div>`
+                : ""
+            }
+
+            ${
+                hasPlan
+                ? `<div class="calendar-day-amount">
+                    📌 預計
+                   </div>`
+                : ""
+            }
+        `;
+
+        el.onclick = () => {
+
+            const selected =
+                prompt(
+                    `${month + 1}/${day}\n\n當日花費：${money(amount)}`
+                );
+
+        };
+
+        container.appendChild(el);
+
+    }
+
+}
+
+
+/* =========================================================
+   Weekly list
+========================================================= */
+
+function renderWeeks() {
+
+    const year = getCurrentYear();
+    const month = getCurrentMonth();
+
+    const weeks =
+        getWeeks(year, month);
+
+    const container =
+        document.getElementById("weekList");
+
+    container.innerHTML = "";
+
+    const today =
+        new Date();
+
+    const currentIsMonth =
+        today.getFullYear() === year &&
+        today.getMonth() === month;
+
+    weeks.forEach((week, index) => {
+
+        const budget =
+            getFreeWeeklyBudget(
+                year,
+                month,
+                index
+            );
+
+        const spent =
+            getWeekSpent(
+                year,
+                month,
+                index
+            );
+
+        const remaining =
+            budget - spent;
+
+        const planned =
+            getPlanTotalForWeek(
+                year,
+                month,
+                index
+            );
+
+        const percentage =
+            budget > 0
+                ? Math.min(
+                    100,
+                    Math.max(
+                        0,
+                        spent / budget * 100
+                    )
+                )
+                : 0;
+
+        const isCurrent =
+            currentIsMonth &&
+            getWeekForDay(today.getDate()) === index;
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "week-item" +
+            (isCurrent ? " current" : "");
+
+        div.innerHTML = `
+
+            <div class="week-item-top">
+
+                <div>
+                    <div class="week-name">
+                        第 ${index + 1} 週
+                    </div>
+
+                    <div class="week-date">
+                        ${month + 1}/${week.start}
+                        －
+                        ${month + 1}/${week.end}
+                    </div>
+                </div>
+
+                <div class="week-money">
+
+                    <div class="week-remaining
+                        ${remaining < 0 ? "red" : ""}">
+                        ${money(remaining)}
+                    </div>
+
+                    <div class="week-date">
+                        剩餘
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                margin-top:10px;
+                font-size:12px;
+                color:#777;
+            ">
+
+                <span>
+                    可用 ${money(budget)}
+                </span>
+
+                <span>
+                    已花 ${money(spent)}
+                </span>
+
+            </div>
+
+            ${
+                planned > 0
+                ? `<div style="
+                    margin-top:7px;
+                    font-size:12px;
+                    color:#ff9500;
+                ">
+                    📌 已安排未來支出 ${money(planned)}
+                   </div>`
+                : ""
+            }
+
+            <div class="progress week-progress">
+
+                <div
+                    class="progress-fill"
+                    style="width:${percentage}%"
+                ></div>
+
+            </div>
+
+        `;
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================================================
+   Expenses
+========================================================= */
+
+function renderExpenses() {
+
+    const year = getCurrentYear();
+    const month = getCurrentMonth();
+
+    const expenses =
+        getExpensesForMonth(year, month)
+            .sort(
+                (a,b) =>
+                    b.date.localeCompare(a.date)
+            );
+
+    const container =
+        document.getElementById("expenseList");
+
+    container.innerHTML = "";
+
+    if (!expenses.length) {
+
+        container.innerHTML =
+            `<div class="empty">
+                本月還沒有記帳紀錄
+             </div>`;
+
+        return;
+
+    }
+
+    expenses.forEach(expense => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "expense-item";
+
+        div.innerHTML = `
+
+            <div class="expense-left">
+
+                <div class="expense-icon">
+                    💳
+                </div>
+
+                <div>
+
+                    <div class="expense-name">
+                        ${escapeHTML(expense.name)}
+                    </div>
+
+                    <div class="expense-date">
+                        ${expense.date}
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div style="
+                display:flex;
+                align-items:center;
+                gap:8px;
+            ">
+
+                <div class="expense-amount">
+                    ${money(expense.amount)}
+                </div>
+
+                <button
+                    class="btn btn-danger"
+                    onclick="deleteExpense('${expense.id}')"
+                >
+                    刪除
+                </button>
+
+            </div>
+
+        `;
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================================================
+   Add Expense
+========================================================= */
+
+function openExpenseModal() {
+
+    document.getElementById("expenseDate").value =
+        dateKey(new Date());
+
+    document.getElementById("expenseName").value = "";
+
+    document.getElementById("expenseAmount").value = "";
+
+    openModal("expenseModal");
+
+}
+
+
+function addExpense() {
+
+    const date =
+        document.getElementById("expenseDate").value;
+
+    const name =
+        document.getElementById("expenseName").value.trim();
+
+    const amount =
+        Number(
+            document.getElementById("expenseAmount").value
+        );
+
+    if (!date || !name || amount <= 0) {
+
+        alert("請完整填寫日期、項目及金額");
+
+        return;
+
+    }
+
+    data.expenses.push({
+
+        id: Date.now().toString(),
+
+        date,
+
+        name,
+
+        amount
+
+    });
+
+    saveData();
+
+    closeModal("expenseModal");
+
+    render();
+
+}
+
+
+function deleteExpense(id) {
+
+    if (!confirm("確定要刪除這筆記帳嗎？"))
+        return;
+
+    data.expenses =
+        data.expenses.filter(
+            e => e.id !== id
+        );
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================================
+   Future plans
+========================================================= */
+
+function openPlanModal() {
+
+    document.getElementById("planName").value = "";
+
+    document.getElementById("planDate").value =
+        dateKey(new Date());
+
+    document.getElementById("planAmount").value = "";
+
+    document.getElementById("detailInputs").innerHTML = "";
+
+    addDetailInput();
+
+    openModal("planModal");
+
+}
+
+
+function addDetailInput() {
+
+    const container =
+        document.getElementById("detailInputs");
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "detail-row";
+
+    row.innerHTML = `
+
+        <input
+            type="text"
+            placeholder="細項名稱，例如：交通"
+            style="
+                flex:1;
+                border:1px solid #e5e5ea;
+                border-radius:9px;
+                padding:9px;
+            "
+        >
+
+        <input
+            type="number"
+            placeholder="金額"
+            min="0"
+            style="
+                width:110px;
+                border:1px solid #e5e5ea;
+                border-radius:9px;
+                padding:9px;
+                margin-left:7px;
+            "
+        >
+
+        <button
+            class="btn btn-danger"
+            style="margin-left:7px;"
+            onclick="this.parentElement.remove()"
+        >
+            ×
+        </button>
+
+    `;
+
+    container.appendChild(row);
+
+}
+
+
+function addPlan() {
+
+    const name =
+        document.getElementById("planName").value.trim();
+
+    const date =
+        document.getElementById("planDate").value;
+
+    const amount =
+        Number(
+            document.getElementById("planAmount").value
+        );
+
+    if (!name || !date || amount <= 0) {
+
+        alert("請完整填寫支出名稱、日期及總預算");
+
+        return;
+
+    }
+
+    const detailRows =
+        document.querySelectorAll(
+            "#detailInputs .detail-row"
+        );
+
+    const details = [];
+
+    detailRows.forEach(row => {
+
+        const inputs =
+            row.querySelectorAll("input");
+
+        const detailName =
+            inputs[0].value.trim();
+
+        const detailAmount =
+            Number(inputs[1].value);
+
+        if (
+            detailName &&
+            detailAmount > 0
+        ) {
+
+            details.push({
+
+                name: detailName,
+
+                amount: detailAmount
+
+            });
+
+        }
+
+    });
+
+    const detailTotal =
+        details.reduce(
+            (sum, d) =>
+                sum + d.amount,
+            0
+        );
+
+    if (
+        details.length &&
+        detailTotal > amount
+    ) {
+
+        alert(
+            `細項合計 ${money(detailTotal)} 已超過總預算 ${money(amount)}`
+        );
+
+        return;
+
+    }
+
+    data.plans.push({
+
+        id: Date.now().toString(),
+
+        name,
+
+        date,
+
+        amount,
+
+        details
+
+    });
+
+    saveData();
+
+    closeModal("planModal");
+
+    render();
+
+}
+
+
+/* =========================================================
+   Plan list
+========================================================= */
+
+function renderPlans() {
+
+    const year = getCurrentYear();
+    const month = getCurrentMonth();
+
+    const plans =
+        getPlansForMonth(year, month)
+            .sort(
+                (a,b) =>
+                    a.date.localeCompare(b.date)
+            );
+
+    const container =
+        document.getElementById("planList");
+
+    container.innerHTML = "";
+
+    if (!plans.length) {
+
+        container.innerHTML =
+            `<div class="empty">
+                尚未安排未來支出
+             </div>`;
+
+        return;
+
+    }
+
+    plans.forEach(plan => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "plan-item";
+
+        const detailsHTML =
+            plan.details && plan.details.length
+            ? plan.details.map(detail => `
+
+                <div class="detail-row">
+
+                    <span>
+                        ${escapeHTML(detail.name)}
+                    </span>
+
+                    <strong>
+                        ${money(detail.amount)}
+                    </strong>
+
+                </div>
+
+            `).join("")
+            : `
+                <div class="empty">
+                    尚未新增細項
+                </div>
+              `;
+
+        const today =
+            dateKey(new Date());
+
+        let status = "";
+
+        if (plan.date < today) {
+
+            status = `
+                <span style="
+                    color:#34c759;
+                    font-size:12px;
+                ">
+                    已到預定日期
+                </span>
+            `;
+
+        } else {
+
+            status = `
+                <span style="
+                    color:#ff9500;
+                    font-size:12px;
+                ">
+                    尚未發生
+                </span>
+            `;
+
+        }
+
+        div.innerHTML = `
+
+            <div class="plan-header">
+
+                <div>
+
+                    <div class="plan-name">
+                        ${escapeHTML(plan.name)}
+                    </div>
+
+                    <div class="plan-date">
+                        ${plan.date}　${status}
+                    </div>
+
+                </div>
+
+                <div class="plan-total">
+                    ${money(plan.amount)}
+                </div>
+
+            </div>
+
+            <div class="plan-details">
+
+                ${detailsHTML}
+
+            </div>
+
+            <div class="plan-actions">
+
+                <button
+                    class="btn btn-danger"
+                    onclick="deletePlan('${plan.id}')"
+                >
+                    刪除
+                </button>
+
+            </div>
+
+        `;
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+function deletePlan(id) {
+
+    if (!confirm("確定要刪除這筆未來支出嗎？"))
+        return;
+
+    data.plans =
+        data.plans.filter(
+            p => p.id !== id
+        );
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================================
+   Savings
+========================================================= */
+
+function renderSavings() {
+
+    const container =
+        document.getElementById("savingList");
+
+    container.innerHTML = "";
+
+    const manual =
+        data.savings || [];
+
+    const auto =
+        data.autoSavings || [];
+
+    const totalManual =
+        manual.reduce(
+            (sum, s) =>
+                sum + Number(s.amount || 0),
+            0
+        );
+
+    const totalAuto =
+        auto.reduce(
+            (sum, s) =>
+                sum + Number(s.amount || 0),
+            0
+        );
+
+    document.getElementById("savingTotal").textContent =
+        money(totalManual + totalAuto);
+
+    if (!manual.length && !auto.length) {
+
+        container.innerHTML =
+            `<div class="empty">
+                尚未有存款紀錄
+             </div>`;
+
+        return;
+
+    }
+
+    auto.forEach(saving => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "saving-item";
+
+        div.innerHTML = `
+
+            <div>
+                <strong>自動存款</strong>
+                <div style="
+                    font-size:12px;
+                    color:#888;
+                ">
+                    ${saving.date}
+                </div>
+            </div>
+
+            <strong style="color:#34c759;">
+                +${money(saving.amount)}
+            </strong>
+
+        `;
+
+        container.appendChild(div);
+
+    });
+
+    manual.forEach(saving => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "saving-item";
+
+        div.innerHTML = `
+
+            <div>
+                <strong>
+                    ${escapeHTML(saving.name)}
+                </strong>
+            </div>
+
+            <div style="
+                display:flex;
+                gap:8px;
+                align-items:center;
+            ">
+
+                <strong style="color:#34c759;">
+                    +${money(saving.amount)}
+                </strong>
+
+                <button
+                    class="btn btn-danger"
+                    onclick="deleteSaving('${saving.id}')"
+                >
+                    刪除
+                </button>
+
+            </div>
+
+        `;
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+function openSavingModal() {
+
+    document.getElementById("savingName").value = "";
+
+    document.getElementById("savingAmount").value = "";
+
+    openModal("savingModal");
+
+}
+
+
+function addSaving() {
+
+    const name =
+        document.getElementById("savingName").value.trim();
+
+    const amount =
+        Number(
+            document.getElementById("savingAmount").value
+        );
+
+    if (!name || amount <= 0) {
+
+        alert("請完整填寫名稱及金額");
+
+        return;
+
+    }
+
+    data.savings.push({
+
+        id: Date.now().toString(),
+
+        name,
+
+        amount
+
+    });
+
+    saveData();
+
+    closeModal("savingModal");
+
+    render();
+
+}
+
+
+function deleteSaving(id) {
+
+    if (!confirm("確定要刪除這筆存款嗎？"))
+        return;
+
+    data.savings =
+        data.savings.filter(
+            s => s.id !== id
+        );
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================================
+   自動存款
+========================================================= */
+
+/*
+    每週結束後，
+    如果該週有剩餘，
+    系統會自動計入存款。
+
+    注意：
+    這裡不直接寫入 localStorage，
+    而是每次重新計算已結束週的剩餘。
+*/
+
+function calculateAutoSavings() {
+
+    const year = getCurrentYear();
+    const month = getCurrentMonth();
+
+    const weeks =
+        getWeeks(year, month);
+
+    const today =
+        new Date();
+
+    const todayKey =
+        dateKey(today);
+
+    const result = [];
+
+    weeks.forEach((week, index) => {
+
+        const endDate =
+            new Date(
+                year,
+                month,
+                week.end
+            );
+
+        const endKey =
+            dateKey(endDate);
+
+        /*
+            只有已經結束的週才算存款
+        */
+
+        if (endKey < todayKey) {
+
+            const budget =
+                getFreeWeeklyBudget(
+                    year,
+                    month,
+                    index
+                );
+
+            const spent =
+                getWeekSpent(
+                    year,
+                    month,
+                    index
+                );
+
+            const remaining =
+                budget - spent;
+
+            if (remaining > 0) {
+
+                result.push({
+
+                    id:
+                        `auto-${year}-${month}-${index}`,
+
+                    date: endKey,
+
+                    amount: remaining
+
+                });
+
+            }
+
+        }
+
+    });
+
+    return result;
+
+}
+
+
+/* =========================================================
+   Modal
+========================================================= */
+
+function openModal(id) {
+
+    document
+        .getElementById(id)
+        .classList.add("show");
+
+}
+
+
+function closeModal(id) {
+
+    document
+        .getElementById(id)
+        .classList.remove("show");
+
+}
+
+
+/* =========================================================
+   Backup
+========================================================= */
+
+function backupData() {
+
+    const backup = {
+
+        version: 1,
+
+        exportDate:
+            new Date().toISOString(),
+
+        monthlyBudget:
+            FIXED_MONTHLY_BUDGET,
+
+        data
+
+    };
+
+    const blob =
+        new Blob(
+            [
+                JSON.stringify(
+                    backup,
+                    null,
+                    2
+                )
+            ],
+            {
+                type: "application/json"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    const now =
+        new Date();
+
+    const filename =
+        `週週記備份_${now.getFullYear()}-${String(
+            now.getMonth()+1
+        ).padStart(2,"0")}-${String(
+            now.getDate()
+        ).padStart(2,"0")}.json`;
+
+    a.href = url;
+
+    a.download = filename;
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+function restoreData(event) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file)
+        return;
+
+    const reader =
+        new FileReader();
+
+    reader.onload = function(e) {
+
+        try {
+
+            const backup =
+                JSON.parse(e.target.result);
+
+            if (!backup.data) {
+
+                alert("這不是有效的週週記備份檔");
+
+                return;
+
+            }
+
+            if (
+                !confirm(
+                    "還原資料會覆蓋目前資料，確定要繼續嗎？"
+                )
+            ) {
+
+                return;
+
+            }
+
+            data =
+                backup.data;
+
+            if (!data.expenses)
+                data.expenses = [];
+
+            if (!data.plans)
+                data.plans = [];
+
+            if (!data.savings)
+                data.savings = [];
+
+            if (!data.autoSavings)
+                data.autoSavings = [];
+
+            saveData();
+
+            alert("資料還原成功！");
+
+            render();
+
+        } catch (error) {
+
+            alert(
+                "備份檔讀取失敗，請確認檔案是否正確。"
+            );
+
+        }
+
+    };
+
+    reader.readAsText(file);
+
+}
+
+
+/* =========================================================
+   HTML escape
+========================================================= */
+
+function escapeHTML(str) {
+
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================================
+   Main render
+========================================================= */
+
+function render() {
+
+    const year =
+        getCurrentYear();
+
+    const month =
+        getCurrentMonth();
+
+    document.getElementById("monthTitle").textContent =
+        `${year} 年 ${month + 1} 月`;
+
+    renderHero();
+
+    renderMonthOverview();
+
+    renderCalendar();
+
+    renderWeeks();
+
+    renderExpenses();
+
+    renderPlans();
+
+    /*
+        自動存款只在畫面顯示時計算，
+        不會重複寫入。
+    */
+
+    const autoSavings =
+        calculateAutoSavings();
+
+    data.autoSavings =
+        autoSavings;
+
+    renderSavings();
+
+}
+
+
+/* =========================================================
+   Close modal when clicking outside
+========================================================= */
+
+document.querySelectorAll(".modal")
+    .forEach(modal => {
+
+        modal.addEventListener(
+            "click",
+            function(e) {
+
+                if (e.target === modal) {
+
+                    modal.classList.remove("show");
+
+                }
+
+            }
+        );
+
+    });
+
+
+/* =========================================================
+   Start
+========================================================= */
+
+loadData();
+
+render();
+
+</script>
+
+</body>
+</html>    font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
