@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -2938,6 +2939,885 @@ document.querySelectorAll(".modal")
 
     });
 
+</script>
+
+
+<script>
+/* =========================================================
+   預算核心邏輯 V2（只新增，不改動上方既有 HTML / JS）
+   規則：
+   1. 月預算固定 $15,000
+   2. 每日基準 = $15,000 ÷ 當月實際天數
+   3. 每天剩餘不結轉到隔天，直接視為存款
+   4. 超支才會降低後續每日可用額
+   5. 超支後：剩餘月預算 ÷ 剩餘天數，且不會高於原始每日基準
+   6. 未來支出只做「預留／規劃」與提醒，不會把省下來的錢拿去補超支
+========================================================= */
+
+(function(){
+
+    const V2_MONTHLY_BUDGET = 15000;
+
+    function v2DateOnly(date){
+        return new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        );
+    }
+
+    function v2SameDay(a,b){
+        return dateKey(a) === dateKey(b);
+    }
+
+    function v2MonthDays(){
+        const y = currentMonth.getFullYear();
+        const m = currentMonth.getMonth();
+        return new Date(y,m+1,0).getDate();
+    }
+
+    function v2BaseDailyBudget(){
+        return V2_MONTHLY_BUDGET / v2MonthDays();
+    }
+
+    function v2MonthRecords(){
+        const key = monthKey();
+        return (data.records || []).filter(r =>
+            String(r.date || "").startsWith(key)
+        );
+    }
+
+    function v2SpentOnKey(key){
+        return (data.records || [])
+            .filter(r => r.date === key)
+            .reduce((sum,r)=>sum + Number(r.amount || 0),0);
+    }
+
+    function v2SpentThroughDate(date){
+        const end = v2DateOnly(date);
+        return v2MonthRecords().reduce((sum,r)=>{
+            if(!r.date) return sum;
+            const d = parseDate(r.date);
+            return d <= end ? sum + Number(r.amount || 0) : sum;
+        },0);
+    }
+
+    function v2SpentBeforeDate(date){
+        const end = v2DateOnly(date);
+        return v2MonthRecords().reduce((sum,r)=>{
+            if(!r.date) return sum;
+            const d = parseDate(r.date);
+            return d < end ? sum + Number(r.amount || 0) : sum;
+        },0);
+    }
+
+    function v2IsCurrentMonth(){
+        const now = new Date();
+        return now.getFullYear() === currentMonth.getFullYear()
+            && now.getMonth() === currentMonth.getMonth();
+    }
+
+    function v2TodayForMonth(){
+        if(v2IsCurrentMonth()){
+            return v2DateOnly(new Date());
+        }
+        return v2DateOnly(getMonthDays()[0]);
+    }
+
+    /*
+       核心：
+       - 沒超支時，永遠維持原始每日基準，不因前幾天省錢而增加。
+       - 一旦累積超支，才把剩餘月預算平均分配到剩餘天數。
+    */
+    function v2DailyAllowance(date){
+        const d = v2DateOnly(date);
+        const monthDays = getMonthDays();
+        const base = v2BaseDailyBudget();
+
+        const index = monthDays.findIndex(day => v2SameDay(day,d));
+        if(index < 0) return 0;
+
+        const daysRemainingAfterToday = monthDays.length - index - 1;
+        const spentBefore = v2SpentBeforeDate(d);
+
+        const baseAllowedBefore = base * index;
+        const accumulatedOverage =
+            Math.max(0, spentBefore - baseAllowedBefore);
+
+        if(accumulatedOverage <= 0){
+            return base;
+        }
+
+        const remainingBudget =
+            Math.max(0, V2_MONTHLY_BUDGET - spentBefore);
+
+        const remainingDaysIncludingToday =
+            monthDays.length - index;
+
+        return remainingDaysIncludingToday > 0
+            ? Math.min(
+                base,
+                remainingBudget / remainingDaysIncludingToday
+            )
+            : 0;
+    }
+
+    function v2DailyRemaining(date){
+        return v2DailyAllowance(date) - v2SpentOnKey(dateKey(date));
+    }
+
+    /*
+       每日剩餘直接成為存款。
+       不把前一天的剩餘加到下一天。
+       尚未發生的日期不列入已累積存款。
+    */
+    function v2AutomaticSavings(){
+        const today = v2TodayForMonth();
+
+        return getMonthDays().reduce((sum,day)=>{
+            if(day > today) return sum;
+
+            return sum + Math.max(
+                0,
+                v2DailyRemaining(day)
+            );
+        },0);
+    }
+
+    /*
+       超支只計「已發生的實際支出」超過固定預算的部分。
+       儲蓄不會拿來抵銷超支。
+    */
+    function v2MonthOverage(){
+        const today = v2TodayForMonth();
+        const spentThroughToday = v2SpentThroughDate(today);
+
+        return Math.max(
+            0,
+            spentThroughToday - V2_MONTHLY_BUDGET
+        );
+    }
+
+    function v2RemainingMonthlyBudget(){
+        const today = v2TodayForMonth();
+        return Math.max(
+            0,
+            V2_MONTHLY_BUDGET - v2SpentThroughDate(today)
+        );
+    }
+
+    function v2FutureItems(){
+        return (data.futureExpenses || [])
+            .filter(item=>{
+                if(!item.date) return false;
+                const d = parseDate(item.date);
+                return d.getFullYear() === currentMonth.getFullYear()
+                    && d.getMonth() === currentMonth.getMonth();
+            });
+    }
+
+    function v2FutureReserved(){
+        return v2FutureItems().reduce(
+            (sum,item)=>{
+                const total = Number(item.total || 0);
+                const spent = Number(item.spent || 0);
+                return sum + Math.max(0,total-spent);
+            },
+            0
+        );
+    }
+
+    /*
+       將同一天的實際支出依序分配給未來支出，
+       讓「已花／剩餘」能隨記帳更新。
+    */
+    function v2FutureAllocation(){
+        const result = new Map();
+
+        v2FutureItems()
+            .slice()
+            .sort((a,b)=>
+                String(a.date).localeCompare(String(b.date))
+            )
+            .forEach(item=>{
+                const key = item.date;
+                const actual = v2SpentOnKey(key);
+                const previous = result.get(key) || 0;
+
+                const totalForItem = Number(item.total || 0);
+                const allocated =
+                    Math.max(
+                        0,
+                        Math.min(
+                            totalForItem,
+                            actual - previous
+                        )
+                    );
+
+                result.set(
+                    key,
+                    previous + allocated
+                );
+
+                item.__v2Spent = allocated;
+            });
+
+        return result;
+    }
+
+    function v2FutureSpentForItem(item){
+        /*
+           同日期若有多筆未來支出，依列表順序分配實際支出。
+        */
+        const sameDayItems = v2FutureItems()
+            .filter(x=>x.date===item.date)
+            .sort((a,b)=>
+                String(a.id).localeCompare(String(b.id))
+            );
+
+        let available = v2SpentOnKey(item.date);
+
+        for(const x of sameDayItems){
+            const total = Number(x.total || 0);
+            const used = Math.max(
+                0,
+                Math.min(total, available)
+            );
+
+            if(x.id === item.id){
+                return used;
+            }
+
+            available = Math.max(0, available-total);
+        }
+
+        return 0;
+    }
+
+    function v2WeekData(week){
+        const start = v2DateOnly(week.start);
+        const end = v2DateOnly(week.end);
+
+        const days = getMonthDays().filter(day=>
+            day >= start && day <= end
+        );
+
+        const budget = days.reduce(
+            (sum,day)=>sum + v2DailyAllowance(day),
+            0
+        );
+
+        const spent = days.reduce(
+            (sum,day)=>sum + v2SpentOnKey(dateKey(day)),
+            0
+        );
+
+        const remaining = budget-spent;
+
+        const future = v2FutureItems()
+            .filter(item=>{
+                const d = parseDate(item.date);
+                return d >= start && d <= end;
+            })
+            .reduce(
+                (sum,item)=>{
+                    const total = Number(item.total || 0);
+                    const spentFuture = v2FutureSpentForItem(item);
+                    return sum + Math.max(0,total-spentFuture);
+                },
+                0
+            );
+
+        const dailyAfterReallocation =
+            days.length > 0
+            ? Math.max(0, remaining / days.length)
+            : 0;
+
+        return {
+            days,
+            budget,
+            spent,
+            remaining,
+            future,
+            dailyAfterReallocation
+        };
+    }
+
+    function v2CurrentWeek(){
+        const target = v2TodayForMonth();
+        return getWeeks().find(week =>
+            week.days.some(day=>v2SameDay(day,target))
+        ) || getWeeks()[0];
+    }
+
+    function v2FutureWarningHTML(){
+        const today = v2TodayForMonth();
+        const items = v2FutureItems()
+            .filter(item=>v2SameDay(parseDate(item.date),today));
+
+        if(!items.length){
+            return `
+                <div class="v2-today-future">
+                    <strong>📌 今日無大型預計支出</strong>
+                    <span>今日預算不會因其他日期的剩餘金額而增加。</span>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="v2-today-future has-future">
+                <strong>⚠️ 今日已有預計支出</strong>
+                ${items.map(item=>{
+                    const total = Number(item.total || 0);
+                    const spent = v2FutureSpentForItem(item);
+                    const remaining = Math.max(0,total-spent);
+                    return `
+                        <div class="v2-future-line">
+                            <span>${escapeHTML(item.name)}</span>
+                            <span>${formatMoney(spent)} / ${formatMoney(total)} · 剩 ${formatMoney(remaining)}</span>
+                        </div>
+                    `;
+                }).join("")}
+                <small>這筆預計支出會進入本月規劃，但不會把前幾天的節省拿來補超支。</small>
+            </div>
+        `;
+    }
+
+    function v2EnsureStyles(){
+        if(document.getElementById("budgetV2Styles")) return;
+
+        const style = document.createElement("style");
+        style.id = "budgetV2Styles";
+        style.textContent = `
+            .v2-budget-panel{
+                background:#fff;
+                border:1px solid #e5e7eb;
+                border-radius:18px;
+                box-shadow:0 4px 18px rgba(0,0,0,.06);
+                padding:18px;
+                margin-bottom:18px;
+            }
+            .v2-budget-grid{
+                display:grid;
+                grid-template-columns:repeat(6,1fr);
+                gap:10px;
+                margin-top:12px;
+            }
+            .v2-stat{
+                border:1px solid #e5e7eb;
+                border-radius:13px;
+                padding:12px;
+                background:#fafbfc;
+            }
+            .v2-stat-label{
+                font-size:11px;
+                color:#6e6e73;
+                margin-bottom:5px;
+            }
+            .v2-stat-value{
+                font-size:19px;
+                font-weight:900;
+            }
+            .v2-stat.over .v2-stat-value{color:#ff3b30}
+            .v2-stat.save .v2-stat-value{color:#34c759}
+            .v2-stat.plan .v2-stat-value{color:#ff9500}
+            .v2-budget-note{
+                margin-top:12px;
+                padding:11px 12px;
+                border-radius:11px;
+                background:#f5f7fb;
+                color:#6e6e73;
+                font-size:12px;
+                line-height:1.6;
+            }
+            .v2-reallocation{
+                margin-top:12px;
+                padding:12px;
+                border-radius:12px;
+                background:#eaf4ff;
+                color:#1d1d1f;
+                font-size:13px;
+            }
+            .v2-reallocation strong{font-size:16px}
+            .v2-today-future{
+                margin-top:12px;
+                padding:11px 12px;
+                border-radius:12px;
+                background:#f5f7fb;
+                font-size:12px;
+                line-height:1.6;
+                display:flex;
+                flex-direction:column;
+                gap:4px;
+            }
+            .v2-today-future.has-future{
+                background:#fff5e5;
+                color:#8a5a00;
+            }
+            .v2-future-line{
+                display:flex;
+                justify-content:space-between;
+                gap:10px;
+            }
+            .v2-future-plan{
+                margin-top:9px;
+                padding:10px 12px;
+                border-radius:10px;
+                background:#fff5e5;
+                color:#8a5a00;
+                font-size:12px;
+            }
+            .v2-week-detail{
+                margin-top:8px;
+                padding-top:8px;
+                border-top:1px dashed #e5e7eb;
+                display:flex;
+                justify-content:space-between;
+                gap:10px;
+                color:#6e6e73;
+                font-size:11px;
+            }
+            .v2-overage-badge{
+                display:inline-block;
+                margin-left:5px;
+                padding:2px 6px;
+                border-radius:6px;
+                background:#fff0ef;
+                color:#ff3b30;
+                font-size:10px;
+                font-weight:800;
+            }
+            @media(max-width:900px){
+                .v2-budget-grid{grid-template-columns:repeat(3,1fr)}
+            }
+            @media(max-width:600px){
+                .v2-budget-grid{grid-template-columns:1fr 1fr}
+                .v2-future-line{flex-direction:column;gap:0}
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function v2EnsurePanel(){
+        let panel = document.getElementById("budgetV2Panel");
+        if(panel) return panel;
+
+        panel = document.createElement("section");
+        panel.id = "budgetV2Panel";
+        panel.className = "v2-budget-panel";
+
+        const summary = document.querySelector(".summary-grid");
+        if(summary && summary.parentNode){
+            summary.parentNode.insertBefore(panel, summary.nextSibling);
+        }else{
+            document.querySelector(".app")?.prepend(panel);
+        }
+
+        return panel;
+    }
+
+    function v2RenderPanel(){
+        const panel = v2EnsurePanel();
+        const today = v2TodayForMonth();
+        const todayAllowance = v2DailyAllowance(today);
+        const todaySpent = v2SpentOnKey(dateKey(today));
+        const todayRemaining = todayAllowance - todaySpent;
+
+        const monthSpent = v2SpentThroughDate(today);
+        const overage = v2MonthOverage();
+        const savings = v2AutomaticSavings();
+        const remainingMonth = v2RemainingMonthlyBudget();
+        const futureReserved = v2FutureReserved();
+        const plannedAfterFuture =
+            remainingMonth - futureReserved;
+
+        const remainingDays =
+            getMonthDays().filter(day=>day >= today).length;
+
+        const reallocatedDaily =
+            remainingDays > 0
+            ? Math.min(
+                v2BaseDailyBudget(),
+                remainingMonth / remainingDays
+            )
+            : 0;
+
+        panel.innerHTML = `
+            <div class="card-header" style="margin-bottom:0">
+                <div>
+                    <div class="card-title">🎯 預算重算中心</div>
+                    <div class="card-subtitle">
+                        固定月預算 $15,000｜依當月實際天數分配｜省下直接存款、超支才重分配
+                    </div>
+                </div>
+            </div>
+
+            <div class="v2-budget-grid">
+                <div class="v2-stat">
+                    <div class="v2-stat-label">固定月預算</div>
+                    <div class="v2-stat-value">${formatMoney(V2_MONTHLY_BUDGET)}</div>
+                </div>
+
+                <div class="v2-stat">
+                    <div class="v2-stat-label">每日基準</div>
+                    <div class="v2-stat-value">${formatMoney(v2BaseDailyBudget())}</div>
+                </div>
+
+                <div class="v2-stat">
+                    <div class="v2-stat-label">本月已使用</div>
+                    <div class="v2-stat-value">${formatMoney(monthSpent)}</div>
+                </div>
+
+                <div class="v2-stat over">
+                    <div class="v2-stat-label">本月超支</div>
+                    <div class="v2-stat-value">${formatMoney(overage)}</div>
+                </div>
+
+                <div class="v2-stat save">
+                    <div class="v2-stat-label">本月已存</div>
+                    <div class="v2-stat-value">${formatMoney(savings)}</div>
+                </div>
+
+                <div class="v2-stat plan">
+                    <div class="v2-stat-label">未來支出預留</div>
+                    <div class="v2-stat-value">${formatMoney(futureReserved)}</div>
+                </div>
+            </div>
+
+            <div class="v2-reallocation">
+                <div>📅 今天可用：<strong>${formatMoney(todayAllowance)}</strong></div>
+                <div>
+                    今日已用 ${formatMoney(todaySpent)}
+                    ${todayRemaining < 0
+                        ? `<span class="v2-overage-badge">今日超支 ${formatMoney(Math.abs(todayRemaining))}</span>`
+                        : `｜今日剩餘 ${formatMoney(todayRemaining)}`
+                    }
+                </div>
+                <div style="margin-top:4px">
+                    ${overage > 0
+                        ? `🔴 已發生超支，剩餘 ${remainingDays} 天重新分配為約 <strong>${formatMoney(reallocatedDaily)} / 日</strong>`
+                        : `🟢 尚未發生累積超支，維持每日基準 <strong>${formatMoney(v2BaseDailyBudget())}</strong>`
+                    }
+                </div>
+            </div>
+
+            <div class="v2-budget-note">
+                💡 每天少花的錢不會搬到明天；會直接累積到「本月已存」。
+                如果發生超支，存款也不會被拿來抵銷；系統只會用「本月剩餘預算 ÷ 剩餘天數」
+                降低後續每日可用額。未來支出則獨立列為預留金額。
+                目前扣除未來支出後的規劃可用額為 <strong>${formatMoney(plannedAfterFuture)}</strong>。
+            </div>
+        `;
+    }
+
+    function v2RenderToday(){
+        const card = document.querySelector(".today-card");
+        if(!card) return;
+
+        let box = document.getElementById("budgetV2TodayFuture");
+        if(!box){
+            box = document.createElement("div");
+            box.id = "budgetV2TodayFuture";
+            card.appendChild(box);
+        }
+
+        box.innerHTML = v2FutureWarningHTML();
+    }
+
+    function v2RenderWeekDetails(){
+        const list = document.getElementById("weekList");
+        if(!list) return;
+
+        const weeks = getWeeks();
+
+        weeks.forEach((week,index)=>{
+            const item = list.children[index];
+            if(!item) return;
+
+            const old = item.querySelector(".v2-week-detail");
+            if(old) old.remove();
+
+            const info = v2WeekData(week);
+            const detail = document.createElement("div");
+            detail.className = "v2-week-detail";
+
+            const over =
+                Math.max(0, info.spent-info.budget);
+
+            detail.innerHTML = `
+                <span>
+                    重算後每日 ${formatMoney(info.dailyAfterReallocation)}
+                    ${info.future > 0
+                        ? `｜未來支出剩 ${formatMoney(info.future)}`
+                        : ""}
+                </span>
+                <span class="${over>0 ? "bad" : "good"}">
+                    ${over>0
+                        ? `超支 ${formatMoney(over)}`
+                        : `本週剩餘 ${formatMoney(Math.max(0,info.remaining))}`
+                    }
+                </span>
+            `;
+
+            item.appendChild(detail);
+        });
+    }
+
+    function v2RenderFuture(){
+        const list = document.getElementById("futureList");
+        if(!list) return;
+
+        const items = v2FutureItems()
+            .slice()
+            .sort((a,b)=>
+                String(a.date).localeCompare(String(b.date))
+            );
+
+        const nodes = Array.from(
+            list.querySelectorAll(".future-item")
+        );
+
+        nodes.forEach((node,index)=>{
+            const item = items[index];
+            if(!item) return;
+
+            const old = node.querySelector(".v2-future-plan");
+            if(old) old.remove();
+
+            const total = Number(item.total || 0);
+            const spent = v2FutureSpentForItem(item);
+            const remaining = Math.max(0,total-spent);
+
+            const plan = document.createElement("div");
+            plan.className = "v2-future-plan";
+
+            if(remaining > 0){
+                plan.innerHTML =
+                    `📌 已納入本月規劃預留：${formatMoney(remaining)}｜實際已用 ${formatMoney(spent)}`;
+            }else{
+                plan.innerHTML =
+                    `✅ 這筆預計支出已使用完畢：${formatMoney(total)}`;
+            }
+
+            node.appendChild(plan);
+        });
+    }
+
+    function v2RefreshExistingSummary(){
+        const week = v2CurrentWeek();
+        const info = v2WeekData(week);
+
+        const today = v2TodayForMonth();
+        const todayAllowance = v2DailyAllowance(today);
+        const todaySpent = v2SpentOnKey(dateKey(today));
+        const todayRemaining = todayAllowance - todaySpent;
+
+        const monthSpent = v2SpentThroughDate(today);
+        const savings =
+            v2AutomaticSavings()
+            +
+            (data.savings || [])
+                .filter(s=>s.month===monthKey())
+                .reduce((sum,s)=>sum+Number(s.amount || 0),0);
+
+        const set = (id,value)=>{
+            const el = document.getElementById(id);
+            if(el) el.textContent = value;
+        };
+
+        set(
+            "summaryWeekRemaining",
+            formatMoney(Math.max(0,info.remaining))
+        );
+
+        set(
+            "summaryWeekInfo",
+            `${formatDate(week.start)}－${formatDate(week.end)}｜本週預算 ${formatMoney(info.budget)}`
+        );
+
+        set(
+            "summaryToday",
+            formatMoney(Math.max(0,todayRemaining))
+        );
+
+        set(
+            "summarySpent",
+            formatMoney(monthSpent)
+        );
+
+        set(
+            "summarySavings",
+            formatMoney(savings)
+        );
+
+        const todayMoney = document.getElementById("todayMoney");
+        if(todayMoney){
+            todayMoney.textContent =
+                formatMoney(Math.max(0,todayRemaining));
+        }
+
+        const status = document.getElementById("todayStatus");
+        if(status){
+            if(todayRemaining >= 0){
+                status.className = "today-status good";
+                status.textContent =
+                    `✓ 今日已使用 ${formatMoney(todaySpent)}，還可以使用 ${formatMoney(todayRemaining)}`;
+            }else{
+                status.className = "today-status over";
+                status.textContent =
+                    `⚠️ 今日超支 ${formatMoney(Math.abs(todayRemaining))}；後續每日預算將重新分配`;
+            }
+        }
+
+        /* 修正既有 Hero 顯示：未來支出不會直接吃掉基本週預算 */
+        const heroPercent =
+            info.budget > 0
+            ? Math.min(100,(info.spent/info.budget)*100)
+            : 0;
+
+        set("currentWeekName",`第 ${week.index} 週`);
+        set("currentWeekDate",`${formatDate(week.start)}－${formatDate(week.end)}`);
+        set("heroRemaining",formatMoney(Math.max(0,info.remaining)));
+        set("heroBudget",formatMoney(info.budget));
+        set("heroSpent",`已使用 ${formatMoney(info.spent)}`);
+        set("heroPercent",`${Math.round(heroPercent)}%`);
+
+        const heroProgress = document.getElementById("heroProgress");
+        if(heroProgress){
+            heroProgress.style.width = heroPercent + "%";
+        }
+
+        /* 修正既有每週清單：預算由實際天數與超支重分配決定 */
+        const weekList = document.getElementById("weekList");
+        if(weekList){
+            getWeeks().forEach((w,index)=>{
+                const node = weekList.children[index];
+                if(!node) return;
+
+                const wInfo = v2WeekData(w);
+                const amount = node.querySelector(".week-amount strong");
+                const bottom = node.querySelector(".week-bottom span:first-child");
+                const fill = node.querySelector(".week-bar-fill");
+
+                if(amount){
+                    amount.textContent =
+                        formatMoney(Math.max(0,wInfo.remaining));
+                }
+
+                if(bottom){
+                    bottom.textContent =
+                        `預算 ${formatMoney(wInfo.budget)} · 已用 ${formatMoney(wInfo.spent)}`;
+                }
+
+                if(fill){
+                    const pct =
+                        wInfo.budget > 0
+                        ? Math.min(100,(wInfo.spent/wInfo.budget)*100)
+                        : 0;
+                    fill.style.width = pct + "%";
+                }
+            });
+        }
+
+        /* 修正既有日曆每日預算 */
+        const calendar = document.getElementById("calendar");
+        if(calendar){
+            const dayNodes = Array.from(
+                calendar.querySelectorAll(".calendar-day")
+            ).filter(node=>!node.classList.contains("empty"));
+
+            getMonthDays().forEach((day,index)=>{
+                const node = dayNodes[index];
+                if(!node) return;
+
+                const money = node.querySelector(".calendar-day-money");
+                if(money){
+                    money.textContent =
+                        `可 ${formatMoney(v2DailyAllowance(day))}`;
+                }
+            });
+        }
+
+        /* 修正未來支出的實際進度 */
+        const futureList = document.getElementById("futureList");
+        if(futureList){
+            const items = v2FutureItems()
+                .slice()
+                .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+
+            const nodes = Array.from(
+                futureList.querySelectorAll(".future-item")
+            );
+
+            nodes.forEach((node,index)=>{
+                const item = items[index];
+                if(!item) return;
+
+                const total = Number(item.total || 0);
+                const futureSpent = v2FutureSpentForItem(item);
+                const futureRemaining = Math.max(0,total-futureSpent);
+                const pct = total > 0
+                    ? Math.min(100,(futureSpent/total)*100)
+                    : 0;
+
+                const fill = node.querySelector(".future-progress-fill");
+                const bottomSpans =
+                    node.querySelectorAll(".future-bottom span");
+
+                if(fill){
+                    fill.style.width = pct + "%";
+                }
+
+                if(bottomSpans[0]){
+                    bottomSpans[0].textContent =
+                        `已花 ${formatMoney(futureSpent)}`;
+                }
+
+                if(bottomSpans[1]){
+                    bottomSpans[1].textContent =
+                        `剩 ${formatMoney(futureRemaining)}`;
+                }
+            });
+        }
+    }
+
+    const originalRender =
+        window.render;
+
+    window.render = function(){
+
+        /*
+           先讓原本 App 完整執行。
+           上方既有 HTML / JS 不刪除、不搬動。
+        */
+        if(typeof originalRender === "function"){
+            originalRender();
+        }
+
+        try{
+            if(!data.records) data.records = [];
+            if(!data.futureExpenses) data.futureExpenses = [];
+            if(!data.savings) data.savings = [];
+
+            v2EnsureStyles();
+            v2RefreshExistingSummary();
+            v2RenderPanel();
+            v2RenderToday();
+            v2RenderWeekDetails();
+            v2RenderFuture();
+        }catch(error){
+            console.error("預算核心邏輯 V2 更新失敗：",error);
+        }
+    };
+
+    /*
+       初次執行：
+       原本 render 已在前一段 script 執行過，
+       這裡再以新規則刷新一次。
+    */
+    window.render();
+
+})();
 </script>
 
 </body>
