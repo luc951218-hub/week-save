@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>週週記｜預算管理</title>
+<title>週週記｜月度預算管理</title>
 
 <style>
 :root {
     --primary: #007aff;
     --primary-light: #eaf4ff;
     --green: #34c759;
-    --green-light: #e9f9ef;
+    --green-light: #e8f8ed;
     --red: #ff3b30;
     --red-light: #fff0ef;
     --orange: #ff9500;
     --orange-light: #fff5e6;
     --purple: #af52de;
-    --purple-light: #f7edfc;
+    --purple-light: #f5e9fb;
 
     --bg: #f5f6f8;
     --card: #ffffff;
@@ -24,7 +24,7 @@
     --sub: #6e6e73;
     --border: #e5e5ea;
 
-    --shadow: 0 4px 18px rgba(0,0,0,.06);
+    --shadow: 0 4px 18px rgba(0,0,0,0.06);
     --radius: 18px;
 }
 
@@ -37,9 +37,8 @@ body {
     font-family:
         -apple-system,
         BlinkMacSystemFont,
-        "SF Pro Display",
-        "PingFang TC",
-        "Microsoft JhengHei",
+        "Segoe UI",
+        "Noto Sans TC",
         sans-serif;
     background: var(--bg);
     color: var(--text);
@@ -56,8 +55,8 @@ button {
 }
 
 .app {
-    max-width: 1180px;
-    margin: auto;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 24px;
 }
 
@@ -69,7 +68,7 @@ button {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
 }
 
 .logo-area h1 {
@@ -86,27 +85,87 @@ button {
 .month-selector {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 8px 12px;
+    box-shadow: var(--shadow);
 }
 
 .month-selector button {
-    width: 36px;
-    height: 36px;
     border: none;
-    background: white;
-    border-radius: 50%;
-    box-shadow: var(--shadow);
-    font-size: 18px;
+    background: transparent;
+    font-size: 20px;
+    width: 30px;
+    height: 30px;
 }
 
-.month-selector strong {
+.month-title {
+    font-weight: 700;
     min-width: 90px;
     text-align: center;
 }
 
 /* =========================
-   Cards
+   Summary
 ========================= */
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+}
+
+.summary-label {
+    color: var(--sub);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.summary-value {
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.summary-small {
+    margin-top: 6px;
+    color: var(--sub);
+    font-size: 12px;
+}
+
+.blue {
+    color: var(--primary);
+}
+
+.green {
+    color: var(--green);
+}
+
+.red {
+    color: var(--red);
+}
+
+.orange {
+    color: var(--orange);
+}
+
+/* =========================
+   Main Grid
+========================= */
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 18px;
+}
 
 .card {
     background: var(--card);
@@ -116,21 +175,22 @@ button {
     margin-bottom: 18px;
 }
 
-.section-title {
+.card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
 }
 
-.section-title h2 {
+.card-title {
     font-size: 18px;
-    margin: 0;
+    font-weight: 800;
 }
 
-.section-title span {
-    font-size: 13px;
+.card-subtitle {
     color: var(--sub);
+    font-size: 12px;
+    margin-top: 3px;
 }
 
 /* =========================
@@ -138,153 +198,121 @@ button {
 ========================= */
 
 .budget-hero {
-    display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 20px;
-    background: linear-gradient(135deg, #ffffff, #f4f9ff);
+    background: linear-gradient(135deg, #007aff, #5aa9ff);
+    color: white;
+    border-radius: 22px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 25px rgba(0,122,255,0.2);
 }
 
-.total-budget {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-}
-
-.budget-circle {
-    width: 145px;
-    height: 145px;
-    border-radius: 50%;
-    background:
-        conic-gradient(
-            var(--primary) var(--percent, 0%),
-            #e9edf2 var(--percent, 0%)
-        );
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    flex-shrink: 0;
-}
-
-.budget-circle::after {
-    content: "";
-    position: absolute;
-    width: 112px;
-    height: 112px;
-    background: white;
-    border-radius: 50%;
-}
-
-.circle-content {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-}
-
-.circle-content strong {
-    display: block;
-    font-size: 24px;
-}
-
-.circle-content small {
-    color: var(--sub);
-}
-
-.budget-info h3 {
-    margin: 0 0 5px;
-    color: var(--sub);
-    font-size: 14px;
-}
-
-.budget-info .amount {
-    font-size: 32px;
-    font-weight: 800;
-}
-
-.fixed-label {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 5px 10px;
-    border-radius: 20px;
-    background: #f1f1f3;
-    color: var(--sub);
-    font-size: 12px;
-}
-
-.budget-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-}
-
-.stat-box {
-    background: #f7f7f9;
-    border-radius: 14px;
-    padding: 15px;
-}
-
-.stat-box .label {
-    color: var(--sub);
-    font-size: 12px;
-}
-
-.stat-box strong {
-    display: block;
-    margin-top: 5px;
-    font-size: 21px;
-}
-
-.stat-box.green strong {
-    color: var(--green);
-}
-
-.stat-box.red strong {
-    color: var(--red);
-}
-
-.stat-box.orange strong {
-    color: var(--orange);
-}
-
-/* =========================
-   Weekly
-========================= */
-
-.week-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
-}
-
-.week-card {
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    background: #fff;
-    position: relative;
-}
-
-.week-card.current {
-    border: 2px solid var(--primary);
-    background: #fbfdff;
-}
-
-.week-header {
+.budget-hero-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.week-number {
-    font-weight: 700;
+.budget-hero-label {
+    font-size: 14px;
+    opacity: 0.9;
 }
 
-.current-badge {
-    background: var(--primary);
-    color: white;
-    font-size: 10px;
-    padding: 4px 8px;
+.fixed-budget {
+    font-size: 34px;
+    font-weight: 900;
+    margin: 5px 0;
+}
+
+.fixed-note {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.progress {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.25);
     border-radius: 10px;
+    overflow: hidden;
+    margin-top: 18px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 10px;
+    transition: width 0.3s;
+}
+
+/* =========================
+   Today
+========================= */
+
+.today-card {
+    background: linear-gradient(135deg, #ffffff, #f7fbff);
+    border: 1px solid #dcecff;
+}
+
+.today-money {
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--primary);
+}
+
+.today-desc {
+    color: var(--sub);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.today-status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    font-size: 13px;
+}
+
+.today-status.over {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+.today-status.good {
+    background: var(--green-light);
+    color: #218838;
+}
+
+/* =========================
+   Weekly Budget
+========================= */
+
+.week-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.week-item {
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 15px;
+    transition: 0.2s;
+}
+
+.week-item.current {
+    border: 2px solid var(--primary);
+    background: #f8fbff;
+}
+
+.week-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.week-name {
+    font-weight: 800;
 }
 
 .week-date {
@@ -294,105 +322,45 @@ button {
 }
 
 .week-amount {
-    margin-top: 15px;
+    text-align: right;
 }
 
 .week-amount strong {
-    font-size: 25px;
+    font-size: 18px;
 }
 
-.week-amount span {
-    color: var(--sub);
-    font-size: 12px;
-}
-
-.progress {
+.week-bar {
     height: 8px;
-    background: #e9e9ed;
-    border-radius: 10px;
+    background: #eeeeef;
+    border-radius: 8px;
     overflow: hidden;
-    margin: 12px 0;
+    margin: 12px 0 8px;
 }
 
-.progress-fill {
+.week-bar-fill {
     height: 100%;
-    border-radius: 10px;
-    transition: width .3s;
-}
-
-.progress-blue {
+    border-radius: 8px;
     background: var(--primary);
-}
-
-.progress-green {
-    background: var(--green);
-}
-
-.progress-red {
-    background: var(--red);
+    transition: width 0.3s;
 }
 
 .week-bottom {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
+    color: var(--sub);
 }
 
-.remaining {
-    color: var(--green);
+.week-status {
     font-weight: 700;
 }
 
-.remaining.over {
+.week-status.good {
+    color: var(--green);
+}
+
+.week-status.bad {
     color: var(--red);
-}
-
-/* =========================
-   Today
-========================= */
-
-.today-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-}
-
-.today-box {
-    padding: 18px;
-    border-radius: 16px;
-    background: #f7f8fa;
-}
-
-.today-box.blue {
-    background: var(--primary-light);
-}
-
-.today-box.green {
-    background: var(--green-light);
-}
-
-.today-box.orange {
-    background: var(--orange-light);
-}
-
-.today-box.red {
-    background: var(--red-light);
-}
-
-.today-box .emoji {
-    font-size: 25px;
-}
-
-.today-box .label {
-    color: var(--sub);
-    font-size: 13px;
-    margin-top: 8px;
-}
-
-.today-box strong {
-    display: block;
-    font-size: 27px;
-    margin-top: 3px;
 }
 
 /* =========================
@@ -402,71 +370,56 @@ button {
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 5px;
 }
 
 .calendar-weekday {
     text-align: center;
     color: var(--sub);
     font-size: 12px;
-    padding: 5px;
+    padding: 6px 0;
 }
 
-.day {
-    min-height: 88px;
-    background: #fafafa;
-    border: 1px solid #eeeeF2;
-    border-radius: 12px;
-    padding: 8px;
+.calendar-day {
+    min-height: 70px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px;
+    background: #fff;
     position: relative;
-    cursor: pointer;
 }
 
-.day:hover {
-    border-color: var(--primary);
-}
-
-.day.empty {
+.calendar-day.empty {
     background: transparent;
     border: none;
-    cursor: default;
 }
 
-.day.today {
+.calendar-day.today {
     border: 2px solid var(--primary);
+    background: #f3f9ff;
 }
 
-.day-number {
-    font-size: 13px;
+.calendar-day-number {
+    font-size: 12px;
     font-weight: 700;
 }
 
-.day-budget {
+.calendar-day-money {
+    margin-top: 7px;
     font-size: 10px;
-    color: var(--sub);
-    margin-top: 6px;
+    color: var(--primary);
 }
 
-.day-spent {
-    font-size: 11px;
-    font-weight: 700;
-    margin-top: 3px;
-}
-
-.day-future {
-    margin-top: 3px;
-    color: var(--orange);
+.calendar-day-event {
+    margin-top: 4px;
     font-size: 9px;
-}
-
-.day-dot {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--orange);
+    background: var(--orange-light);
+    color: var(--orange);
+    padding: 2px 4px;
+    border-radius: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* =========================
@@ -479,128 +432,89 @@ button {
     gap: 12px;
 }
 
-.future-card {
+.future-item {
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 16px;
+    padding: 15px;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-.future-main {
+.future-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.future-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
 }
 
 .future-name {
-    font-size: 16px;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .future-date {
-    color: var(--sub);
     font-size: 12px;
-    margin-top: 3px;
+    color: var(--sub);
+    margin-top: 4px;
 }
 
 .future-total {
     font-size: 20px;
-    font-weight: 800;
+    font-weight: 900;
 }
 
 .future-progress {
     margin-top: 12px;
 }
 
+.future-progress-bar {
+    height: 7px;
+    background: #eee;
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.future-progress-fill {
+    height: 100%;
+    background: var(--primary);
+}
+
 .future-detail {
-    display: none;
-    margin-top: 14px;
-    border-top: 1px solid var(--border);
-    padding-top: 12px;
-}
-
-.future-detail.open {
-    display: block;
-}
-
-.detail-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 9px 0;
-    border-bottom: 1px solid #f0f0f2;
-}
-
-.detail-item:last-child {
-    border-bottom: none;
-}
-
-.detail-name {
-    font-size: 13px;
-}
-
-.detail-price {
-    font-weight: 700;
-}
-
-.future-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
+    margin-top: 7px;
+    color: var(--sub);
+    font-size: 12px;
 }
 
 /* =========================
    Savings
 ========================= */
 
-.savings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 14px;
+.saving-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.saving-card {
-    background: linear-gradient(135deg, #fff, #faf5ff);
-    border: 1px solid #eadcf4;
-    border-radius: 16px;
-    padding: 16px;
-}
-
-.saving-header {
+.saving-item {
     display: flex;
     justify-content: space-between;
-}
-
-.saving-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-    display: flex;
     align-items: center;
-    justify-content: center;
-    background: var(--purple-light);
-    font-size: 21px;
+    padding: 13px;
+    border-radius: 13px;
+    background: #f8f8fa;
 }
 
-.saving-title {
+.saving-name {
     font-weight: 700;
 }
 
-.saving-target {
-    font-size: 12px;
-    color: var(--sub);
-    margin-top: 3px;
-}
-
 .saving-amount {
-    margin-top: 18px;
-    font-size: 24px;
+    color: var(--green);
     font-weight: 800;
-}
-
-.saving-gap {
-    font-size: 12px;
-    color: var(--sub);
-    margin-top: 3px;
 }
 
 /* =========================
@@ -609,10 +523,10 @@ button {
 
 .btn {
     border: none;
-    border-radius: 12px;
-    padding: 9px 14px;
+    border-radius: 11px;
+    padding: 9px 13px;
+    font-weight: 700;
     font-size: 13px;
-    font-weight: 600;
 }
 
 .btn-primary {
@@ -620,14 +534,9 @@ button {
     color: white;
 }
 
-.btn-light {
+.btn-secondary {
     background: #f1f1f3;
     color: var(--text);
-}
-
-.btn-green {
-    background: var(--green);
-    color: white;
 }
 
 .btn-danger {
@@ -635,48 +544,14 @@ button {
     color: var(--red);
 }
 
-.add-btn {
-    width: 38px;
-    height: 38px;
-    border: none;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    font-size: 23px;
+.btn-green {
+    background: var(--green-light);
+    color: var(--green);
 }
 
 /* =========================
-   Modal
+   Forms
 ========================= */
-
-.modal-bg {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.35);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.modal-bg.show {
-    display: flex;
-}
-
-.modal {
-    background: white;
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    border-radius: 22px;
-    padding: 22px;
-}
-
-.modal h2 {
-    margin-top: 0;
-}
 
 .form-group {
     margin-bottom: 14px;
@@ -685,18 +560,18 @@ button {
 .form-group label {
     display: block;
     font-size: 13px;
-    color: var(--sub);
+    font-weight: 700;
     margin-bottom: 6px;
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
+    padding: 11px 12px;
     border: 1px solid var(--border);
     border-radius: 11px;
-    padding: 11px;
-    font-size: 14px;
     outline: none;
+    background: white;
 }
 
 .form-group input:focus,
@@ -704,38 +579,103 @@ button {
     border-color: var(--primary);
 }
 
-.modal-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
+/* =========================
+   Modal
+========================= */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
 
-.modal-buttons button {
-    flex: 1;
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 22px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 22px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.close {
+    border: none;
+    background: #f1f1f3;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+}
+
+.detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f8fa;
+    padding: 12px;
+    border-radius: 11px;
+}
+
+.detail-name {
+    font-weight: 600;
+}
+
+.detail-price {
+    font-weight: 800;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
 }
 
 /* =========================
-   Detail Editor
+   AI Suggestion
 ========================= */
 
-.detail-editor {
-    border: 1px solid var(--border);
-    border-radius: 13px;
-    padding: 12px;
-    margin-bottom: 10px;
+.ai-card {
+    background: linear-gradient(135deg, #eef7ff, #ffffff);
+    border: 1px solid #cfe6ff;
 }
 
-.detail-editor-row {
-    display: grid;
-    grid-template-columns: 1fr 100px 35px;
-    gap: 7px;
+.ai-content {
+    font-size: 14px;
+    line-height: 1.7;
 }
 
-.remove-detail {
-    border: none;
-    border-radius: 9px;
-    background: var(--red-light);
-    color: var(--red);
+.ai-highlight {
+    color: var(--primary);
+    font-weight: 800;
 }
 
 /* =========================
@@ -744,8 +684,8 @@ button {
 
 .empty {
     text-align: center;
+    padding: 25px 10px;
     color: var(--sub);
-    padding: 30px 10px;
     font-size: 13px;
 }
 
@@ -753,48 +693,41 @@ button {
    Responsive
 ========================= */
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
     .app {
         padding: 14px;
     }
 
     .header {
-        align-items: flex-start;
-    }
-
-    .budget-hero {
-        grid-template-columns: 1fr;
-    }
-
-    .total-budget {
         flex-direction: column;
         align-items: flex-start;
+        gap: 14px;
     }
 
-    .today-grid {
+    .summary-grid {
         grid-template-columns: 1fr 1fr;
     }
 
-    .calendar {
-        gap: 3px;
+    .summary-value {
+        font-size: 21px;
     }
 
-    .day {
-        min-height: 70px;
-        padding: 5px;
+    .calendar-day {
+        min-height: 55px;
     }
 
-    .day-budget {
+    .calendar-day-money {
         font-size: 8px;
-    }
-
-    .day-spent {
-        font-size: 9px;
-    }
-
-    .week-grid {
-        grid-template-columns: 1fr;
     }
 }
 </style>
@@ -805,173 +738,206 @@ button {
 <div class="app">
 
     <!-- Header -->
-    <div class="header">
+    <header class="header">
         <div class="logo-area">
-            <h1>週週記</h1>
-            <p>讓每一週都知道自己還能花多少</p>
+            <h1>📒 週週記</h1>
+            <p>把每個月的 15,000 元，分配到每一天。</p>
         </div>
 
         <div class="month-selector">
             <button onclick="changeMonth(-1)">‹</button>
-            <strong id="monthTitle"></strong>
+            <div class="month-title" id="monthTitle"></div>
             <button onclick="changeMonth(1)">›</button>
         </div>
-    </div>
+    </header>
 
-    <!-- 固定預算 -->
-    <div class="card budget-hero">
 
-        <div class="total-budget">
+    <!-- Summary -->
+    <section class="summary-grid">
 
-            <div class="budget-circle" id="budgetCircle">
-                <div class="circle-content">
-                    <strong id="remainingPercent">100%</strong>
-                    <small>剩餘</small>
+        <div class="summary-card">
+            <div class="summary-label">本月固定預算</div>
+            <div class="summary-value blue">$15,000</div>
+            <div class="summary-small">每月固定，不可修改</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">本月已花費</div>
+            <div class="summary-value" id="monthSpent">$0</div>
+            <div class="summary-small" id="monthSpentPercent">使用 0%</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">目前剩餘</div>
+            <div class="summary-value green" id="monthRemaining">$15,000</div>
+            <div class="summary-small">尚可支配金額</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">預計存款</div>
+            <div class="summary-value green" id="totalSavings">$0</div>
+            <div class="summary-small">包含每週結餘</div>
+        </div>
+
+    </section>
+
+
+    <div class="main-grid">
+
+        <div>
+
+            <!-- Monthly Budget -->
+            <section class="budget-hero">
+
+                <div class="budget-hero-top">
+                    <div>
+                        <div class="budget-hero-label">本月固定預算</div>
+                        <div class="fixed-budget">$15,000</div>
+                        <div class="fixed-note">
+                            系統固定設定，每月不需重新輸入
+                        </div>
+                    </div>
+
+                    <div style="font-size:38px;">💰</div>
                 </div>
-            </div>
 
-            <div class="budget-info">
-                <h3>本月固定預算</h3>
-                <div class="amount">$15,000</div>
-                <div class="fixed-label">🔒 固定預算，不可修改</div>
-            </div>
+                <div class="progress">
+                    <div class="progress-fill" id="monthProgress"></div>
+                </div>
 
-        </div>
+            </section>
 
-        <div class="budget-stats">
 
-            <div class="stat-box">
-                <div class="label">本月已花</div>
-                <strong id="monthSpent">$0</strong>
-            </div>
+            <!-- Today -->
+            <section class="card today-card">
 
-            <div class="stat-box green">
-                <div class="label">目前可用</div>
-                <strong id="monthAvailable">$15,000</strong>
-            </div>
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📌 今日可以使用多少？</div>
+                        <div class="card-subtitle" id="todayDate"></div>
+                    </div>
+                </div>
 
-            <div class="stat-box orange">
-                <div class="label">未來預定支出</div>
-                <strong id="futureTotal">$0</strong>
-            </div>
+                <div class="today-money" id="todayAvailable">$0</div>
 
-            <div class="stat-box green">
-                <div class="label">可累積存款</div>
-                <strong id="accumulatedSavings">$0</strong>
-            </div>
+                <div class="today-desc">
+                    依照目前這一週剩餘預算與剩餘天數計算
+                </div>
 
-        </div>
-    </div>
+                <div class="today-status" id="todayStatus">
+                    今日預算計算中...
+                </div>
 
-    <!-- 今日 -->
-    <div class="card">
+            </section>
 
-        <div class="section-title">
-            <h2>☀️ 今天可以怎麼花</h2>
-            <span id="todayDate"></span>
-        </div>
 
-        <div class="today-grid">
+            <!-- Weekly -->
+            <section class="card">
 
-            <div class="today-box blue">
-                <div class="emoji">💰</div>
-                <div class="label">今天基礎可用</div>
-                <strong id="todayBudget">$0</strong>
-            </div>
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📊 每週預算</div>
+                        <div class="card-subtitle">
+                            每週結餘會自動轉入存款
+                        </div>
+                    </div>
+                </div>
 
-            <div class="today-box green">
-                <div class="emoji">🛒</div>
-                <div class="label">今天已花</div>
-                <strong id="todaySpent">$0</strong>
-            </div>
+                <div class="week-list" id="weekList"></div>
 
-            <div class="today-box orange">
-                <div class="emoji">✈️</div>
-                <div class="label">今天預定支出</div>
-                <strong id="todayFuture">$0</strong>
-            </div>
+            </section>
 
-            <div class="today-box green" id="todayRemainBox">
-                <div class="emoji">✨</div>
-                <div class="label">今天還能花</div>
-                <strong id="todayRemaining">$0</strong>
-            </div>
+
+            <!-- Calendar -->
+            <section class="card">
+
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📅 當月日曆</div>
+                        <div class="card-subtitle">
+                            可以直接看到每日預算與未來支出
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calendar" id="calendar"></div>
+
+            </section>
 
         </div>
 
-    </div>
 
-    <!-- 每週 -->
-    <div class="card">
+        <div>
 
-        <div class="section-title">
-            <div>
-                <h2>📊 每週預算</h2>
-                <span id="weekDescription"></span>
-            </div>
+            <!-- Future Expenses -->
+            <section class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="card-title">🧳 未來支出</div>
+                        <div class="card-subtitle">
+                            會提前影響後續週預算
+                        </div>
+                    </div>
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="openFutureModal()">
+                        ＋ 新增
+                    </button>
+
+                </div>
+
+                <div class="future-list" id="futureList"></div>
+
+            </section>
+
+
+            <!-- Savings -->
+            <section class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="card-title">🏦 預計存款</div>
+                        <div class="card-subtitle">
+                            每週剩餘會自動計入
+                        </div>
+                    </div>
+
+                    <button
+                        class="btn btn-green"
+                        onclick="openSavingModal()">
+                        ＋ 新增
+                    </button>
+
+                </div>
+
+                <div class="saving-list" id="savingList"></div>
+
+            </section>
+
+
+            <!-- AI -->
+            <section class="card ai-card">
+
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">🤖 AI 預算建議</div>
+                        <div class="card-subtitle">
+                            根據目前支出與未來行程分析
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-content" id="aiSuggestion">
+                    正在分析你的預算...
+                </div>
+
+            </section>
+
         </div>
-
-        <div class="week-grid" id="weekGrid"></div>
-
-    </div>
-
-    <!-- 日曆 -->
-    <div class="card">
-
-        <div class="section-title">
-            <h2>📅 當月日曆</h2>
-            <span>點擊日期查看當天支出</span>
-        </div>
-
-        <div class="calendar" id="calendar"></div>
-
-    </div>
-
-    <!-- 未來支出 -->
-    <div class="card">
-
-        <div class="section-title">
-            <div>
-                <h2>✈️ 未來支出</h2>
-                <span>提前安排，避免未來某週突然超支</span>
-            </div>
-
-            <button class="add-btn" onclick="openFutureModal()">+</button>
-        </div>
-
-        <div class="future-list" id="futureList"></div>
-
-    </div>
-
-    <!-- 記帳 -->
-    <div class="card">
-
-        <div class="section-title">
-            <div>
-                <h2>🧾 本月記帳</h2>
-                <span>實際花費會影響每週剩餘預算</span>
-            </div>
-
-            <button class="add-btn" onclick="openExpenseModal()">+</button>
-        </div>
-
-        <div id="expenseList"></div>
-
-    </div>
-
-    <!-- 預計存款 -->
-    <div class="card">
-
-        <div class="section-title">
-            <div>
-                <h2>🏦 預計存款</h2>
-                <span>可以自己新增你的存款目標</span>
-            </div>
-
-            <button class="add-btn" onclick="openSavingModal()">+</button>
-        </div>
-
-        <div class="savings-grid" id="savingsList"></div>
 
     </div>
 
@@ -982,46 +948,53 @@ button {
      Future Expense Modal
 ========================= -->
 
-<div class="modal-bg" id="futureModal">
+<div class="modal" id="futureModal">
 
-    <div class="modal">
+    <div class="modal-content">
 
-        <h2>✈️ 新增未來支出</h2>
+        <div class="modal-header">
+            <div class="modal-title">新增未來支出</div>
+            <button class="close" onclick="closeFutureModal()">×</button>
+        </div>
 
         <div class="form-group">
             <label>出遊／支出名稱</label>
-            <input id="futureName" placeholder="例如：小琉球">
+            <input
+                type="text"
+                id="futureName"
+                placeholder="例如：小琉球">
         </div>
 
         <div class="form-group">
             <label>日期</label>
-            <input type="date" id="futureDate">
+            <input
+                type="date"
+                id="futureDate">
         </div>
 
         <div class="form-group">
-            <label>預算總額</label>
-            <input type="number" id="futureBudget" placeholder="例如：1000">
+            <label>總預算</label>
+            <input
+                type="number"
+                id="futureBudget"
+                placeholder="例如：1000"
+                min="0">
         </div>
 
         <div class="form-group">
-            <label>細項</label>
-
-            <div id="detailEditor"></div>
-
-            <button class="btn btn-light" onclick="addDetailRow()">
-                ＋ 新增細項
-            </button>
+            <label>備註</label>
+            <input
+                type="text"
+                id="futureNote"
+                placeholder="例如：交通＋餐費">
         </div>
 
-        <div class="modal-buttons">
-            <button class="btn btn-light" onclick="closeModal('futureModal')">
-                取消
-            </button>
-
-            <button class="btn btn-primary" onclick="saveFuture()">
-                儲存
-            </button>
-        </div>
+        <button
+            class="btn btn-primary"
+            style="width:100%;"
+            onclick="saveFutureExpense()">
+            建立預算
+        </button>
 
     </div>
 
@@ -1029,49 +1002,132 @@ button {
 
 
 <!-- =========================
-     Expense Modal
+     Future Detail Modal
 ========================= -->
 
-<div class="modal-bg" id="expenseModal">
+<div class="modal" id="detailModal">
 
-    <div class="modal">
+    <div class="modal-content">
 
-        <h2>🧾 新增記帳</h2>
+        <div class="modal-header">
 
-        <div class="form-group">
-            <label>日期</label>
-            <input type="date" id="expenseDate">
-        </div>
+            <div>
+                <div class="modal-title" id="detailTitle">
+                    小琉球
+                </div>
+                <div
+                    id="detailDate"
+                    class="card-subtitle">
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label>項目</label>
-            <input id="expenseName" placeholder="例如：午餐">
-        </div>
-
-        <div class="form-group">
-            <label>金額</label>
-            <input type="number" id="expenseAmount" placeholder="例如：120">
-        </div>
-
-        <div class="form-group">
-            <label>分類</label>
-            <select id="expenseCategory">
-                <option value="餐飲">🍜 餐飲</option>
-                <option value="交通">🚌 交通</option>
-                <option value="購物">🛍️ 購物</option>
-                <option value="娛樂">🎮 娛樂</option>
-                <option value="其他">📦 其他</option>
-            </select>
-        </div>
-
-        <div class="modal-buttons">
-            <button class="btn btn-light" onclick="closeModal('expenseModal')">
-                取消
+            <button
+                class="close"
+                onclick="closeDetailModal()">
+                ×
             </button>
 
-            <button class="btn btn-primary" onclick="saveExpense()">
-                儲存
+        </div>
+
+
+        <div
+            style="
+                background:#f5f9ff;
+                border-radius:14px;
+                padding:15px;
+                margin-bottom:15px;
+            ">
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                ">
+
+                <span>總預算</span>
+
+                <strong id="detailBudget">
+                    $0
+                </strong>
+
+            </div>
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    margin-top:7px;
+                ">
+
+                <span>已花費</span>
+
+                <strong id="detailSpent">
+                    $0
+                </strong>
+
+            </div>
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    margin-top:7px;
+                ">
+
+                <span>剩餘</span>
+
+                <strong
+                    id="detailRemaining"
+                    class="green">
+                    $0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:8px;
+            ">
+
+            <strong>支出細項</strong>
+
+            <button
+                class="btn btn-secondary"
+                onclick="addDetailItem()">
+                ＋ 新增細項
             </button>
+
+        </div>
+
+
+        <div
+            class="detail-list"
+            id="detailList">
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-danger"
+                onclick="deleteCurrentFuture()"
+                style="flex:1;">
+                刪除這筆預算
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                onclick="closeDetailModal()"
+                style="flex:1;">
+                關閉
+            </button>
+
         </div>
 
     </div>
@@ -1083,36 +1139,58 @@ button {
      Saving Modal
 ========================= -->
 
-<div class="modal-bg" id="savingModal">
+<div class="modal" id="savingModal">
 
-    <div class="modal">
+    <div class="modal-content">
 
-        <h2>🏦 新增預計存款</h2>
+        <div class="modal-header">
+
+            <div class="modal-title">
+                新增預計存款
+            </div>
+
+            <button
+                class="close"
+                onclick="closeSavingModal()">
+                ×
+            </button>
+
+        </div>
+
 
         <div class="form-group">
+
             <label>存款名稱</label>
-            <input id="savingName" placeholder="例如：日本旅遊基金">
+
+            <input
+                type="text"
+                id="savingName"
+                placeholder="例如：日本旅費">
+
         </div>
+
 
         <div class="form-group">
-            <label>目標金額</label>
-            <input type="number" id="savingTarget" placeholder="例如：10000">
+
+            <label>金額</label>
+
+            <input
+                type="number"
+                id="savingAmount"
+                placeholder="例如：3000"
+                min="0">
+
         </div>
 
-        <div class="form-group">
-            <label>目前已存</label>
-            <input type="number" id="savingCurrent" placeholder="例如：2000" value="0">
-        </div>
 
-        <div class="modal-buttons">
-            <button class="btn btn-light" onclick="closeModal('savingModal')">
-                取消
-            </button>
+        <button
+            class="btn btn-primary"
+            style="width:100%;"
+            onclick="saveSaving()">
 
-            <button class="btn btn-primary" onclick="saveSaving()">
-                儲存
-            </button>
-        </div>
+            新增存款
+
+        </button>
 
     </div>
 
@@ -1125,173 +1203,212 @@ button {
    基本設定
 ===================================================== */
 
-const MONTHLY_BUDGET = 15000;
+const FIXED_MONTHLY_BUDGET = 15000;
 
 let currentDate = new Date();
+currentDate.setHours(0,0,0,0);
+
+let selectedFutureId = null;
+
+
+/* =====================================================
+   LocalStorage
+===================================================== */
 
 let data = JSON.parse(
     localStorage.getItem("weeklyBudgetApp")
 ) || {
-    expenses: [],
+
+    expenses: {},
+
     futureExpenses: [],
+
     savings: []
+
 };
 
 
 /* =====================================================
-   工具
+   儲存
 ===================================================== */
 
-function money(value) {
-    return "$" + Math.round(value).toLocaleString("zh-TW");
-}
-
-function dateKey(date) {
-    const d = new Date(date);
-
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-
-    return `${y}-${m}-${day}`;
-}
-
 function saveData() {
+
     localStorage.setItem(
         "weeklyBudgetApp",
         JSON.stringify(data)
     );
-}
 
-function daysInMonth(year, month) {
-    return new Date(year, month + 1, 0).getDate();
 }
 
 
 /* =====================================================
-   月份
+   日期工具
 ===================================================== */
 
-function getYear() {
-    return currentDate.getFullYear();
+function formatMoney(value) {
+
+    return "$" + Number(value || 0).toLocaleString("zh-TW");
+
 }
 
-function getMonth() {
-    return currentDate.getMonth();
+
+function dateKey(date) {
+
+    const y = date.getFullYear();
+
+    const m = String(
+        date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const d = String(
+        date.getDate()
+    ).padStart(2, "0");
+
+    return `${y}-${m}-${d}`;
+
 }
 
-function changeMonth(direction) {
 
-    currentDate.setMonth(
-        currentDate.getMonth() + direction
+function formatDate(dateString) {
+
+    const d = new Date(dateString + "T00:00:00");
+
+    return `${d.getMonth()+1}/${d.getDate()}`;
+
+}
+
+
+function sameMonth(dateString, year, month) {
+
+    const d = new Date(dateString + "T00:00:00");
+
+    return (
+        d.getFullYear() === year &&
+        d.getMonth() === month
     );
 
-    renderAll();
 }
 
 
 /* =====================================================
-   當月週數
+   每月資訊
 ===================================================== */
 
-function getMonthWeeks(year, month) {
+function getMonthInfo() {
 
-    const firstDay = new Date(year, month, 1);
+    const year =
+        currentDate.getFullYear();
 
-    const totalDays = daysInMonth(year, month);
+    const month =
+        currentDate.getMonth();
 
-    /*
-       這裡不是單純用 7 天切割，
-       而是按照月曆上的星期區間計算。
+    const days =
+        new Date(year, month + 1, 0)
+            .getDate();
 
-       例如：
-       8/1 如果落在星期六，
-       第一週就是 8/1～8/1。
-    */
+    const firstDay =
+        new Date(year, month, 1)
+            .getDay();
 
-    const startOffset = firstDay.getDay();
+    return {
+        year,
+        month,
+        days,
+        firstDay
+    };
 
-    return Math.ceil(
-        (startOffset + totalDays) / 7
-    );
 }
 
 
 /* =====================================================
-   週資訊
+   每週區間
+=====================================================
+
+   這裡採用：
+
+   第一週：1～7
+   第二週：8～14
+   第三週：15～21
+   第四週：22～28
+   第五週：29～月底
+
+   因此 8 月會變成：
+
+   第1週 8/1-8/7
+   第2週 8/8-8/14
+   第3週 8/15-8/21
+   第4週 8/22-8/28
+   第5週 8/29-8/31
+
 ===================================================== */
 
-function getWeekIndex(date) {
+function getWeeks() {
 
-    const year = date.getFullYear();
-    const month = date.getMonth();
+    const {
+        year,
+        month,
+        days
+    } = getMonthInfo();
 
-    const firstDay = new Date(year, month, 1);
+    const weeks = [];
 
-    const dayOfMonth = date.getDate();
+    let start = 1;
 
-    return Math.floor(
-        (firstDay.getDay() + dayOfMonth - 1) / 7
-    );
-}
+    while (start <= days) {
 
-function getWeekBudget() {
+        const end =
+            Math.min(start + 6, days);
 
-    const weeks = getMonthWeeks(
-        getYear(),
-        getMonth()
-    );
+        weeks.push({
+            index: weeks.length + 1,
+            start,
+            end,
+            days: end - start + 1
+        });
 
-    return MONTHLY_BUDGET / weeks;
-}
+        start = end + 1;
 
-function getDayBudget() {
+    }
 
-    return getWeekBudget() / 7;
+    return weeks;
+
 }
 
 
 /* =====================================================
-   支出
+   找出某日期屬於第幾週
 ===================================================== */
 
-function getMonthExpenses() {
+function getWeekByDate(date) {
 
-    const y = getYear();
-    const m = getMonth();
+    const day =
+        date.getDate();
 
-    return data.expenses.filter(item => {
+    const weeks =
+        getWeeks();
 
-        const d = new Date(item.date);
+    return weeks.find(
+        week =>
+            day >= week.start &&
+            day <= week.end
+    );
 
-        return (
-            d.getFullYear() === y &&
-            d.getMonth() === m
-        );
-    });
 }
 
-function getMonthSpent() {
 
-    return getMonthExpenses()
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.amount),
-            0
-        );
-}
+/* =====================================================
+   每週基本預算
+===================================================== */
 
-function getDaySpent(date) {
+function getBaseWeeklyBudget() {
 
-    const key = dateKey(date);
+    const weeks =
+        getWeeks();
 
-    return data.expenses
-        .filter(item => item.date === key)
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.amount),
-            0
-        );
+    return FIXED_MONTHLY_BUDGET /
+        weeks.length;
+
 }
 
 
@@ -1299,396 +1416,546 @@ function getDaySpent(date) {
    未來支出
 ===================================================== */
 
-function getFutureForMonth() {
+function getFutureExpensesForMonth() {
 
-    const y = getYear();
-    const m = getMonth();
+    const {
+        year,
+        month
+    } = getMonthInfo();
 
-    return data.futureExpenses.filter(item => {
-
-        const d = new Date(item.date);
-
-        return (
-            d.getFullYear() === y &&
-            d.getMonth() === m
-        );
-    });
-}
-
-function getFutureTotal() {
-
-    return getFutureForMonth()
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.budget),
-            0
-        );
-}
-
-function getFutureForDate(date) {
-
-    const key = dateKey(date);
-
-    return data.futureExpenses
-        .filter(item => item.date === key)
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.budget),
-            0
-        );
-}
-
-
-/* =====================================================
-   預計支出對週預算的影響
-===================================================== */
-
-function getFutureForWeek(weekIndex) {
-
-    const year = getYear();
-    const month = getMonth();
-
-    return getFutureForMonth()
-        .filter(item => {
-
-            const d = new Date(item.date);
-
-            return getWeekIndex(d) === weekIndex;
-        })
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.budget),
-            0
-        );
-}
-
-function getSpentForWeek(weekIndex) {
-
-    return getMonthExpenses()
-        .filter(item => {
-
-            const d = new Date(item.date);
-
-            return getWeekIndex(d) === weekIndex;
-        })
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.amount),
-            0
-        );
-}
-
-
-/* =====================================================
-   預計存款
-===================================================== */
-
-function getAccumulatedSavings() {
-
-    const weeks = getMonthWeeks(
-        getYear(),
-        getMonth()
+    return data.futureExpenses.filter(
+        item =>
+            sameMonth(
+                item.date,
+                year,
+                month
+            )
     );
 
-    let result = 0;
-
-    for (let i = 0; i < weeks; i++) {
-
-        const spent = getSpentForWeek(i);
-        const future = getFutureForWeek(i);
-
-        const remain =
-            getWeekBudget() -
-            spent -
-            future;
-
-        if (remain > 0) {
-            result += remain;
-        }
-    }
-
-    return result;
 }
 
 
 /* =====================================================
-   Render Header
+   計算每週未來支出
 ===================================================== */
 
-function renderHeader() {
+function getFutureExpenseForWeek(week) {
 
-    const title =
-        `${getYear()} 年 ${getMonth() + 1} 月`;
+    const {
+        year,
+        month
+    } = getMonthInfo();
+
+    return data.futureExpenses
+        .filter(item => {
+
+            if (
+                !sameMonth(
+                    item.date,
+                    year,
+                    month
+                )
+            ) {
+                return false;
+            }
+
+            const d =
+                new Date(
+                    item.date +
+                    "T00:00:00"
+                ).getDate();
+
+            return (
+                d >= week.start &&
+                d <= week.end
+            );
+
+        })
+        .reduce(
+            (sum, item) =>
+                sum + Number(item.budget || 0),
+            0
+        );
+
+}
+
+
+/* =====================================================
+   每週實際花費
+===================================================== */
+
+function getWeekSpent(week) {
+
+    const {
+        year,
+        month
+    } = getMonthInfo();
+
+    let total = 0;
+
+    for (
+        let day = week.start;
+        day <= week.end;
+        day++
+    ) {
+
+        const key =
+            `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+        total += Number(
+            data.expenses[key] || 0
+        );
+
+    }
+
+    return total;
+
+}
+
+
+/* =====================================================
+   每週可使用預算
+=====================================================
+
+   公式：
+
+   每週基本預算
+   - 該週預計未來支出
+
+   但如果前面週有結餘，
+   結餘會成為存款，不再繼續增加本週可花金額。
+
+===================================================== */
+
+function getWeekBudget(week) {
+
+    const base =
+        getBaseWeeklyBudget();
+
+    const future =
+        getFutureExpenseForWeek(week);
+
+    return Math.max(
+        0,
+        base - future
+    );
+
+}
+
+
+/* =====================================================
+   今日可使用金額
+===================================================== */
+
+function getTodayAvailable() {
+
+    const info =
+        getMonthInfo();
+
+    const today =
+        new Date();
+
+    today.setHours(0,0,0,0);
+
+    if (
+        today.getFullYear() !== info.year ||
+        today.getMonth() !== info.month
+    ) {
+
+        return null;
+
+    }
+
+    const week =
+        getWeekByDate(today);
+
+    if (!week) return null;
+
+    const weekBudget =
+        getWeekBudget(week);
+
+    const spent =
+        getWeekSpent(week);
+
+    const remaining =
+        Math.max(
+            0,
+            weekBudget - spent
+        );
+
+    const remainingDays =
+        week.end -
+        today.getDate() +
+        1;
+
+    return {
+        week,
+        weekBudget,
+        spent,
+        remaining,
+        remainingDays,
+        daily:
+            remainingDays > 0
+                ? remaining / remainingDays
+                : 0
+    };
+
+}
+
+
+/* =====================================================
+   顯示月份
+===================================================== */
+
+function renderMonthTitle() {
+
+    const info =
+        getMonthInfo();
 
     document.getElementById(
         "monthTitle"
-    ).textContent = title;
-
-    const now = new Date();
-
-    document.getElementById(
-        "todayDate"
     ).textContent =
-        `${now.getMonth() + 1}/${now.getDate()}`;
+        `${info.year} 年 ${info.month + 1} 月`;
+
 }
 
 
 /* =====================================================
-   Render 總預算
+   月份切換
 ===================================================== */
 
-function renderBudget() {
+function changeMonth(offset) {
 
-    const spent = getMonthSpent();
+    currentDate.setMonth(
+        currentDate.getMonth() + offset
+    );
+
+    renderAll();
+
+}
+
+
+/* =====================================================
+   月度統計
+===================================================== */
+
+function renderSummary() {
+
+    const {
+        year,
+        month,
+        days
+    } = getMonthInfo();
+
+    let spent = 0;
+
+    for (
+        let day = 1;
+        day <= days;
+        day++
+    ) {
+
+        const key =
+            `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+        spent += Number(
+            data.expenses[key] || 0
+        );
+
+    }
 
     const remaining =
-        MONTHLY_BUDGET - spent;
-
-    const percent =
         Math.max(
             0,
-            Math.min(
-                100,
-                (remaining / MONTHLY_BUDGET) * 100
-            )
+            FIXED_MONTHLY_BUDGET - spent
+        );
+
+    const percent =
+        Math.min(
+            100,
+            (spent / FIXED_MONTHLY_BUDGET) * 100
         );
 
     document.getElementById(
         "monthSpent"
-    ).textContent = money(spent);
-
-    document.getElementById(
-        "monthAvailable"
     ).textContent =
-        money(Math.max(0, remaining));
+        formatMoney(spent);
 
     document.getElementById(
-        "futureTotal"
+        "monthRemaining"
     ).textContent =
-        money(getFutureTotal());
+        formatMoney(remaining);
 
     document.getElementById(
-        "accumulatedSavings"
+        "monthSpentPercent"
     ).textContent =
-        money(getAccumulatedSavings());
+        `使用 ${percent.toFixed(1)}%`;
 
     document.getElementById(
-        "remainingPercent"
+        "monthProgress"
+    ).style.width =
+        percent + "%";
+
+
+    const manualSavings =
+        data.savings.reduce(
+            (sum, item) =>
+                sum + Number(item.amount || 0),
+            0
+        );
+
+
+    document.getElementById(
+        "totalSavings"
     ).textContent =
-        Math.round(percent) + "%";
+        formatMoney(
+            manualSavings
+        );
 
-    document.getElementById(
-        "budgetCircle"
-    ).style.setProperty(
-        "--percent",
-        percent + "%"
-    );
 }
 
 
 /* =====================================================
-   Render 今日
+   今日
 ===================================================== */
 
 function renderToday() {
 
-    const today = new Date();
+    const result =
+        getTodayAvailable();
 
-    const base = getDayBudget();
-
-    const spent = getDaySpent(today);
-
-    const future = getFutureForDate(today);
-
-    const remaining =
-        base -
-        spent -
-        future;
-
-    document.getElementById(
-        "todayBudget"
-    ).textContent =
-        money(base);
-
-    document.getElementById(
-        "todaySpent"
-    ).textContent =
-        money(spent);
-
-    document.getElementById(
-        "todayFuture"
-    ).textContent =
-        money(future);
-
-    document.getElementById(
-        "todayRemaining"
-    ).textContent =
-        money(Math.max(0, remaining));
-
-    const box =
+    const money =
         document.getElementById(
-            "todayRemainBox"
+            "todayAvailable"
         );
 
-    if (remaining < 0) {
-        box.className =
-            "today-box red";
-    } else {
-        box.className =
-            "today-box green";
+    const status =
+        document.getElementById(
+            "todayStatus"
+        );
+
+    const dateText =
+        document.getElementById(
+            "todayDate"
+        );
+
+    const today =
+        new Date();
+
+    dateText.textContent =
+        `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+
+
+    if (!result) {
+
+        money.textContent = "--";
+
+        status.className =
+            "today-status";
+
+        status.textContent =
+            "目前不是正在查看的月份";
+
+        return;
+
     }
+
+
+    money.textContent =
+        formatMoney(
+            result.daily
+        );
+
+
+    if (
+        result.spent >
+        result.weekBudget
+    ) {
+
+        status.className =
+            "today-status over";
+
+        status.textContent =
+            `⚠️ 本週已超支 ${formatMoney(
+                result.spent -
+                result.weekBudget
+            )}，建議今天暫停非必要消費。`;
+
+    } else {
+
+        status.className =
+            "today-status good";
+
+        status.textContent =
+            `本週剩餘 ${formatMoney(
+                result.remaining
+            )}，剩餘 ${result.remainingDays} 天。平均每天約可使用 ${formatMoney(
+                result.daily
+            )}。`;
+
+    }
+
 }
 
 
 /* =====================================================
-   Render 每週
+   每週
 ===================================================== */
 
 function renderWeeks() {
 
     const container =
         document.getElementById(
-            "weekGrid"
+            "weekList"
         );
 
     container.innerHTML = "";
 
     const weeks =
-        getMonthWeeks(
-            getYear(),
-            getMonth()
-        );
+        getWeeks();
 
-    document.getElementById(
-        "weekDescription"
-    ).textContent =
-        `本月共 ${weeks} 週｜每週基礎預算 ${money(getWeekBudget())}`;
+    const today =
+        new Date();
 
-    const now = new Date();
+    const currentWeek =
+        getWeekByDate(today);
 
-    for (let i = 0; i < weeks; i++) {
 
-        const spent =
-            getSpentForWeek(i);
+    weeks.forEach(week => {
+
+        const base =
+            getBaseWeeklyBudget();
 
         const future =
-            getFutureForWeek(i);
+            getFutureExpenseForWeek(week);
 
-        const available =
-            getWeekBudget() -
-            spent -
-            future;
+        const actualBudget =
+            getWeekBudget(week);
 
-        const used =
-            spent + future;
+        const spent =
+            getWeekSpent(week);
 
-        const percent =
-            Math.min(
-                100,
-                Math.max(
-                    0,
-                    (used / getWeekBudget()) * 100
+        const remaining =
+            actualBudget - spent;
+
+        const usedPercent =
+            actualBudget > 0
+                ? Math.min(
+                    100,
+                    (spent / actualBudget) * 100
                 )
-            );
+                : 0;
 
         const isCurrent =
-            now.getFullYear() === getYear() &&
-            now.getMonth() === getMonth() &&
-            getWeekIndex(now) === i;
+            currentWeek &&
+            currentWeek.index === week.index &&
+            currentDate.getFullYear() === today.getFullYear() &&
+            currentDate.getMonth() === today.getMonth();
 
-        const card =
+
+        const div =
             document.createElement("div");
 
-        card.className =
-            "week-card" +
+        div.className =
+            "week-item" +
             (isCurrent ? " current" : "");
 
-        card.innerHTML = `
 
-            <div class="week-header">
+        div.innerHTML = `
 
-                <div class="week-number">
-                    第 ${i + 1} 週
+            <div class="week-top">
+
+                <div>
+
+                    <div class="week-name">
+                        第 ${week.index} 週
+                        ${isCurrent ? "📍 本週" : ""}
+                    </div>
+
+                    <div class="week-date">
+                        ${getMonthInfo().month + 1}/${week.start}
+                        -
+                        ${getMonthInfo().month + 1}/${week.end}
+                    </div>
+
                 </div>
 
-                ${
-                    isCurrent
-                    ? `<span class="current-badge">本週</span>`
-                    : ""
-                }
+                <div class="week-amount">
+
+                    <strong>
+                        ${formatMoney(actualBudget)}
+                    </strong>
+
+                    <div style="font-size:11px;color:#888;">
+                        可使用
+                    </div>
+
+                </div>
 
             </div>
 
-            <div class="week-date">
-                基礎預算 ${money(getWeekBudget())}
-            </div>
 
-            <div class="week-amount">
+            <div class="week-bar">
 
-                <strong>
-                    ${money(Math.max(0, available))}
-                </strong>
-
-                <span>本週可用</span>
-
-            </div>
-
-            <div class="progress">
                 <div
-                    class="progress-fill ${
-                        available < 0
-                        ? "progress-red"
-                        : "progress-blue"
-                    }"
-                    style="width:${percent}%"
-                ></div>
+                    class="week-bar-fill"
+                    style="width:${usedPercent}%">
+                </div>
+
             </div>
+
 
             <div class="week-bottom">
 
                 <span>
-                    已花 ${money(spent)}
+                    已花 ${formatMoney(spent)}
                 </span>
 
-                <span>
-                    未來 ${money(future)}
-                </span>
+                <span class="${
+                    remaining >= 0
+                    ? "week-status good"
+                    : "week-status bad"
+                }">
 
-            </div>
-
-            <div
-                class="week-bottom"
-                style="margin-top:7px"
-            >
-
-                <span>
-                    每日約 ${money(getWeekBudget() / 7)}
-                </span>
-
-                <span
-                    class="remaining ${
-                        available < 0
-                        ? "over"
-                        : ""
-                    }"
-                >
                     ${
-                        available < 0
-                        ? "超支 " + money(Math.abs(available))
-                        : "剩餘 " + money(available)
+                        remaining >= 0
+                        ? "剩餘 " + formatMoney(remaining)
+                        : "超支 " + formatMoney(Math.abs(remaining))
                     }
+
                 </span>
 
             </div>
+
+
+            ${
+                future > 0
+                ? `
+                    <div
+                        style="
+                            margin-top:8px;
+                            font-size:11px;
+                            color:#ff9500;
+                        ">
+                        🧳 本週已預留未來支出
+                        ${formatMoney(future)}
+                    </div>
+                `
+                : ""
+            }
+
         `;
 
-        container.appendChild(card);
-    }
+
+        container.appendChild(div);
+
+    });
+
 }
 
 
 /* =====================================================
-   Render Calendar
+   Calendar
 ===================================================== */
 
 function renderCalendar() {
@@ -1700,52 +1967,59 @@ function renderCalendar() {
 
     container.innerHTML = "";
 
+
+    const {
+        year,
+        month,
+        days,
+        firstDay
+    } = getMonthInfo();
+
+
     const weekdays =
         ["日","一","二","三","四","五","六"];
 
+
     weekdays.forEach(day => {
 
-        const el =
+        const div =
             document.createElement("div");
 
-        el.className =
+        div.className =
             "calendar-weekday";
 
-        el.textContent = day;
+        div.textContent =
+            day;
 
-        container.appendChild(el);
+        container.appendChild(div);
+
     });
 
-    const year = getYear();
-    const month = getMonth();
-
-    const firstDay =
-        new Date(year, month, 1);
-
-    const totalDays =
-        daysInMonth(year, month);
 
     for (
         let i = 0;
-        i < firstDay.getDay();
+        i < firstDay;
         i++
     ) {
 
-        const empty =
+        const div =
             document.createElement("div");
 
-        empty.className =
-            "day empty";
+        div.className =
+            "calendar-day empty";
 
-        container.appendChild(empty);
+        container.appendChild(div);
+
     }
+
 
     const today =
         new Date();
 
+
     for (
         let day = 1;
-        day <= totalDays;
+        day <= days;
         day++
     ) {
 
@@ -1756,86 +2030,120 @@ function renderCalendar() {
                 day
             );
 
+        const key =
+            dateKey(date);
+
         const spent =
-            getDaySpent(date);
+            Number(
+                data.expenses[key] || 0
+            );
+
 
         const future =
-            getFutureForDate(date);
+            data.futureExpenses.filter(
+                item =>
+                    item.date === key
+            );
 
-        const el =
-            document.createElement("div");
 
         const isToday =
-            dateKey(date) === dateKey(today);
+            date.toDateString() ===
+            today.toDateString();
 
-        el.className =
-            "day" +
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "calendar-day" +
             (isToday ? " today" : "");
 
-        el.innerHTML = `
 
-            <div class="day-number">
+        div.innerHTML = `
+
+            <div class="calendar-day-number">
                 ${day}
             </div>
 
             ${
-                future > 0
-                ? `<div class="day-dot"></div>`
-                : ""
-            }
-
-            <div class="day-budget">
-                可用 ${money(getDayBudget())}
-            </div>
-
-            ${
                 spent > 0
-                ? `<div class="day-spent">
-                    已花 ${money(spent)}
-                   </div>`
+                ? `
+                    <div class="calendar-day-money">
+                        ${formatMoney(spent)}
+                    </div>
+                `
                 : ""
             }
 
             ${
-                future > 0
-                ? `<div class="day-future">
-                    預定 ${money(future)}
-                   </div>`
+                future.length > 0
+                ? future.map(
+                    item => `
+                        <div
+                            class="calendar-day-event"
+                            title="${item.name}">
+                            🧳 ${item.name}
+                        </div>
+                    `
+                ).join("")
                 : ""
             }
+
         `;
 
-        el.onclick = () => {
 
-            const dateText =
-                `${year}/${month + 1}/${day}`;
+        div.onclick = () => {
 
-            alert(
-                `${dateText}\n\n` +
-                `每日基礎預算：${money(getDayBudget())}\n` +
-                `已花：${money(spent)}\n` +
-                `預定支出：${money(future)}\n` +
-                `目前剩餘：${money(
-                    Math.max(
-                        0,
-                        getDayBudget() -
-                        spent -
-                        future
-                    )
-                )}`
-            );
+            const amount =
+                prompt(
+                    `${month + 1}/${day} 今日實際花費多少？`,
+                    spent || ""
+                );
+
+
+            if (
+                amount === null
+            ) return;
+
+
+            const value =
+                Number(amount);
+
+
+            if (
+                isNaN(value) ||
+                value < 0
+            ) {
+
+                alert("請輸入正確金額");
+
+                return;
+
+            }
+
+
+            data.expenses[key] =
+                value;
+
+            saveData();
+
+            renderAll();
+
         };
 
-        container.appendChild(el);
+
+        container.appendChild(div);
+
     }
+
 }
 
 
 /* =====================================================
-   Render Future Expenses
+   Future List
 ===================================================== */
 
-function renderFuture() {
+function renderFutureList() {
 
     const container =
         document.getElementById(
@@ -1844,549 +2152,188 @@ function renderFuture() {
 
     container.innerHTML = "";
 
-    const list =
-        getFutureForMonth();
 
-    if (!list.length) {
+    const items =
+        getFutureExpensesForMonth();
+
+
+    if (!items.length) {
 
         container.innerHTML = `
             <div class="empty">
-                ✈️ 目前還沒有未來支出<br>
-                點右上角「＋」開始規劃你的旅程
+                目前沒有未來支出<br>
+                點擊「＋ 新增」建立出遊預算
             </div>
         `;
 
         return;
+
     }
 
-    list.forEach((item, index) => {
+
+    items.forEach(item => {
 
         const spent =
-            item.spent || 0;
+            (item.details || [])
+                .reduce(
+                    (sum, detail) =>
+                        sum +
+                        Number(
+                            detail.spent || 0
+                        ),
+                    0
+                );
 
-        const budget =
-            Number(item.budget);
 
         const remaining =
-            budget - spent;
+            Number(item.budget) -
+            spent;
+
 
         const percent =
             Math.min(
                 100,
-                (spent / budget) * 100
+                spent /
+                Number(item.budget) *
+                100
             );
 
-        const card =
+
+        const div =
             document.createElement("div");
 
-        card.className =
-            "future-card";
+        div.className =
+            "future-item";
 
-        card.innerHTML = `
 
-            <div
-                class="future-main"
-                onclick="toggleFuture(${item.id})"
-            >
+        div.innerHTML = `
+
+            <div class="future-top">
 
                 <div>
+
                     <div class="future-name">
-                        ${escapeHTML(item.name)}
+                        🧳 ${item.name}
                     </div>
 
                     <div class="future-date">
-                        ${item.date}
+                        ${formatDate(item.date)}
                     </div>
+
                 </div>
 
                 <div class="future-total">
-                    ${money(budget)}
+                    ${formatMoney(item.budget)}
                 </div>
 
             </div>
+
 
             <div class="future-progress">
 
-                <div class="progress">
+                <div class="future-progress-bar">
 
                     <div
-                        class="progress-fill ${
-                            remaining < 0
-                            ? "progress-red"
-                            : "progress-blue"
-                        }"
-                        style="width:${percent}%"
-                    ></div>
+                        class="future-progress-fill"
+                        style="width:${percent}%">
+                    </div>
 
                 </div>
 
-                <div class="week-bottom">
+                <div class="future-detail">
 
                     <span>
-                        已使用 ${money(spent)}
+                        已花 ${formatMoney(spent)}
                     </span>
 
-                    <span
-                        class="remaining ${
-                            remaining < 0
-                            ? "over"
-                            : ""
-                        }"
-                    >
-                        ${
-                            remaining < 0
-                            ? "超支 " +
-                              money(Math.abs(remaining))
-                            : "剩餘 " +
-                              money(remaining)
-                        }
+                    <span>
+                        ${remaining >= 0
+                            ? "剩餘 " + formatMoney(remaining)
+                            : "超支 " + formatMoney(Math.abs(remaining))}
                     </span>
 
                 </div>
 
             </div>
 
-            <div
-                class="future-detail"
-                id="detail-${item.id}"
-            >
-
-                ${
-                    item.details &&
-                    item.details.length
-                    ?
-                    item.details.map(detail => `
-
-                        <div class="detail-item">
-
-                            <span class="detail-name">
-                                ${escapeHTML(detail.name)}
-                            </span>
-
-                            <span class="detail-price">
-                                ${money(detail.amount)}
-                            </span>
-
-                        </div>
-
-                    `).join("")
-                    :
-                    `<div class="empty">
-                        尚未建立細項
-                    </div>`
-                }
-
-                <div class="future-actions">
-
-                    <button
-                        class="btn btn-primary"
-                        onclick="event.stopPropagation(); addFutureSpent(${item.id})"
-                    >
-                        ＋ 記錄這趟支出
-                    </button>
-
-                    <button
-                        class="btn btn-danger"
-                        onclick="event.stopPropagation(); deleteFuture(${item.id})"
-                    >
-                        刪除
-                    </button>
-
-                </div>
-
-            </div>
         `;
 
-        container.appendChild(card);
+
+        div.onclick = () =>
+            openDetailModal(item.id);
+
+
+        container.appendChild(div);
+
     });
+
 }
 
 
 /* =====================================================
-   Future 展開
-===================================================== */
-
-function toggleFuture(id) {
-
-    const el =
-        document.getElementById(
-            "detail-" + id
-        );
-
-    el.classList.toggle("open");
-}
-
-
-/* =====================================================
-   Render Expenses
-===================================================== */
-
-function renderExpenses() {
-
-    const container =
-        document.getElementById(
-            "expenseList"
-        );
-
-    container.innerHTML = "";
-
-    const list =
-        getMonthExpenses()
-        .sort(
-            (a,b) =>
-                new Date(b.date) -
-                new Date(a.date)
-        );
-
-    if (!list.length) {
-
-        container.innerHTML = `
-            <div class="empty">
-                🧾 本月還沒有記帳紀錄
-            </div>
-        `;
-
-        return;
-    }
-
-    list.forEach(item => {
-
-        const row =
-            document.createElement("div");
-
-        row.className =
-            "detail-item";
-
-        row.innerHTML = `
-
-            <div>
-
-                <div class="detail-name">
-                    ${item.category}
-                    ${escapeHTML(item.name)}
-                </div>
-
-                <div
-                    style="
-                    color:var(--sub);
-                    font-size:11px;
-                    margin-top:3px;
-                    "
-                >
-                    ${item.date}
-                </div>
-
-            </div>
-
-            <div style="display:flex;align-items:center;gap:10px">
-
-                <strong>
-                    ${money(item.amount)}
-                </strong>
-
-                <button
-                    class="btn btn-danger"
-                    style="padding:5px 8px"
-                    onclick="deleteExpense(${item.id})"
-                >
-                    ×
-                </button>
-
-            </div>
-        `;
-
-        container.appendChild(row);
-    });
-}
-
-
-/* =====================================================
-   Render Savings
-===================================================== */
-
-function renderSavings() {
-
-    const container =
-        document.getElementById(
-            "savingsList"
-        );
-
-    container.innerHTML = "";
-
-    if (!data.savings.length) {
-
-        container.innerHTML = `
-            <div class="empty">
-                🏦 還沒有設定預計存款<br>
-                點右上角「＋」建立你的第一個存款目標
-            </div>
-        `;
-
-        return;
-    }
-
-    data.savings.forEach(item => {
-
-        const target =
-            Number(item.target);
-
-        const current =
-            Number(item.current);
-
-        const percent =
-            target > 0
-            ? Math.min(
-                100,
-                current / target * 100
-            )
-            : 0;
-
-        const gap =
-            Math.max(
-                0,
-                target - current
-            );
-
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "saving-card";
-
-        card.innerHTML = `
-
-            <div class="saving-header">
-
-                <div>
-                    <div class="saving-title">
-                        ${escapeHTML(item.name)}
-                    </div>
-
-                    <div class="saving-target">
-                        目標 ${money(target)}
-                    </div>
-                </div>
-
-                <div class="saving-icon">
-                    🏦
-                </div>
-
-            </div>
-
-            <div class="saving-amount">
-                ${money(current)}
-            </div>
-
-            <div class="saving-gap">
-                ${
-                    gap > 0
-                    ? `還差 ${money(gap)}`
-                    : "🎉 已達成目標"
-                }
-            </div>
-
-            <div class="progress">
-
-                <div
-                    class="progress-fill progress-green"
-                    style="width:${percent}%"
-                ></div>
-
-            </div>
-
-            <div
-                style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                "
-            >
-
-                <span
-                    style="
-                    font-size:11px;
-                    color:var(--sub);
-                    "
-                >
-                    ${Math.round(percent)}%
-                </span>
-
-                <button
-                    class="btn btn-danger"
-                    onclick="deleteSaving(${item.id})"
-                >
-                    刪除
-                </button>
-
-            </div>
-
-        `;
-
-        container.appendChild(card);
-    });
-}
-
-
-/* =====================================================
-   Modal
-===================================================== */
-
-function openModal(id) {
-
-    document
-        .getElementById(id)
-        .classList.add("show");
-}
-
-function closeModal(id) {
-
-    document
-        .getElementById(id)
-        .classList.remove("show");
-}
-
-
-/* =====================================================
-   Future Modal
+   新增 Future
 ===================================================== */
 
 function openFutureModal() {
 
-    document.getElementById(
-        "futureName"
-    ).value = "";
+    document
+        .getElementById("futureModal")
+        .classList.add("show");
 
-    document.getElementById(
-        "futureDate"
-    ).value =
-        dateKey(
-            new Date(
-                getYear(),
-                getMonth(),
-                new Date().getDate()
-            )
-        );
-
-    document.getElementById(
-        "futureBudget"
-    ).value = "";
-
-    document.getElementById(
-        "detailEditor"
-    ).innerHTML = "";
-
-    addDetailRow();
-
-    openModal("futureModal");
 }
 
-function addDetailRow() {
 
-    const container =
-        document.getElementById(
-            "detailEditor"
-        );
+function closeFutureModal() {
 
-    const row =
-        document.createElement(
-            "div"
-        );
+    document
+        .getElementById("futureModal")
+        .classList.remove("show");
 
-    row.className =
-        "detail-editor";
-
-    row.innerHTML = `
-
-        <div class="detail-editor-row">
-
-            <input
-                type="text"
-                class="detail-name-input"
-                placeholder="例如：交通"
-            >
-
-            <input
-                type="number"
-                class="detail-amount-input"
-                placeholder="金額"
-            >
-
-            <button
-                class="remove-detail"
-                onclick="this.parentElement.parentElement.remove()"
-            >
-                ×
-            </button>
-
-        </div>
-    `;
-
-    container.appendChild(row);
 }
 
-function saveFuture() {
+
+function saveFutureExpense() {
 
     const name =
-        document.getElementById(
-            "futureName"
-        ).value.trim();
+        document
+            .getElementById("futureName")
+            .value
+            .trim();
 
     const date =
-        document.getElementById(
-            "futureDate"
-        ).value;
+        document
+            .getElementById("futureDate")
+            .value;
 
     const budget =
         Number(
-            document.getElementById(
-                "futureBudget"
-            ).value
+            document
+                .getElementById("futureBudget")
+                .value
         );
+
+    const note =
+        document
+            .getElementById("futureNote")
+            .value
+            .trim();
+
 
     if (!name || !date || budget <= 0) {
 
         alert(
-            "請完整填寫出遊名稱、日期及預算"
+            "請完整填寫名稱、日期與總預算。"
         );
 
         return;
+
     }
 
-    const details = [];
-
-    document
-        .querySelectorAll(
-            "#detailEditor .detail-editor"
-        )
-        .forEach(row => {
-
-            const detailName =
-                row.querySelector(
-                    ".detail-name-input"
-                ).value.trim();
-
-            const amount =
-                Number(
-                    row.querySelector(
-                        ".detail-amount-input"
-                    ).value
-                );
-
-            if (
-                detailName &&
-                amount > 0
-            ) {
-
-                details.push({
-                    name: detailName,
-                    amount: amount
-                });
-            }
-        });
 
     data.futureExpenses.push({
 
-        id: Date.now(),
+        id:
+            Date.now(),
 
         name,
 
@@ -2394,24 +2341,44 @@ function saveFuture() {
 
         budget,
 
-        spent: 0,
+        note,
 
-        details
+        details: []
+
     });
+
 
     saveData();
 
-    closeModal("futureModal");
+    closeFutureModal();
+
+    document
+        .getElementById("futureName")
+        .value = "";
+
+    document
+        .getElementById("futureDate")
+        .value = "";
+
+    document
+        .getElementById("futureBudget")
+        .value = "";
+
+    document
+        .getElementById("futureNote")
+        .value = "";
+
 
     renderAll();
+
 }
 
 
 /* =====================================================
-   Future 支出記錄
+   Future Detail
 ===================================================== */
 
-function addFutureSpent(id) {
+function openDetailModal(id) {
 
     const item =
         data.futureExpenses.find(
@@ -2420,273 +2387,692 @@ function addFutureSpent(id) {
 
     if (!item) return;
 
-    const amount =
+    selectedFutureId =
+        id;
+
+
+    document
+        .getElementById("detailModal")
+        .classList.add("show");
+
+
+    renderDetail(item);
+
+}
+
+
+function closeDetailModal() {
+
+    document
+        .getElementById("detailModal")
+        .classList.remove("show");
+
+    selectedFutureId =
+        null;
+
+}
+
+
+function renderDetail(item) {
+
+    const spent =
+        (item.details || [])
+            .reduce(
+                (sum, detail) =>
+                    sum +
+                    Number(
+                        detail.spent || 0
+                    ),
+                0
+            );
+
+
+    document
+        .getElementById("detailTitle")
+        .textContent =
+        item.name;
+
+
+    document
+        .getElementById("detailDate")
+        .textContent =
+        `${formatDate(item.date)} ${
+            item.note
+                ? "｜" + item.note
+                : ""
+        }`;
+
+
+    document
+        .getElementById("detailBudget")
+        .textContent =
+        formatMoney(item.budget);
+
+
+    document
+        .getElementById("detailSpent")
+        .textContent =
+        formatMoney(spent);
+
+
+    const remaining =
+        Number(item.budget) -
+        spent;
+
+
+    const remainingElement =
+        document.getElementById(
+            "detailRemaining"
+        );
+
+
+    remainingElement.textContent =
+        formatMoney(
+            Math.abs(remaining)
+        );
+
+
+    remainingElement.className =
+        remaining >= 0
+            ? "green"
+            : "red";
+
+
+    if (remaining < 0) {
+
+        remainingElement.textContent =
+            "超支 " +
+            formatMoney(
+                Math.abs(remaining)
+            );
+
+    }
+
+
+    const list =
+        document.getElementById(
+            "detailList"
+        );
+
+    list.innerHTML = "";
+
+
+    if (
+        !item.details ||
+        item.details.length === 0
+    ) {
+
+        list.innerHTML = `
+            <div class="empty">
+                尚未新增細項<br>
+                例如：交通、餐費、住宿
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    item.details.forEach(
+        (detail, index) => {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "detail-row";
+
+
+            row.innerHTML = `
+
+                <div>
+
+                    <div class="detail-name">
+                        ${detail.name}
+                    </div>
+
+                    <div
+                        style="
+                            color:#888;
+                            font-size:11px;
+                            margin-top:3px;
+                        ">
+
+                        預算
+                        ${formatMoney(detail.budget)}
+                        ｜已花
+                        ${formatMoney(detail.spent)}
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="btn btn-danger"
+                    onclick="deleteDetail(${index})">
+
+                    ×
+
+                </button>
+
+            `;
+
+
+            list.appendChild(row);
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   新增細項
+===================================================== */
+
+function addDetailItem() {
+
+    if (!selectedFutureId)
+        return;
+
+
+    const item =
+        data.futureExpenses.find(
+            x =>
+                x.id ===
+                selectedFutureId
+        );
+
+
+    if (!item) return;
+
+
+    const name =
+        prompt(
+            "請輸入細項名稱，例如：交通"
+        );
+
+
+    if (!name)
+        return;
+
+
+    const budget =
         Number(
             prompt(
-                `「${item.name}」目前預算 ${money(item.budget)}\n\n請輸入這次實際花費金額：`
+                "請輸入這個細項的預算，例如：500"
             )
         );
 
+
     if (
-        !amount ||
-        amount <= 0
+        isNaN(budget) ||
+        budget < 0
     ) {
+
+        alert("請輸入正確金額");
+
         return;
+
     }
 
-    item.spent =
-        Number(item.spent || 0) +
-        amount;
 
-    /*
-       同時把實際支出加入一般記帳，
-       讓它真正影響當週預算。
-    */
+    const spent =
+        Number(
+            prompt(
+                "目前已經花多少？如果尚未消費請輸入 0",
+                "0"
+            )
+        );
 
-    data.expenses.push({
 
-        id: Date.now(),
+    if (
+        isNaN(spent) ||
+        spent < 0
+    ) {
 
-        date: item.date,
+        alert("請輸入正確金額");
 
-        name: item.name,
+        return;
 
-        amount: amount,
+    }
 
-        category: "✈️ 未來支出"
+
+    if (!item.details)
+        item.details = [];
+
+
+    item.details.push({
+
+        name,
+
+        budget,
+
+        spent
+
     });
+
 
     saveData();
 
+    renderDetail(item);
+
     renderAll();
+
 }
 
-function deleteFuture(id) {
+
+/* =====================================================
+   刪除細項
+===================================================== */
+
+function deleteDetail(index) {
+
+    const item =
+        data.futureExpenses.find(
+            x =>
+                x.id ===
+                selectedFutureId
+        );
+
+
+    if (!item) return;
+
+
+    if (
+        !confirm(
+            "確定要刪除這個細項嗎？"
+        )
+    ) return;
+
+
+    item.details.splice(
+        index,
+        1
+    );
+
+
+    saveData();
+
+    renderDetail(item);
+
+    renderAll();
+
+}
+
+
+/* =====================================================
+   刪除未來支出
+===================================================== */
+
+function deleteCurrentFuture() {
+
+    if (!selectedFutureId)
+        return;
+
 
     if (
         !confirm(
             "確定要刪除這筆未來支出嗎？"
         )
-    ) {
-        return;
-    }
+    ) return;
+
 
     data.futureExpenses =
         data.futureExpenses.filter(
-            x => x.id !== id
+            x =>
+                x.id !==
+                selectedFutureId
         );
+
 
     saveData();
 
+    closeDetailModal();
+
     renderAll();
+
 }
 
 
 /* =====================================================
-   Expense Modal
+   Savings
 ===================================================== */
 
-function openExpenseModal() {
+function openSavingModal() {
 
-    document.getElementById(
-        "expenseDate"
-    ).value =
-        dateKey(new Date());
+    document
+        .getElementById("savingModal")
+        .classList.add("show");
 
-    document.getElementById(
-        "expenseName"
-    ).value = "";
-
-    document.getElementById(
-        "expenseAmount"
-    ).value = "";
-
-    openModal("expenseModal");
 }
 
-function saveExpense() {
 
-    const date =
-        document.getElementById(
-            "expenseDate"
-        ).value;
+function closeSavingModal() {
+
+    document
+        .getElementById("savingModal")
+        .classList.remove("show");
+
+}
+
+
+function saveSaving() {
 
     const name =
-        document.getElementById(
-            "expenseName"
-        ).value.trim();
+        document
+            .getElementById("savingName")
+            .value
+            .trim();
 
     const amount =
         Number(
-            document.getElementById(
-                "expenseAmount"
-            ).value
+            document
+                .getElementById("savingAmount")
+                .value
         );
 
-    const category =
-        document.getElementById(
-            "expenseCategory"
-        ).value;
 
     if (
-        !date ||
         !name ||
+        isNaN(amount) ||
         amount <= 0
     ) {
 
         alert(
-            "請完整填寫記帳內容"
+            "請完整輸入存款名稱與金額。"
         );
 
         return;
+
     }
 
-    data.expenses.push({
 
-        id: Date.now(),
+    data.savings.push({
 
-        date,
+        id:
+            Date.now(),
 
         name,
 
         amount,
 
-        category
+        createdAt:
+            dateKey(new Date())
+
     });
 
-    saveData();
-
-    closeModal("expenseModal");
-
-    renderAll();
-}
-
-function deleteExpense(id) {
-
-    if (
-        !confirm(
-            "確定要刪除這筆記帳嗎？"
-        )
-    ) {
-        return;
-    }
-
-    data.expenses =
-        data.expenses.filter(
-            x => x.id !== id
-        );
 
     saveData();
 
+    closeSavingModal();
+
+
+    document
+        .getElementById("savingName")
+        .value = "";
+
+    document
+        .getElementById("savingAmount")
+        .value = "";
+
+
     renderAll();
+
 }
 
 
 /* =====================================================
-   Saving
+   Savings List
 ===================================================== */
 
-function openSavingModal() {
+function renderSavings() {
 
-    document.getElementById(
-        "savingName"
-    ).value = "";
-
-    document.getElementById(
-        "savingTarget"
-    ).value = "";
-
-    document.getElementById(
-        "savingCurrent"
-    ).value = 0;
-
-    openModal("savingModal");
-}
-
-function saveSaving() {
-
-    const name =
+    const container =
         document.getElementById(
-            "savingName"
-        ).value.trim();
-
-    const target =
-        Number(
-            document.getElementById(
-                "savingTarget"
-            ).value
+            "savingList"
         );
 
-    const current =
-        Number(
-            document.getElementById(
-                "savingCurrent"
-            ).value
-        );
+    container.innerHTML = "";
+
 
     if (
-        !name ||
-        target <= 0
+        data.savings.length === 0
     ) {
 
-        alert(
-            "請輸入存款名稱及目標金額"
-        );
+        container.innerHTML = `
+            <div class="empty">
+                尚未建立預計存款<br>
+                可以自行新增，例如「日本旅費」
+            </div>
+        `;
 
         return;
+
     }
 
-    data.savings.push({
 
-        id: Date.now(),
+    data.savings.forEach(
+        item => {
 
-        name,
+            const div =
+                document.createElement(
+                    "div"
+                );
 
-        target,
+            div.className =
+                "saving-item";
 
-        current
-    });
 
-    saveData();
+            div.innerHTML = `
 
-    closeModal("savingModal");
+                <div>
 
-    renderAll();
+                    <div class="saving-name">
+                        🏦 ${item.name}
+                    </div>
+
+                    <div
+                        style="
+                            font-size:11px;
+                            color:#888;
+                            margin-top:3px;
+                        ">
+
+                        ${item.createdAt}
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:8px;
+                    ">
+
+                    <div class="saving-amount">
+                        ${formatMoney(item.amount)}
+                    </div>
+
+                    <button
+                        class="btn btn-danger"
+                        onclick="deleteSaving(${item.id})">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+            `;
+
+
+            container.appendChild(div);
+
+        }
+    );
+
 }
+
+
+/* =====================================================
+   Delete Saving
+===================================================== */
 
 function deleteSaving(id) {
 
     if (
         !confirm(
-            "確定要刪除這個存款目標嗎？"
+            "確定要刪除這筆存款嗎？"
         )
-    ) {
-        return;
-    }
+    ) return;
+
 
     data.savings =
         data.savings.filter(
-            x => x.id !== id
+            item =>
+                item.id !== id
         );
+
 
     saveData();
 
     renderAll();
+
 }
 
 
 /* =====================================================
-   HTML 安全
+   AI Suggestion
 ===================================================== */
 
-function escapeHTML(str) {
+function renderAI() {
 
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    const result =
+        getTodayAvailable();
+
+    const element =
+        document.getElementById(
+            "aiSuggestion"
+        );
+
+
+    const {
+        year,
+        month,
+        days
+    } = getMonthInfo();
+
+
+    let spent = 0;
+
+
+    for (
+        let day = 1;
+        day <= days;
+        day++
+    ) {
+
+        const key =
+            `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+        spent +=
+            Number(
+                data.expenses[key] || 0
+            );
+
+    }
+
+
+    const future =
+        getFutureExpensesForMonth()
+            .reduce(
+                (sum, item) =>
+                    sum +
+                    Number(item.budget || 0),
+                0
+            );
+
+
+    const remaining =
+        Math.max(
+            0,
+            FIXED_MONTHLY_BUDGET -
+            spent
+        );
+
+
+    let html = "";
+
+
+    if (result) {
+
+        if (
+            result.spent >
+            result.weekBudget
+        ) {
+
+            html += `
+                ⚠️ <span class="ai-highlight">
+                本週目前已經超支。
+                </span>
+                <br>
+                建議接下來幾天先降低非必要消費，
+                避免影響月底預算。
+                <br><br>
+            `;
+
+        } else {
+
+            html += `
+                ✅ 今天建議最多使用
+                <span class="ai-highlight">
+                ${formatMoney(result.daily)}
+                </span>
+                左右。
+                <br><br>
+            `;
+
+        }
+
+    }
+
+
+    if (future > 0) {
+
+        html += `
+            🧳 目前已安排未來支出
+            <span class="ai-highlight">
+            ${formatMoney(future)}
+            </span>。
+            <br>
+            系統已將這些預算視為「預留金」，
+            因此後續週的可使用金額會降低。
+            <br><br>
+        `;
+
+    }
+
+
+    html += `
+        💰 本月目前還有
+        <span class="ai-highlight">
+        ${formatMoney(remaining)}
+        </span>
+        尚未使用。
+    `;
+
+
+    element.innerHTML =
+        html;
+
 }
 
 
@@ -2696,9 +3082,9 @@ function escapeHTML(str) {
 
 function renderAll() {
 
-    renderHeader();
+    renderMonthTitle();
 
-    renderBudget();
+    renderSummary();
 
     renderToday();
 
@@ -2706,11 +3092,12 @@ function renderAll() {
 
     renderCalendar();
 
-    renderFuture();
-
-    renderExpenses();
+    renderFutureList();
 
     renderSavings();
+
+    renderAI();
+
 }
 
 
@@ -2719,6 +3106,30 @@ function renderAll() {
 ===================================================== */
 
 renderAll();
+
+
+/* =====================================================
+   ESC 關閉 Modal
+===================================================== */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            closeFutureModal();
+
+            closeDetailModal();
+
+            closeSavingModal();
+
+        }
+
+    }
+);
 
 </script>
 
