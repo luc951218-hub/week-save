@@ -15,6 +15,7 @@
             --sub: #8e8e93; /* iOS System Gray */
             --success: #34c759; /* iOS System Green */
             --danger: #ff3b30; /* iOS System Red */
+            --warning: #ff9500; /* iOS System Orange */
             --border: rgba(60, 60, 67, 0.12);
             --shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
             --ai-bg: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
@@ -211,6 +212,19 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
         }
+        button.btn-warning {
+            width: 100%;
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 149, 0, 0.25);
+        }
         button.btn-success {
             width: 100%;
             background: var(--success);
@@ -323,6 +337,9 @@
             border-radius: 50%;
             margin-top: 2px;
         }
+        .cal-dot.planned {
+            background: var(--warning);
+        }
         .cal-day.active-day .cal-dot {
             background: white;
         }
@@ -396,7 +413,7 @@
         </div>
 
         <div class="card">
-            <div class="card-title">本週可用預算剩餘</div>
+            <div class="card-title">本週可自由支配剩餘預算</div>
             <div class="big-number" id="weeklyRemaining">NT$ 0</div>
             
             <div class="progress-bar">
@@ -407,13 +424,18 @@
                 <span id="percentText" style="font-weight: 600;">0%</span>
             </div>
 
+            <!-- 預留特別支出提示區塊 -->
+            <div id="reservedNoticeArea" style="margin-top: 10px; display: none; background: #fff8e6; padding: 10px 12px; border-radius: 12px; border: 0.5px solid rgba(255,149,0,0.3); font-size: 12px; color: #b45309;">
+                <b>🗓️ 本週已有規劃特別支出：</b>共預留 <b id="totalReservedAmount">NT$ 0</b>（已自自由預算中扣除）
+            </div>
+
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="card-title">📅 本週剩餘天數</div>
                     <div class="num" id="daysLeft">-- 天</div>
                 </div>
                 <div class="stat-box">
-                    <div class="card-title">💡 今日建議花費</div>
+                    <div class="card-title">💡 今日建議日常花費</div>
                     <div class="num" style="color: var(--success);" id="dailyBudget">NT$ --</div>
                 </div>
             </div>
@@ -438,8 +460,9 @@
         </div>
     </div>
 
-    <!-- 2. 記帳頁面 -->
+    <!-- 2. 記帳與預期支出頁面 -->
     <div id="page-add" class="page">
+        <!-- 快速記帳卡片 -->
         <div class="card">
             <div class="card-title" style="margin-bottom: 16px; font-size: 15px; font-weight: 600; color: var(--text);">快速新增支出</div>
 
@@ -488,6 +511,37 @@
 
             <button class="btn-primary" onclick="addTransaction()">完成並扣款</button>
         </div>
+
+        <!-- 預期特別支出規劃卡片 -->
+        <div class="card" style="border-color: rgba(255, 149, 0, 0.3); background: #fffcf5;">
+            <div class="card-title" style="margin-bottom: 12px; font-size: 15px; font-weight: 600; color: var(--warning);">🗓️ 規劃未來特別支出 (預先扣留預算)</div>
+            <div style="font-size: 12px; color: var(--sub); margin-bottom: 14px; line-height: 1.4;">
+                預先規劃未來的出門旅行、聚會等開銷，系統會提前鎖定該金額，不讓其影響日常花費。
+            </div>
+
+            <div class="input-group">
+                <label>預計發生日期</label>
+                <input type="date" id="planDate">
+            </div>
+
+            <div class="input-group">
+                <label>預估金額</label>
+                <input type="number" id="planAmount" placeholder="0" inputmode="decimal">
+            </div>
+
+            <div class="input-group">
+                <label>活動說明 / 備註</label>
+                <input type="text" id="planTitle" placeholder="例如：台南兩天一夜、朋友生日聚餐">
+            </div>
+
+            <button class="btn-warning" onclick="addPlannedExpense()">新增預期特別支出</button>
+        </div>
+
+        <!-- 未來特別支出清單 -->
+        <div class="card">
+            <div class="card-title" style="margin-bottom: 8px;">📋 已規劃的特別支出清單</div>
+            <div id="plannedExpenseList"></div>
+        </div>
     </div>
 
     <!-- 3. 日曆頁面 -->
@@ -497,6 +551,10 @@
                 <span id="calMonthTitle">2026年 8月</span>
             </div>
             <div class="calendar-grid" id="calendarGrid"></div>
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 12px; font-size: 11px; color: var(--sub);">
+                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: var(--danger); border-radius: 50%;"></span> 已實際支出</span>
+                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: var(--warning); border-radius: 50%;"></span> 規劃特別支出</span>
+            </div>
         </div>
 
         <div class="card">
@@ -637,15 +695,18 @@
 
         let state = JSON.parse(localStorage.getItem('week_save_state')) || {
             transactions: [],
+            plannedExpenses: [],
             savingsRecords: [],
             totalSavings: 0,
             reserveSpent: 0
         };
 
         if (!state.savingsRecords) state.savingsRecords = [];
+        if (!state.plannedExpenses) state.plannedExpenses = [];
 
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('txDate').value = todayStr;
+        document.getElementById('planDate').value = todayStr;
         let selectedCalDate = todayStr;
 
         function getWeeksInMonth() {
@@ -664,22 +725,35 @@
             return Math.floor(availableForWeeks / weeks);
         }
 
-        function getWeekRangeText() {
+        function getWeekRange() {
             const now = new Date();
             const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
             
             const monday = new Date(now);
             monday.setDate(now.getDate() - (dayOfWeek - 1));
+            monday.setHours(0,0,0,0);
             
             const sunday = new Date(now);
             sunday.setDate(now.getDate() + (7 - dayOfWeek));
+            sunday.setHours(23,59,59,999);
 
+            return { monday, sunday };
+        }
+
+        function getWeekRangeText() {
+            const { monday, sunday } = getWeekRange();
             const mMonth = monday.getMonth() + 1;
             const mDate = monday.getDate();
             const sMonth = sunday.getMonth() + 1;
             const sDate = sunday.getDate();
 
             return `本週區間：${mMonth}/${mDate} (一) - ${sMonth}/${sDate} (日)`;
+        }
+
+        function isDateInCurrentWeek(dateStr) {
+            const d = new Date(dateStr);
+            const { monday, sunday } = getWeekRange();
+            return d >= monday && d <= sunday;
         }
 
         function saveState() {
@@ -696,8 +770,14 @@
 
         function getWeeklySpent() {
             return state.transactions
-                .filter(t => t.type === 'weekly')
+                .filter(t => t.type === 'weekly' && isDateInCurrentWeek(t.date))
                 .reduce((sum, t) => sum + t.amount, 0);
+        }
+
+        function getWeeklyPlannedReserved() {
+            return state.plannedExpenses
+                .filter(p => isDateInCurrentWeek(p.date) && !p.completed)
+                .reduce((sum, p) => sum + p.amount, 0);
         }
 
         function addTransaction() {
@@ -745,6 +825,45 @@
             switchPage('home', document.querySelectorAll('.nav-item')[0]);
         }
 
+        // 🗓️ 新增預期特別支出
+        function addPlannedExpense() {
+            const date = document.getElementById('planDate').value;
+            const amount = parseFloat(document.getElementById('planAmount').value);
+            const title = document.getElementById('planTitle').value.trim();
+
+            if (!date) {
+                alert('請選擇預計發生日期！');
+                return;
+            }
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('請輸入預估金額！');
+                return;
+            }
+
+            state.plannedExpenses.push({
+                id: Date.now(),
+                date,
+                amount,
+                title: title || '特別支出規劃',
+                completed: false
+            });
+
+            saveState();
+
+            document.getElementById('planAmount').value = '';
+            document.getElementById('planTitle').value = '';
+
+            alert('✅ 成功加入預期特別支出！');
+            render();
+        }
+
+        function deletePlannedExpense(id) {
+            state.plannedExpenses = state.plannedExpenses.filter(p => p.id !== id);
+            saveState();
+            render();
+        }
+
         // 💰 彈性新增／扣除存款紀錄
         function addSavingsRecord() {
             const action = document.getElementById('savingsAction').value;
@@ -782,18 +901,24 @@
             render();
         }
 
-        // AI 建議演算法
-        function generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories) {
+        // AI 建議演算法 (包含特別支出連動)
+        function generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories, plannedReserved) {
             let homeAdvice = "";
-            if (remaining <= 0) {
-                homeAdvice = "🚨 本週預算已告罄！接下來幾天請盡量控制為零花費，或動用緊急預備金。";
-            } else if (dailyBudget < 200) {
-                homeAdvice = `⚠️ 本週僅剩 <b>NT$ ${remaining.toLocaleString()}</b>，離結算還有 ${daysLeft} 天！建議將今日花費壓在 <b>NT$ ${dailyBudget.toLocaleString()}</b> 以內，優先保留餐飲基本開銷。`;
-            } else if (percent > 70) {
-                homeAdvice = `💡 本週已使用 <b>${percent}%</b> 的預算，今日建議花費為 <b>NT$ ${dailyBudget.toLocaleString()}</b>。稍微放緩消費步伐，本週就能順利存下剩餘資金！`;
-            } else {
-                homeAdvice = `🟢 目前花費節奏非常健康！本週剩餘 <b>NT$ ${remaining.toLocaleString()}</b>，每天平均可用 <b>NT$ ${dailyBudget.toLocaleString()}</b>，繼續保持！`;
+            
+            if (plannedReserved > 0) {
+                homeAdvice += `🗓️ 本週已為您預留 <b>NT$ ${plannedReserved.toLocaleString()}</b> 的未來特別支出。<br>`;
             }
+
+            if (remaining <= 0) {
+                homeAdvice += "🚨扣除特別支出預留後，本週日常可自由預算已告罄！請嚴格控制今日消費。";
+            } else if (dailyBudget < 200) {
+                homeAdvice += `⚠️ 本週剩餘自由支配預算 <b>NT$ ${remaining.toLocaleString()}</b>，距離結算還有 ${daysLeft} 天！建議今日日常開銷壓在 <b>NT$ ${dailyBudget.toLocaleString()}</b> 以內。`;
+            } else if (percent > 70) {
+                homeAdvice += `💡 本週預算已使用 <b>${percent}%</b>，今日建議自由花費額度為 <b>NT$ ${dailyBudget.toLocaleString()}</b>，請稍微放緩節奏。`;
+            } else {
+                homeAdvice += `🟢 預算控制良好！扣除特別支出預留後，每日平均尚有 <b>NT$ ${dailyBudget.toLocaleString()}</b> 可自由支配。`;
+            }
+
             document.getElementById('aiHomeAdvice').innerHTML = homeAdvice;
 
             let topCategory = "無";
@@ -806,17 +931,15 @@
             }
 
             let analyticsAdvice = `• 本週最大開支為 <b>${topCategory}</b>（共 NT$ ${topAmount.toLocaleString()}）。<br>`;
+            if (plannedReserved > 0) {
+                analyticsAdvice += `• 本週包含 <b>NT$ ${plannedReserved.toLocaleString()}</b> 的計畫性預估支出，有規劃的花費能讓財務狀況更加穩定！<br>`;
+            }
             if (cardTotal > cashTotal) {
-                analyticsAdvice += `• 本週偏向使用 <b>💳 信用卡</b> 支付（占比 ${Math.round((cardTotal/(cashTotal+cardTotal||1))*100)}%），提醒您月底需留意信用卡帳單結算！<br>`;
+                analyticsAdvice += `• 本週偏向使用 <b>💳 信用卡</b> 支付（占比 ${Math.round((cardTotal/(cashTotal+cardTotal||1))*100)}%），提醒您月底需留意信用卡帳單！`;
             } else if (cashTotal > 0) {
-                analyticsAdvice += `• 本週主要以 <b>💵 現金</b> 支付，現金控管狀況良好。<br>`;
+                analyticsAdvice += `• 本週主要以 <b>💵 現金</b> 支付，控制狀況良好。`;
             }
 
-            if (percent > 80) {
-                analyticsAdvice += `• 建議下週可微調 <b>${topCategory}</b> 的分配額度，避免週中預算過早吃緊。`;
-            } else {
-                analyticsAdvice += `• 整體消費控管得當，預計本週結算時可為您累積一筆額外存款！`;
-            }
             document.getElementById('aiAnalyticsAdvice').innerHTML = analyticsAdvice;
         }
 
@@ -844,6 +967,7 @@
                     if (importedState && Array.isArray(importedState.transactions)) {
                         state = importedState;
                         if (!state.savingsRecords) state.savingsRecords = [];
+                        if (!state.plannedExpenses) state.plannedExpenses = [];
                         saveState();
                         alert('✅ 資料還原成功！');
                         render();
@@ -863,6 +987,7 @@
             if (confirm('確定要清空所有記帳資料嗎？此操作不可逆！')) {
                 state = {
                     transactions: [],
+                    plannedExpenses: [],
                     savingsRecords: [],
                     totalSavings: 0,
                     reserveSpent: 0
@@ -908,9 +1033,15 @@
                 dayDiv.innerText = day;
 
                 const hasTx = state.transactions.some(t => t.date === dateStr);
+                const hasPlan = state.plannedExpenses.some(p => p.date === dateStr);
+
                 if (hasTx) {
                     const dot = document.createElement('div');
                     dot.className = 'cal-dot';
+                    dayDiv.appendChild(dot);
+                } else if (hasPlan) {
+                    const dot = document.createElement('div');
+                    dot.className = 'cal-dot planned';
                     dayDiv.appendChild(dot);
                 }
 
@@ -927,14 +1058,38 @@
         }
 
         function renderCalendarDayDetails(dateStr) {
-            document.getElementById('selectedDateTitle').innerText = `${dateStr} 支出明細`;
+            document.getElementById('selectedDateTitle').innerText = `${dateStr} 明細與規劃`;
             const list = document.getElementById('calendarDayTxList');
             list.innerHTML = '';
 
             const txs = state.transactions.filter(t => t.date === dateStr);
-            if (txs.length === 0) {
-                list.innerHTML = '<div style="font-size:13px; color:var(--sub); padding:10px 0;">當日無支出紀錄</div>';
+            const plans = state.plannedExpenses.filter(p => p.date === dateStr);
+
+            if (txs.length === 0 && plans.length === 0) {
+                list.innerHTML = '<div style="font-size:13px; color:var(--sub); padding:10px 0;">當日無支出或預期規劃</div>';
                 return;
+            }
+
+            if (plans.length > 0) {
+                plans.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'tx-item';
+                    item.style.background = '#fffcf5';
+                    item.style.padding = '8px 12px';
+                    item.style.borderRadius = '10px';
+                    item.style.marginBottom = '6px';
+                    item.innerHTML = `
+                        <div style="display: flex; align-items: center;">
+                            <div class="tx-icon">🗓️</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 14px; color: var(--warning);">${p.title} (特別支出預估)</div>
+                                <div style="font-size: 11px; color: var(--sub);">預留扣算中</div>
+                            </div>
+                        </div>
+                        <div style="font-weight: 600; color: var(--warning); font-variant-numeric: tabular-nums;">-NT$ ${p.amount.toLocaleString()}</div>
+                    `;
+                    list.appendChild(item);
+                });
             }
 
             let total = 0;
@@ -956,25 +1111,39 @@
                 list.appendChild(item);
             });
 
-            const sumDiv = document.createElement('div');
-            sumDiv.style.cssText = 'text-align:right; font-weight:600; font-size:14px; margin-top:12px; color:var(--text); font-variant-numeric: tabular-nums;';
-            sumDiv.innerText = `當日總計：NT$ ${total.toLocaleString()}`;
-            list.appendChild(sumDiv);
+            if (txs.length > 0) {
+                const sumDiv = document.createElement('div');
+                sumDiv.style.cssText = 'text-align:right; font-weight:600; font-size:14px; margin-top:12px; color:var(--text); font-variant-numeric: tabular-nums;';
+                sumDiv.innerText = `當日實際總計：NT$ ${total.toLocaleString()}`;
+                list.appendChild(sumDiv);
+            }
         }
 
         function render() {
             const weeklyTarget = getWeeklyTarget();
             const weeklySpent = getWeeklySpent();
-            const remaining = weeklyTarget - weeklySpent;
-            const percent = Math.min(100, Math.round((weeklySpent / weeklyTarget) * 100));
+            const plannedReserved = getWeeklyPlannedReserved();
+            
+            // 本週扣除已花費與已預留後的剩餘自由預算
+            const remaining = weeklyTarget - weeklySpent - plannedReserved;
+            const percent = Math.min(100, Math.round(((weeklySpent + plannedReserved) / weeklyTarget) * 100));
 
             document.getElementById('weekRangeText').innerText = getWeekRangeText();
             document.getElementById('weeklyCalcTag').innerText = `本月包含 ${getWeeksInMonth()} 週 (每週約 $${weeklyTarget.toLocaleString()})`;
             document.getElementById('weeklyTarget').innerText = `NT$ ${weeklyTarget.toLocaleString()}`;
-            document.getElementById('weeklyRemaining').innerText = `NT$ ${remaining.toLocaleString()}`;
+            document.getElementById('weeklyRemaining').innerText = `NT$ ${Math.max(0, remaining).toLocaleString()}`;
             document.getElementById('weeklySpent').innerText = `NT$ ${weeklySpent.toLocaleString()}`;
             document.getElementById('progressFill').style.width = `${percent}%`;
             document.getElementById('percentText').innerText = `${percent}%`;
+
+            // 特別支出預留提示
+            const reservedNoticeArea = document.getElementById('reservedNoticeArea');
+            if (plannedReserved > 0) {
+                reservedNoticeArea.style.display = 'block';
+                document.getElementById('totalReservedAmount').innerText = `NT$ ${plannedReserved.toLocaleString()}`;
+            } else {
+                reservedNoticeArea.style.display = 'none';
+            }
 
             const now = new Date();
             const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
@@ -1008,6 +1177,32 @@
                 `;
                 homeList.appendChild(item);
             });
+
+            // 預期特別支出清單渲染
+            const plannedExpenseList = document.getElementById('plannedExpenseList');
+            plannedExpenseList.innerHTML = '';
+            if (!state.plannedExpenses || state.plannedExpenses.length === 0) {
+                plannedExpenseList.innerHTML = '<div style="font-size:13px; color:var(--sub); padding:10px 0;">尚無預期的特別支出</div>';
+            } else {
+                state.plannedExpenses.slice().reverse().forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'tx-item';
+                    item.innerHTML = `
+                        <div style="display: flex; align-items: center;">
+                            <div class="tx-icon">🗓️</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 14px;">${p.title}</div>
+                                <div style="font-size: 11px; color: var(--sub); margin-top:1px;">預計日期: ${p.date}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 600; color: var(--warning); font-variant-numeric: tabular-nums;">-NT$ ${p.amount.toLocaleString()}</div>
+                            <button onclick="deletePlannedExpense(${p.id})" style="background:none; border:none; color:var(--danger); font-size:11px; cursor:pointer; margin-top:2px;">刪除</button>
+                        </div>
+                    `;
+                    plannedExpenseList.appendChild(item);
+                });
+            }
 
             // 存款紀錄渲染
             const savingsHistory = document.getElementById('savingsHistory');
@@ -1064,7 +1259,7 @@
             }
 
             // 觸發 AI 建議更新
-            generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories);
+            generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories, plannedReserved);
 
             renderCalendar();
         }
