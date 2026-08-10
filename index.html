@@ -286,6 +286,38 @@
             justify-content: center;
         }
 
+        /* Planned Item Detail Style */
+        .plan-card {
+            background: #ffffff;
+            border: 0.5px solid rgba(255,149,0,0.25);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .plan-header {
+            padding: 12px 14px;
+            background: #fffcf5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .plan-details {
+            padding: 12px 14px;
+            background: #ffffff;
+            border-top: 0.5px dashed rgba(255,149,0,0.2);
+        }
+        .sub-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 0.5px dotted #eee;
+        }
+        .sub-item:last-child {
+            border-bottom: none;
+        }
+
         /* iOS Calendar */
         .calendar-header {
             display: flex;
@@ -512,34 +544,29 @@
             <button class="btn-primary" onclick="addTransaction()">完成並扣款</button>
         </div>
 
-        <!-- 預期特別支出規劃卡片 -->
+        <!-- 預期特別支出規劃卡片 (新增第一層活動主題) -->
         <div class="card" style="border-color: rgba(255, 149, 0, 0.3); background: #fffcf5;">
-            <div class="card-title" style="margin-bottom: 12px; font-size: 15px; font-weight: 600; color: var(--warning);">🗓️ 規劃未來特別支出 (預先扣留預算)</div>
+            <div class="card-title" style="margin-bottom: 12px; font-size: 15px; font-weight: 600; color: var(--warning);">🗓️ 規劃未來特別活動 / 出門支出</div>
             <div style="font-size: 12px; color: var(--sub); margin-bottom: 14px; line-height: 1.4;">
-                預先規劃未來的出門旅行、聚會等開銷，系統會提前鎖定該金額，不讓其影響日常花費。
+                先建立活動名稱與日期，建立後即可點擊展開新增詳細的「細項與金額」。
             </div>
 
             <div class="input-group">
-                <label>預計發生日期</label>
+                <label>預計出門 / 活動日期</label>
                 <input type="date" id="planDate">
             </div>
 
             <div class="input-group">
-                <label>預估金額</label>
-                <input type="number" id="planAmount" placeholder="0" inputmode="decimal">
+                <label>活動名稱 / 主題</label>
+                <input type="text" id="planTitle" placeholder="例如：8/15 台南小旅行、朋友聚餐">
             </div>
 
-            <div class="input-group">
-                <label>活動說明 / 備註</label>
-                <input type="text" id="planTitle" placeholder="例如：台南兩天一夜、朋友生日聚餐">
-            </div>
-
-            <button class="btn-warning" onclick="addPlannedExpense()">新增預期特別支出</button>
+            <button class="btn-warning" onclick="addPlannedExpense()">建立活動預算規劃</button>
         </div>
 
-        <!-- 未來特別支出清單 -->
+        <!-- 未來特別支出清單 (支援第一層與第二層展開) -->
         <div class="card">
-            <div class="card-title" style="margin-bottom: 8px;">📋 已規劃的特別支出清單</div>
+            <div class="card-title" style="margin-bottom: 8px;">📋 已規劃的特別支出與細項 (點擊展開明細)</div>
             <div id="plannedExpenseList"></div>
         </div>
     </div>
@@ -704,6 +731,12 @@
         if (!state.savingsRecords) state.savingsRecords = [];
         if (!state.plannedExpenses) state.plannedExpenses = [];
 
+        // 確保相容舊資料資料結構 (補上 items 陣列與 expanded 狀態)
+        state.plannedExpenses.forEach(p => {
+            if (!p.items) p.items = [];
+            if (p.expanded === undefined) p.expanded = false;
+        });
+
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('txDate').value = todayStr;
         document.getElementById('planDate').value = todayStr;
@@ -774,10 +807,18 @@
                 .reduce((sum, t) => sum + t.amount, 0);
         }
 
+        // 計算計劃中活動的總金額 (自動加總該活動下的所有細項)
+        function getPlanTotalAmount(plan) {
+            if (plan.items && plan.items.length > 0) {
+                return plan.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+            }
+            return plan.amount || 0;
+        }
+
         function getWeeklyPlannedReserved() {
             return state.plannedExpenses
                 .filter(p => isDateInCurrentWeek(p.date) && !p.completed)
-                .reduce((sum, p) => sum + p.amount, 0);
+                .reduce((sum, p) => sum + getPlanTotalAmount(p), 0);
         }
 
         function addTransaction() {
@@ -825,37 +866,81 @@
             switchPage('home', document.querySelectorAll('.nav-item')[0]);
         }
 
-        // 🗓️ 新增預期特別支出
+        // 🗓️ 新增第一層預期特別活動
         function addPlannedExpense() {
             const date = document.getElementById('planDate').value;
-            const amount = parseFloat(document.getElementById('planAmount').value);
             const title = document.getElementById('planTitle').value.trim();
 
             if (!date) {
-                alert('請選擇預計發生日期！');
+                alert('請選擇預計日期！');
                 return;
             }
 
-            if (isNaN(amount) || amount <= 0) {
-                alert('請輸入預估金額！');
+            if (!title) {
+                alert('請輸入活動名稱或主題！');
                 return;
             }
 
             state.plannedExpenses.push({
                 id: Date.now(),
                 date,
-                amount,
-                title: title || '特別支出規劃',
-                completed: false
+                title,
+                amount: 0,
+                items: [],
+                expanded: true
             });
 
             saveState();
-
-            document.getElementById('planAmount').value = '';
             document.getElementById('planTitle').value = '';
 
-            alert('✅ 成功加入預期特別支出！');
+            alert('✅ 活動已建立！請在下方點擊該活動新增詳細花費項目。');
             render();
+        }
+
+        // ➕ 為活動新增細項 (第二層)
+        function addSubItem(planId) {
+            const nameInput = document.getElementById(`subName_${planId}`);
+            const amountInput = document.getElementById(`subAmount_${planId}`);
+
+            const name = nameInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            if (!name) {
+                alert('請填寫細項名稱（例如：交通費、午餐）');
+                return;
+            }
+            if (isNaN(amount) || amount <= 0) {
+                alert('請輸入有效的金額');
+                return;
+            }
+
+            const plan = state.plannedExpenses.find(p => p.id === planId);
+            if (plan) {
+                if (!plan.items) plan.items = [];
+                plan.items.push({ id: Date.now(), name, amount });
+                plan.amount = getPlanTotalAmount(plan);
+                saveState();
+                render();
+            }
+        }
+
+        function deleteSubItem(planId, itemId) {
+            const plan = state.plannedExpenses.find(p => p.id === planId);
+            if (plan && plan.items) {
+                plan.items = plan.items.filter(i => i.id !== itemId);
+                plan.amount = getPlanTotalAmount(plan);
+                saveState();
+                render();
+            }
+        }
+
+        function togglePlanExpand(planId) {
+            const plan = state.plannedExpenses.find(p => p.id === planId);
+            if (plan) {
+                plan.expanded = !plan.expanded;
+                saveState();
+                render();
+            }
         }
 
         function deletePlannedExpense(id) {
@@ -901,7 +986,7 @@
             render();
         }
 
-        // AI 建議演算法 (包含特別支出連動)
+        // AI 建議演算法
         function generateAiAdvice(remaining, daysLeft, dailyBudget, percent, weeklySpent, cashTotal, cardTotal, categories, plannedReserved) {
             let homeAdvice = "";
             
@@ -968,6 +1053,10 @@
                         state = importedState;
                         if (!state.savingsRecords) state.savingsRecords = [];
                         if (!state.plannedExpenses) state.plannedExpenses = [];
+                        state.plannedExpenses.forEach(p => {
+                            if (!p.items) p.items = [];
+                            if (p.expanded === undefined) p.expanded = false;
+                        });
                         saveState();
                         alert('✅ 資料還原成功！');
                         render();
@@ -1072,21 +1161,30 @@
 
             if (plans.length > 0) {
                 plans.forEach(p => {
+                    const totalAmt = getPlanTotalAmount(p);
                     const item = document.createElement('div');
                     item.className = 'tx-item';
                     item.style.background = '#fffcf5';
-                    item.style.padding = '8px 12px';
-                    item.style.borderRadius = '10px';
-                    item.style.marginBottom = '6px';
+                    item.style.padding = '10px 12px';
+                    item.style.borderRadius = '12px';
+                    item.style.marginBottom = '8px';
+                    
+                    let subDetailsHtml = '';
+                    if (p.items && p.items.length > 0) {
+                        subDetailsHtml = `<div style="font-size:11px; color:var(--sub); margin-top:4px;">` + 
+                            p.items.map(i => `${i.name}: $${i.amount}`).join(' | ') + `</div>`;
+                    } else {
+                        subDetailsHtml = `<div style="font-size:11px; color:var(--sub); margin-top:2px;">尚未建立細項</div>`;
+                    }
+
                     item.innerHTML = `
-                        <div style="display: flex; align-items: center;">
-                            <div class="tx-icon">🗓️</div>
-                            <div>
-                                <div style="font-weight: 600; font-size: 14px; color: var(--warning);">${p.title} (特別支出預估)</div>
-                                <div style="font-size: 11px; color: var(--sub);">預留扣算中</div>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-weight: 600; font-size: 14px; color: var(--warning);">🗓️ ${p.title}</div>
+                                <div style="font-weight: 600; color: var(--warning); font-variant-numeric: tabular-nums;">-NT$ ${totalAmt.toLocaleString()}</div>
                             </div>
+                            ${subDetailsHtml}
                         </div>
-                        <div style="font-weight: 600; color: var(--warning); font-variant-numeric: tabular-nums;">-NT$ ${p.amount.toLocaleString()}</div>
                     `;
                     list.appendChild(item);
                 });
@@ -1124,7 +1222,6 @@
             const weeklySpent = getWeeklySpent();
             const plannedReserved = getWeeklyPlannedReserved();
             
-            // 本週扣除已花費與已預留後的剩餘自由預算
             const remaining = weeklyTarget - weeklySpent - plannedReserved;
             const percent = Math.min(100, Math.round(((weeklySpent + plannedReserved) / weeklyTarget) * 100));
 
@@ -1136,7 +1233,6 @@
             document.getElementById('progressFill').style.width = `${percent}%`;
             document.getElementById('percentText').innerText = `${percent}%`;
 
-            // 特別支出預留提示
             const reservedNoticeArea = document.getElementById('reservedNoticeArea');
             if (plannedReserved > 0) {
                 reservedNoticeArea.style.display = 'block';
@@ -1178,29 +1274,61 @@
                 homeList.appendChild(item);
             });
 
-            // 預期特別支出清單渲染
+            // 預期特別支出清單渲染 (第一層 + 第二層展開細項)
             const plannedExpenseList = document.getElementById('plannedExpenseList');
             plannedExpenseList.innerHTML = '';
             if (!state.plannedExpenses || state.plannedExpenses.length === 0) {
-                plannedExpenseList.innerHTML = '<div style="font-size:13px; color:var(--sub); padding:10px 0;">尚無預期的特別支出</div>';
+                plannedExpenseList.innerHTML = '<div style="font-size:13px; color:var(--sub); padding:10px 0;">尚無預期的特別支出規劃</div>';
             } else {
                 state.plannedExpenses.slice().reverse().forEach(p => {
-                    const item = document.createElement('div');
-                    item.className = 'tx-item';
-                    item.innerHTML = `
-                        <div style="display: flex; align-items: center;">
-                            <div class="tx-icon">🗓️</div>
+                    const totalAmt = getPlanTotalAmount(p);
+                    const planCard = document.createElement('div');
+                    planCard.className = 'plan-card';
+
+                    const isExpanded = p.expanded !== false;
+
+                    let itemsHtml = '';
+                    if (p.items && p.items.length > 0) {
+                        itemsHtml = p.items.map(item => `
+                            <div class="sub-item">
+                                <span>🔹 ${item.name}</span>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <span style="font-weight:600;">NT$ ${parseFloat(item.amount).toLocaleString()}</span>
+                                    <button onclick="deleteSubItem(${p.id}, ${item.id})" style="background:none; border:none; color:var(--danger); font-size:12px; cursor:pointer;">✕</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        itemsHtml = '<div style="font-size:12px; color:var(--sub); padding:4px 0;">尚未新增細項，請於下方新增</div>';
+                    }
+
+                    planCard.innerHTML = `
+                        <!-- 第一層：總覽 -->
+                        <div class="plan-header" onclick="togglePlanExpand(${p.id})">
                             <div>
-                                <div style="font-weight: 600; font-size: 14px;">${p.title}</div>
-                                <div style="font-size: 11px; color: var(--sub); margin-top:1px;">預計日期: ${p.date}</div>
+                                <div style="font-weight: 600; font-size: 15px; color: var(--text);">🗓️ ${p.title}</div>
+                                <div style="font-size: 11px; color: var(--sub); margin-top:2px;">預計日期: ${p.date} · 點擊${isExpanded ? '收合' : '展開'}細項</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; font-size: 16px; color: var(--warning); font-variant-numeric: tabular-nums;">NT$ ${totalAmt.toLocaleString()}</div>
+                                <button onclick="event.stopPropagation(); deletePlannedExpense(${p.id})" style="background:none; border:none; color:var(--danger); font-size:11px; cursor:pointer; margin-top:2px;">刪除整組</button>
                             </div>
                         </div>
-                        <div style="text-align: right;">
-                            <div style="font-weight: 600; color: var(--warning); font-variant-numeric: tabular-nums;">-NT$ ${p.amount.toLocaleString()}</div>
-                            <button onclick="deletePlannedExpense(${p.id})" style="background:none; border:none; color:var(--danger); font-size:11px; cursor:pointer; margin-top:2px;">刪除</button>
+
+                        <!-- 第二層：詳細內容 -->
+                        <div class="plan-details" style="display: ${isExpanded ? 'block' : 'none'};">
+                            <div style="font-size:12px; font-weight:600; color:var(--sub); margin-bottom:6px;">開銷細項列表：</div>
+                            ${itemsHtml}
+
+                            <!-- 新增細項輸入表單 -->
+                            <div style="margin-top:12px; padding-top:10px; border-top:0.5px solid #eee; display:flex; gap:6px;">
+                                <input type="text" id="subName_${p.id}" placeholder="細項 (如: 交通費)" style="flex:2; padding:8px 10px; font-size:13px;">
+                                <input type="number" id="subAmount_${p.id}" placeholder="金額" inputmode="decimal" style="flex:1.5; padding:8px 10px; font-size:13px;">
+                                <button onclick="addSubItem(${p.id})" style="background:var(--primary); color:white; border:none; border-radius:10px; padding:0 12px; font-weight:600; font-size:13px; cursor:pointer;">新增</button>
+                            </div>
                         </div>
                     `;
-                    plannedExpenseList.appendChild(item);
+                    plannedExpenseList.appendChild(planCard);
                 });
             }
 
