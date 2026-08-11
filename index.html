@@ -4386,3 +4386,127 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 </script>
 </body>
 </html>
+```
+
+<!-- ===== 追加：未來支出行程明細＋支付方式＋月度統整（僅新增，不改原有介面） ===== -->
+<style id="futureExpenseDetailUpgradeStyles">
+  .fed-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
+  .fed-pay-grid select{width:100%;padding:8px;border:1px solid #ddd;border-radius:9px;background:#fff}
+  .fed-viewer{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:10001;display:none;align-items:flex-end;justify-content:center}
+  .fed-viewer.show{display:flex}
+  .fed-sheet{width:min(560px,100%);max-height:82vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px;box-sizing:border-box}
+  .fed-sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .fed-sheet-title{font-size:20px;font-weight:900}
+  .fed-close{border:0;background:#f2f2f7;border-radius:50%;width:34px;height:34px;font-size:20px}
+  .fed-detail{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #eee}
+  .fed-detail small{display:block;color:#777;margin-top:3px}
+  .fed-summary{margin-top:16px;padding-top:14px;border-top:1px solid #eee}
+  .fed-summary-row{padding:10px 0;border-bottom:1px solid #f0f0f0}
+  .fed-summary-row b{display:block}
+  .fed-summary-row span{color:#666;font-size:12px}
+  .fed-total{font-size:17px;font-weight:900}
+  .fed-hint{font-size:11px;color:#777;line-height:1.55;margin-top:6px}
+  @media(max-width:600px){.fed-pay-grid{grid-template-columns:1fr}}
+</style>
+
+<div id="fedViewer" class="fed-viewer" onclick="if(event.target===this)window.closeFutureDetailViewer()">
+  <div class="fed-sheet">
+    <div class="fed-sheet-head"><div id="fedViewerBody"></div><button class="fed-close" onclick="window.closeFutureDetailViewer()">×</button></div>
+  </div>
+</div>
+
+<script id="futureExpenseDetailUpgradeScript">
+(function(){
+  const PAYMENTS=['悠遊卡','一卡通','現金','信用卡','Apple Pay','LINE Pay','其他'];
+  const TYPES=['船','火車','公車','捷運','客運','計程車','電影','餐飲','住宿','門票','購物','其他'];
+  const esc2=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const money2=n=>'$'+Math.round(Number(n)||0).toLocaleString('zh-TW');
+  function detailType(name){
+    const s=String(name||'');
+    const rules=[['船',['船','渡輪','船票']],['火車',['火車','台鐵','高鐵','區間車','車票']],['公車',['公車','客運','巴士']],['捷運',['捷運','MRT']],['計程車',['計程車','計程車費','Uber','taxi']],['電影',['電影','影城','威秀','國賓']],['餐飲',['餐','早餐','午餐','晚餐','飲料','咖啡']],['住宿',['住宿','飯店','民宿','旅館']],['門票',['門票','票券','景點','展覽']],['購物',['購物','衣服','日用品']]];
+    for(const [t,words] of rules) if(words.some(w=>s.toLowerCase().includes(w.toLowerCase()))) return t;
+    return '其他';
+  }
+  function addControls(row, detail){
+    if(!row || row.querySelector('.fed-pay-grid')) return;
+    const name=row.querySelector('.detail-name');
+    const amount=row.querySelector('.detail-amount');
+    if(!name||!amount)return;
+    const wrap=document.createElement('div'); wrap.className='fed-pay-grid';
+    const typeSel=document.createElement('select'); typeSel.className='fed-detail-type';
+    TYPES.forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;if((detail&&detail.type)||detailType(name.value)===x)o.selected=true;typeSel.appendChild(o)});
+    const paySel=document.createElement('select'); paySel.className='fed-detail-payment';
+    PAYMENTS.forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent='支付方式：'+x;if((detail&&detail.paymentMethod)||'現金'===x)o.selected=true;paySel.appendChild(o)});
+    wrap.append(typeSel,paySel); row.appendChild(wrap);
+  }
+  function enhanceRows(){document.querySelectorAll('#detailRows .detail-row').forEach(r=>addControls(r));}
+  const originalAddDetail=window.addDetailRow;
+  if(typeof originalAddDetail==='function'){
+    window.addDetailRow=function(name,amount,extra){
+      const r=originalAddDetail.apply(this,arguments);
+      setTimeout(()=>{
+        const rows=document.querySelectorAll('#detailRows .detail-row');
+        const row=rows[rows.length-1];
+        addControls(row,extra);
+      },0); return r;
+    };
+  }
+  const originalEdit=window.editFuture;
+  if(typeof originalEdit==='function'){
+    window.editFuture=function(id){
+      const item=(data.futureExpenses||[]).find(x=>x.id===id);
+      const r=originalEdit.apply(this,arguments);
+      setTimeout(()=>{
+        const rows=[...document.querySelectorAll('#detailRows .detail-row')];
+        (item?.details||[]).forEach((d,i)=>addControls(rows[i],d));
+        enhanceRows();
+      },20); return r;
+    };
+  }
+  const originalSave=window.saveFuture;
+  if(typeof originalSave==='function'){
+    window.saveFuture=function(){
+      const beforeName=document.getElementById('futureName')?.value.trim();
+      const beforeDate=document.getElementById('futureDate')?.value;
+      const beforeId=(typeof editingFutureId!=='undefined')?editingFutureId:null;
+      const rows=[...document.querySelectorAll('#detailRows .detail-row')];
+      const extras=rows.map(row=>({type:row.querySelector('.fed-detail-type')?.value||detailType(row.querySelector('.detail-name')?.value),paymentMethod:row.querySelector('.fed-detail-payment')?.value||'現金'}));
+      const result=originalSave.apply(this,arguments);
+      const item=(data.futureExpenses||[]).find(x=>beforeId?x.id===beforeId:(x.name===beforeName&&x.date===beforeDate));
+      if(item && item.details) item.details.forEach((d,i)=>{d.type=extras[i]?.type||detailType(d.name);d.paymentMethod=extras[i]?.paymentMethod||'現金'});
+      if(item)saveData();
+      setTimeout(()=>{enhanceRows();renderFutureCategorySummary();},30);
+      return result;
+    };
+  }
+  function futureItems(){return data.futureExpenses||[]}
+  function monthNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+  function renderFutureCategorySummary(){
+    const page=document.querySelector('#lineViewStage .lv-page[data-page="future"]'); if(!page)return;
+    let panel=document.getElementById('fedMonthSummary');
+    if(!panel){panel=document.createElement('div');panel.id='fedMonthSummary';panel.className='lv-card'; const list=page.querySelector('#lvFutureList'); (list?.closest('.lv-card')||page).insertAdjacentElement('afterend',panel)}
+    const month=monthNow(); const agg={};
+    futureItems().filter(x=>String(x.date||'').startsWith(month)).forEach(p=>(p.details||[]).forEach(d=>{
+      const pay=d.paymentMethod||'未設定'; const type=d.type||detailType(d.name); const k=pay+'｜'+type;
+      agg[k]=(agg[k]||0)+Number(d.amount||0);
+    }));
+    const rows=Object.entries(agg).sort((a,b)=>b[1]-a[1]);
+    panel.innerHTML='<div class="lv-section-title">💳 本月支付方式 × 支出類型統整</div><div class="lv-note">同一支付方式下的不同交通支出會自動合併。例如：悠遊卡 → 公車＋區間火車。</div>'+
+      (rows.length?rows.map(([k,v])=>{const [pay,type]=k.split('｜');return `<div class="fed-summary-row"><b>${esc2(pay)} · ${esc2(type)}　<span class="fed-total">${money2(v)}</span></b><span>本月預計</span></div>`}).join(''):'<div class="lv-empty">目前沒有可統整的支付方式資料</div>');
+  }
+  window.openFutureDetailViewer=function(id){
+    const item=futureItems().find(x=>x.id===id); if(!item)return;
+    const details=item.details||[]; const body=document.getElementById('fedViewerBody');
+    body.innerHTML=`<div class="fed-sheet-title">${esc2(item.name||'未來支出')}</div><div class="fed-hint">${esc2(item.date||'')} · 預計總花費 ${money2(item.total)}</div>`+
+      (details.length?details.map(d=>`<div class="fed-detail"><div><b>${esc2(d.name)}</b><small>${esc2(d.type||detailType(d.name))} · ${esc2(d.paymentMethod||'未設定')}</small></div><strong>${money2(d.amount)}</strong></div>`).join(''):'<div class="fed-hint">這筆行程尚未拆分細項。</div>');
+    document.getElementById('fedViewer').classList.add('show');
+  };
+  window.closeFutureDetailViewer=function(){document.getElementById('fedViewer')?.classList.remove('show')};
+  function wireCards(){document.querySelectorAll('#lvFutureList .future-item').forEach((card,i)=>{if(card.dataset.fedWired)return;const item=futureItems()[i];if(!item)return;card.dataset.fedWired='1';card.style.cursor='pointer';card.addEventListener('click',e=>{if(e.target.closest('button'))return;window.openFutureDetailViewer(item.id)})});}
+  const oldRender=window.render;
+  if(typeof oldRender==='function')window.render=function(){const r=oldRender.apply(this,arguments);setTimeout(()=>{enhanceRows();wireCards();renderFutureCategorySummary()},30);return r};
+  setTimeout(()=>{enhanceRows();wireCards();renderFutureCategorySummary()},100);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closeFutureDetailViewer()});
+})();
+</script>
+<!-- ===== 追加結束 ===== -->
