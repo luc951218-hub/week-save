@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -4386,7 +4387,7 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 </script>
 </body>
 </html>
-
+```
 
 <!-- ===== 追加：未來支出行程明細＋支付方式＋月度統整（僅新增，不改原有介面） ===== -->
 <style id="futureExpenseDetailUpgradeStyles">
@@ -4507,6 +4508,135 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
   if(typeof oldRender==='function')window.render=function(){const r=oldRender.apply(this,arguments);setTimeout(()=>{enhanceRows();wireCards();renderFutureCategorySummary()},30);return r};
   setTimeout(()=>{enhanceRows();wireCards();renderFutureCategorySummary()},100);
   document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closeFutureDetailViewer()});
+})();
+</script>
+<!-- ===== 追加結束 ===== -->
+
+
+<!-- ===== 追加：未來支出編輯／刪除 ===== -->
+<style>
+.feh-card-actions{display:flex;gap:8px;margin-top:10px}
+.feh-card-actions button{border:0;border-radius:10px;padding:8px 12px;cursor:pointer}
+.feh-edit-box{margin-top:10px;padding:10px;border-radius:12px;background:#f8f8f8}
+.feh-edit-box input,.feh-edit-box select{padding:8px;border:1px solid #ddd;border-radius:9px;margin:3px}
+</style>
+<script>
+(function(){
+  // 只針對本次新增的未來支出資料層提供編輯／刪除，不改動其他功能。
+  const KEY='weekly_future_v3';
+  const get=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}};
+  const put=x=>localStorage.setItem(KEY,JSON.stringify(x));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const types=['火車','公車','船','捷運','計程車','電影','餐飲','住宿','門票','購物','其他'];
+  const methods=['悠遊卡','一卡通','信用卡','現金','LINE Pay','Apple Pay','其他'];
+
+  function render(){
+    const list=document.querySelector('#feh-list');
+    if(!list)return;
+    const plans=get();
+    list.innerHTML=plans.map((p,i)=>`
+      <div class="feh-card">
+        <strong>📌 ${esc(p.name)} <span class="feh-muted">${esc(p.date||'')}</span></strong>
+        <div>${(p.items||[]).map((x,j)=>`
+          <div class="feh-row">
+            <span>${esc(x.type)}｜${esc(x.method)}｜$${Number(x.amount||0).toLocaleString()}</span>
+            <div class="feh-card-actions">
+              <button type="button" onclick="window.fehEditItem(${i},${j})">✏️ 修改</button>
+              <button type="button" onclick="window.fehDeleteItem(${i},${j})">🗑️ 刪除</button>
+            </div>
+          </div>`).join('')||'<span class="feh-muted">尚未新增細項</span>'}</div>
+        <div class="feh-row">
+          <select id="feh-type-${i}">${types.map(x=>`<option>${esc(x)}</option>`).join('')}</select>
+          <select id="feh-method-${i}">${methods.map(x=>`<option>${esc(x)}</option>`).join('')}</select>
+          <input id="feh-amount-${i}" type="number" min="0" placeholder="金額">
+          <button type="button" class="feh-btn" onclick="window.fehAddItem(${i})">＋細項</button>
+        </div>
+        <div class="feh-card-actions">
+          <button type="button" onclick="window.fehEditPlan(${i})">✏️ 修改行程</button>
+          <button type="button" onclick="window.fehDeletePlan(${i})">🗑️ 刪除整個行程</button>
+        </div>
+      </div>`).join('')||'<div class="feh-muted">目前沒有新的統整資料。</div>';
+  }
+
+  window.fehDeleteItem=function(i,j){
+    const plans=get();
+    if(!plans[i] || !plans[i].items[j]) return;
+    if(!confirm('確定要刪除這筆未來支出細項嗎？')) return;
+    plans[i].items.splice(j,1);
+    put(plans); render();
+    document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
+  };
+
+  window.fehEditItem=function(i,j){
+    const plans=get(), x=plans[i]?.items?.[j];
+    if(!x)return;
+    const card=document.querySelectorAll('#feh-list .feh-card')[i];
+    if(!card)return;
+    const old=card.querySelector('.feh-edit-box');
+    if(old) old.remove();
+    const box=document.createElement('div');
+    box.className='feh-edit-box';
+    box.innerHTML=`
+      <b>修改支出細項</b><br>
+      <select id="feh-edit-type">${types.map(t=>`<option ${t===x.type?'selected':''}>${esc(t)}</option>`).join('')}</select>
+      <select id="feh-edit-method">${methods.map(t=>`<option ${t===x.method?'selected':''}>${esc(t)}</option>`).join('')}</select>
+      <input id="feh-edit-amount" type="number" min="0" value="${Number(x.amount||0)}">
+      <button type="button" class="feh-btn" id="feh-save-item">儲存</button>
+      <button type="button" class="feh-btn" id="feh-cancel-item">取消</button>`;
+    card.appendChild(box);
+    box.querySelector('#feh-save-item').onclick=()=>{
+      const ps=get();
+      ps[i].items[j]={
+        type:box.querySelector('#feh-edit-type').value,
+        method:box.querySelector('#feh-edit-method').value,
+        amount:Number(box.querySelector('#feh-edit-amount').value||0)
+      };
+      put(ps); render();
+      document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
+    };
+    box.querySelector('#feh-cancel-item').onclick=()=>box.remove();
+  };
+
+  window.fehEditPlan=function(i){
+    const plans=get(), p=plans[i];
+    if(!p)return;
+    const card=document.querySelectorAll('#feh-list .feh-card')[i];
+    if(!card)return;
+    const old=card.querySelector('.feh-edit-box');
+    if(old) old.remove();
+    const box=document.createElement('div');
+    box.className='feh-edit-box';
+    box.innerHTML=`
+      <b>修改行程</b><br>
+      <input id="feh-plan-name" value="${esc(p.name)}" placeholder="行程名稱">
+      <input id="feh-plan-date" type="date" value="${esc(p.date||'')}">
+      <button type="button" class="feh-btn" id="feh-save-plan">儲存</button>
+      <button type="button" class="feh-btn" id="feh-cancel-plan">取消</button>`;
+    card.appendChild(box);
+    box.querySelector('#feh-save-plan').onclick=()=>{
+      const ps=get();
+      ps[i].name=box.querySelector('#feh-plan-name').value.trim() || ps[i].name;
+      ps[i].date=box.querySelector('#feh-plan-date').value;
+      put(ps); render();
+      document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
+    };
+    box.querySelector('#feh-cancel-plan').onclick=()=>box.remove();
+  };
+
+  window.fehDeletePlan=function(i){
+    const plans=get();
+    if(!plans[i])return;
+    if(!confirm('確定要刪除整個未來行程及其所有預計支出嗎？'))return;
+    plans.splice(i,1);
+    put(plans); render();
+    document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
+  };
+
+  // 覆寫本次追加層的刪除按鈕邏輯；其他原始功能不動。
+  const observer=new MutationObserver(()=>{});
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(render,50));
+  }else setTimeout(render,50);
 })();
 </script>
 <!-- ===== 追加結束 ===== -->
