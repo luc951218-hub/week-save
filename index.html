@@ -4387,7 +4387,6 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 </body>
 </html>
 
-
 <!-- ===== 追加：未來支出行程明細＋支付方式＋月度統整（僅新增，不改原有介面） ===== -->
 <style id="futureExpenseDetailUpgradeStyles">
   .fed-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
@@ -4512,251 +4511,376 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 <!-- ===== 追加結束 ===== -->
 
 
-<!-- ===== 追加：未來支出編輯／刪除 ===== -->
+<!-- ===== 追加：未來支出可查看/編輯/刪除 + 週內結餘滾動 + AI式預算建議 ===== -->
 <style>
-.feh-card-actions{display:flex;gap:8px;margin-top:10px}
-.feh-card-actions button{border:0;border-radius:10px;padding:8px 12px;cursor:pointer}
-.feh-edit-box{margin-top:10px;padding:10px;border-radius:12px;background:#f8f8f8}
-.feh-edit-box input,.feh-edit-box select{padding:8px;border:1px solid #ddd;border-radius:9px;margin:3px}
+.fed-plan-card{border:1px solid #e6e8ee;border-radius:16px;padding:14px;margin:9px 0;background:#fff}
+.fed-plan-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.fed-plan-title{font-weight:850;font-size:15px}
+.fed-plan-sub{font-size:12px;color:#777;margin-top:4px}
+.fed-plan-total{font-weight:900}
+.fed-plan-details{margin-top:11px;border-top:1px solid #eee;padding-top:7px}
+.fed-plan-detail{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f2f2f2;font-size:13px}
+.fed-plan-detail small{display:block;color:#777;margin-top:2px}
+.fed-plan-actions{display:flex;gap:7px;margin-top:10px}
+.fed-plan-actions button{border:0;border-radius:9px;padding:7px 10px;font-weight:700;background:#f2f3f5}
+.fed-plan-actions .danger{color:#e53935;background:#fff0ef}
+.fed-ai-note{margin:10px 0;padding:12px;border-radius:13px;background:#f5f9ff;border:1px solid #dbeaff;font-size:13px;line-height:1.6}
+.fed-ai-note b{color:#1677ff}
+.fed-roll-positive{color:#18a558}.fed-roll-negative{color:#e53935}
 </style>
-<script>
+<script id="futurePlanAndWeeklyRollingV4">
 (function(){
-  // 只針對本次新增的未來支出資料層提供編輯／刪除，不改動其他功能。
-  const KEY='weekly_future_v3';
-  const get=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}};
-  const put=x=>localStorage.setItem(KEY,JSON.stringify(x));
-  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const types=['火車','公車','船','捷運','計程車','電影','餐飲','住宿','門票','購物','其他'];
-  const methods=['悠遊卡','一卡通','信用卡','現金','LINE Pay','Apple Pay','其他'];
+  const root=()=>document.getElementById('lineViewStage');
+  const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('zh-TW');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const key=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+  const daysInMonth=()=>{const y=currentMonth.getFullYear(),m=currentMonth.getMonth(),n=new Date(y,m+1,0).getDate();return Array.from({length:n},(_,i)=>new Date(y,m,i+1))};
+  const monthKey=()=>currentMonth.getFullYear()+'-'+String(currentMonth.getMonth()+1).padStart(2,'0');
+  const spentOn=k=>(data.records||[]).filter(r=>r.date===k).reduce((s,r)=>s+Number(r.amount||0),0);
+  const future=()=> (data.futureExpenses||[]).filter(x=>String(x.date||'').startsWith(monthKey()));
+  const futureOn=k=>future().filter(x=>x.date===k).reduce((s,x)=>s+Math.max(0,Number(x.total||0)-Number(x.spent||0)),0);
+  const weekKey=d=>{const x=new Date(d);const day=(x.getDay()+6)%7;const mon=new Date(x);mon.setDate(x.getDate()-day);return key(mon)};
+  function weeks(){
+    const ds=daysInMonth(), map={};
+    ds.forEach(d=>{const k=weekKey(d);(map[k]||(map[k]=[])).push(d)});
+    return Object.values(map);
+  }
+  function rolling(){
+    const ds=daysInMonth(), base=15000/ds.length, ws=weeks(), result={}, weekStats=[];
+    // 週是唯一的「重新分配邊界」：週內省下來的錢可移到同週後面；
+    // 只有同週無法承受時，才把壓力帶到下一週。
+    let carryFromPrev=0;
+    ws.forEach((w,wi)=>{
+      const weekBase=w.length*base;
+      const weekFuture=w.reduce((s,d)=>s+futureOn(key(d)),0);
+      const weekSpent=w.reduce((s,d)=>s+spentOn(key(d)),0);
+      let weekPool=weekBase+carryFromPrev;
+      let carry=0, pressure=0;
+      w.forEach((d,idx)=>{
+        const k=key(d), spent=spentOn(k);
+        const remainingDays=w.length-idx;
+        // 當週尚未使用的基準＋本週前面省下來的錢
+        const availableBefore=weekPool;
+        const plannedToday=futureOn(k);
+        // 若本週已出現超支，先由本週剩餘日吸收；沒有剩餘才向下週傳遞。
+        const recommended=Math.max(0,availableBefore/remainingDays);
+        const allowance=Math.max(0,recommended);
+        const after=Math.max(0,availableBefore-spent);
+        weekPool=after;
+        const save=Math.max(0,allowance-spent);
+        carry+=save;
+        pressure=Math.max(pressure,spent-allowance);
+        result[k]={allowance,spent,planned:plannedToday,remaining:allowance-spent,weekIndex:wi+1,weekCarry:carrySafe(carry)};
+      });
+      // 將「本週最後仍未用掉的預算」帶給下週；若本週超支，carry 可能為負。
+      const endPool=weekPool;
+      carryFromPrev=endPool;
+      weekStats.push({week:w,index:wi+1,base:weekBase,spent:weekSpent,future:weekFuture,endPool,pressure});
+    });
+    return {map:result,weeks:weekStats,base};
+  }
+  function carrySafe(v){return Number(v)||0}
 
-  function render(){
-    const list=document.querySelector('#feh-list');
+  function renderFuturePlans(){
+    const page=root()?.querySelector('.lv-page[data-page="future"]');
+    const list=page?.querySelector('#lvFutureList');
     if(!list)return;
-    const plans=get();
-    list.innerHTML=plans.map((p,i)=>`
-      <div class="feh-card">
-        <strong>📌 ${esc(p.name)} <span class="feh-muted">${esc(p.date||'')}</span></strong>
-        <div>${(p.items||[]).map((x,j)=>`
-          <div class="feh-row">
-            <span>${esc(x.type)}｜${esc(x.method)}｜$${Number(x.amount||0).toLocaleString()}</span>
-            <div class="feh-card-actions">
-              <button type="button" onclick="window.fehEditItem(${i},${j})">✏️ 修改</button>
-              <button type="button" onclick="window.fehDeleteItem(${i},${j})">🗑️ 刪除</button>
-            </div>
-          </div>`).join('')||'<span class="feh-muted">尚未新增細項</span>'}</div>
-        <div class="feh-row">
-          <select id="feh-type-${i}">${types.map(x=>`<option>${esc(x)}</option>`).join('')}</select>
-          <select id="feh-method-${i}">${methods.map(x=>`<option>${esc(x)}</option>`).join('')}</select>
-          <input id="feh-amount-${i}" type="number" min="0" placeholder="金額">
-          <button type="button" class="feh-btn" onclick="window.fehAddItem(${i})">＋細項</button>
+    const items=future().slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    if(!items.length){list.innerHTML='<div class="lv-empty">目前沒有未來支出</div>';return}
+    list.innerHTML=items.map(item=>{
+      const details=item.details||[];
+      const total=Number(item.total||0), spent=Number(item.spent||0), rem=Math.max(0,total-spent);
+      return `<div class="fed-plan-card" data-future-id="${esc(item.id)}">
+        <div class="fed-plan-head">
+          <div><div class="fed-plan-title">📌 ${esc(item.name||'未來支出')}</div><div class="fed-plan-sub">${esc(item.date||'')} · ${details.length?details.length+' 個細項':'尚未拆分細項'}</div></div>
+          <div class="fed-plan-total">${money(total)}</div>
         </div>
-        <div class="feh-card-actions">
-          <button type="button" onclick="window.fehEditPlan(${i})">✏️ 修改行程</button>
-          <button type="button" onclick="window.fehDeletePlan(${i})">🗑️ 刪除整個行程</button>
-        </div>
-      </div>`).join('')||'<div class="feh-muted">目前沒有新的統整資料。</div>';
-  }
-
-  window.fehDeleteItem=function(i,j){
-    const plans=get();
-    if(!plans[i] || !plans[i].items[j]) return;
-    if(!confirm('確定要刪除這筆未來支出細項嗎？')) return;
-    plans[i].items.splice(j,1);
-    put(plans); render();
-    document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
-  };
-
-  window.fehEditItem=function(i,j){
-    const plans=get(), x=plans[i]?.items?.[j];
-    if(!x)return;
-    const card=document.querySelectorAll('#feh-list .feh-card')[i];
-    if(!card)return;
-    const old=card.querySelector('.feh-edit-box');
-    if(old) old.remove();
-    const box=document.createElement('div');
-    box.className='feh-edit-box';
-    box.innerHTML=`
-      <b>修改支出細項</b><br>
-      <select id="feh-edit-type">${types.map(t=>`<option ${t===x.type?'selected':''}>${esc(t)}</option>`).join('')}</select>
-      <select id="feh-edit-method">${methods.map(t=>`<option ${t===x.method?'selected':''}>${esc(t)}</option>`).join('')}</select>
-      <input id="feh-edit-amount" type="number" min="0" value="${Number(x.amount||0)}">
-      <button type="button" class="feh-btn" id="feh-save-item">儲存</button>
-      <button type="button" class="feh-btn" id="feh-cancel-item">取消</button>`;
-    card.appendChild(box);
-    box.querySelector('#feh-save-item').onclick=()=>{
-      const ps=get();
-      ps[i].items[j]={
-        type:box.querySelector('#feh-edit-type').value,
-        method:box.querySelector('#feh-edit-method').value,
-        amount:Number(box.querySelector('#feh-edit-amount').value||0)
-      };
-      put(ps); render();
-      document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
-    };
-    box.querySelector('#feh-cancel-item').onclick=()=>box.remove();
-  };
-
-  window.fehEditPlan=function(i){
-    const plans=get(), p=plans[i];
-    if(!p)return;
-    const card=document.querySelectorAll('#feh-list .feh-card')[i];
-    if(!card)return;
-    const old=card.querySelector('.feh-edit-box');
-    if(old) old.remove();
-    const box=document.createElement('div');
-    box.className='feh-edit-box';
-    box.innerHTML=`
-      <b>修改行程</b><br>
-      <input id="feh-plan-name" value="${esc(p.name)}" placeholder="行程名稱">
-      <input id="feh-plan-date" type="date" value="${esc(p.date||'')}">
-      <button type="button" class="feh-btn" id="feh-save-plan">儲存</button>
-      <button type="button" class="feh-btn" id="feh-cancel-plan">取消</button>`;
-    card.appendChild(box);
-    box.querySelector('#feh-save-plan').onclick=()=>{
-      const ps=get();
-      ps[i].name=box.querySelector('#feh-plan-name').value.trim() || ps[i].name;
-      ps[i].date=box.querySelector('#feh-plan-date').value;
-      put(ps); render();
-      document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
-    };
-    box.querySelector('#feh-cancel-plan').onclick=()=>box.remove();
-  };
-
-  window.fehDeletePlan=function(i){
-    const plans=get();
-    if(!plans[i])return;
-    if(!confirm('確定要刪除整個未來行程及其所有預計支出嗎？'))return;
-    plans.splice(i,1);
-    put(plans); render();
-    document.dispatchEvent(new CustomEvent('futureExpenseChanged'));
-  };
-
-  // 覆寫本次追加層的刪除按鈕邏輯；其他原始功能不動。
-  const observer=new MutationObserver(()=>{});
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',()=>setTimeout(render,50));
-  }else setTimeout(render,50);
-})();
-</script>
-<!-- ===== 追加結束 ===== -->
-
-
-<!-- ===== 最終追加：既有未來支出卡片可檢視／編輯／刪除 ===== -->
-<style>
-#lvFutureList .lv-future-editable{cursor:pointer}
-#lvFutureList .lv-future-editable .lv-future-details{display:none;margin-top:10px;padding-top:10px;border-top:1px solid #eee}
-#lvFutureList .lv-future-editable.open .lv-future-details{display:block}
-#lvFutureList .lv-future-detail-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px}
-#lvFutureList .lv-future-actions{display:flex;gap:7px;margin-top:10px}
-#lvFutureList .lv-future-actions button{border:0;border-radius:9px;padding:7px 10px;background:#f1f2f5;cursor:pointer}
-#lvFutureList .lv-future-hint{font-size:11px;color:#888;margin-top:5px}
-</style>
-<script id="futureExistingCardsFix">
-(function(){
-  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-  function money(n){return '$'+Math.round(Number(n)||0).toLocaleString('zh-TW')}
-  function typeOf(d){
-    if(d.type)return d.type;
-    const s=String(d.name||'');
-    if(/船|渡輪|船票/.test(s))return '船';
-    if(/火車|台鐵|高鐵|區間車|車票/.test(s))return '火車';
-    if(/公車|巴士|客運/.test(s))return '公車';
-    if(/捷運|MRT/i.test(s))return '捷運';
-    if(/電影|影城/.test(s))return '電影';
-    if(/餐|早餐|午餐|晚餐|飲料|咖啡/.test(s))return '餐飲';
-    return '其他';
-  }
-  function renderCards(){
-    const box=document.getElementById('lvFutureList');
-    if(!box || typeof data==='undefined')return;
-    const items=(data.futureExpenses||[]).slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
-    if(!items.length){
-      box.innerHTML='<div class="lv-empty">目前沒有未來支出</div>';return;
-    }
-    box.innerHTML=items.map((x,i)=>{
-      const total=Number(x.total||0);
-      const details=x.details||[];
-      const detailTotal=details.reduce((s,d)=>s+Number(d.amount||0),0);
-      const spent=typeof futureSpent==='function'?futureSpent(x):Number(x.spent||0);
-      const rem=Math.max(0,total-spent);
-      const pct=total?Math.min(100,spent/total*100):0;
-      return `<div class="lv-row lv-future-editable" data-future-id="${esc(x.id)}">
-        <div style="width:100%">
-          <div style="display:flex;justify-content:space-between;gap:10px">
-            <div>
-              <div class="lv-row-title">📌 ${esc(x.name||'未來支出')}</div>
-              <div class="lv-row-sub">${esc(x.date||'')} · 預計 ${money(total)}</div>
-            </div>
-            <strong>${money(rem)}</strong>
-          </div>
-          <div class="lv-progress"><i style="width:${pct}%"></i></div>
-          <div class="lv-row-sub" style="margin-top:6px">已花 ${money(spent)} · 剩餘預留 ${money(rem)}</div>
-          <div class="lv-future-hint">點擊查看「我編了什麼預算」</div>
-          <div class="lv-future-details">
-            ${details.length?details.map(d=>`<div class="lv-future-detail-row">
-              <span>• ${esc(d.name||'未命名')} <small>（${esc(typeOf(d))} · ${esc(d.paymentMethod||'未設定支付方式')}）</small></span>
-              <strong>${money(d.amount)}</strong>
-            </div>`).join(''):'<div class="lv-future-hint">尚未編列細項</div>'}
-            ${details.length?`<div class="lv-future-hint">細項合計 ${money(detailTotal)}${detailTotal!==total?' · 與行程總額不同':''}</div>`:''}
-            <div class="lv-future-actions">
-              <button type="button" data-action="edit">✏️ 編輯</button>
-              <button type="button" data-action="delete">🗑️ 刪除</button>
-            </div>
-          </div>
+        <div class="fed-plan-details">${details.length?details.map(d=>`<div class="fed-plan-detail"><div><b>${esc(d.name||'細項')}</b><small>${esc(d.type||'未分類')} · ${esc(d.paymentMethod||'未設定支付方式')}</small></div><strong>${money(d.amount)}</strong></div>`).join(''):'<div class="fed-plan-sub">點擊「編輯」即可查看並安排交通、餐飲等細項。</div>'}</div>
+        <div class="fed-plan-sub" style="margin-top:8px">已花 ${money(spent)} · 尚需預留 ${money(rem)}</div>
+        <div class="fed-plan-actions">
+          <button type="button" onclick="event.stopPropagation();editFuture('${esc(item.id)}')">✏️ 編輯</button>
+          <button type="button" class="danger" onclick="event.stopPropagation();deleteFuture('${esc(item.id)}')">🗑️ 刪除</button>
         </div>
       </div>`;
     }).join('');
   }
 
-  function wire(){
-    const box=document.getElementById('lvFutureList');
-    if(!box || box.dataset.futureFixWired)return;
-    box.dataset.futureFixWired='1';
-    box.addEventListener('click',function(e){
-      const card=e.target.closest('.lv-future-editable');
-      if(!card)return;
-      const id=card.dataset.futureId;
-      const item=(data.futureExpenses||[]).find(x=>String(x.id)===String(id));
-      if(!item)return;
-      const action=e.target.closest('[data-action]')?.dataset.action;
-      if(action==='edit'){
-        e.stopPropagation();
-        if(typeof window.editFuture==='function')window.editFuture(id);
-        return;
-      }
-      if(action==='delete'){
-        e.stopPropagation();
-        if(typeof window.deleteFuture==='function')window.deleteFuture(id);
-        return;
-      }
-      card.classList.toggle('open');
+  function renderAIAdvice(){
+    const page=root()?.querySelector('.lv-page[data-page="budget"]'); if(!page)return;
+    let note=document.getElementById('fedAIWeeklyAdvice');
+    if(!note){note=document.createElement('div');note.id='fedAIWeeklyAdvice';note.className='fed-ai-note';const cal=page.querySelector('.lv-budget-calendar-card');(cal||page).insertAdjacentElement('beforebegin',note)}
+    const rb=rolling(), ds=daysInMonth(), today=new Date(), tk=key(today);
+    const todayInfo=rb.map[tk]||rb.map[key(ds[0])];
+    const currentWeek=rb.weeks.find(w=>w.week.some(d=>key(d)===tk))||rb.weeks[0];
+    const plannedToday=futureOn(tk);
+    let advice='';
+    if(todayInfo && todayInfo.remaining<0){
+      const deficit=-todayInfo.remaining;
+      advice=`今天超支 <b>${money(deficit)}</b>。AI 預算建議：先由本週剩餘日期平均吸收，若本週仍無法消化，再把不足額帶入下一週；不動用已累積存款。`;
+    }else if(currentWeek && currentWeek.endPool>0){
+      advice=`本週目前還有 <b>${money(currentWeek.endPool)}</b> 的可調度空間。週一～週三省下的錢會留在本週，之後的大額支出可優先使用這筆「本週結餘」，不會提前挪到下週。`;
+    }else{
+      advice=`目前採用「週內優先、跨週其次」的滾動策略：本週省下的錢只在本週內使用；本週若仍超支，才會壓縮下一週的預算。`;
+    }
+    if(plannedToday>0) advice+=`<br>📌 今天已有預計支出 <b>${money(plannedToday)}</b>，建議優先保留這筆金額。`;
+    note.innerHTML=`🤖 <b>預算安排建議</b><br>${advice}`;
+  }
+
+  // 重新定義「預算頁」的每日/每週結果，不碰原本資料，只覆蓋顯示與計算。
+  function refreshRollingView(){
+    const rb=rolling(), page=root()?.querySelector('.lv-page[data-page="budget"]');
+    if(!page)return;
+    const ds=daysInMonth();
+    const daily=page.querySelector('#lvBudgetDays');
+    if(daily)daily.innerHTML=ds.map(d=>{const i=rb.map[key(d)],sp=spentOn(key(d));return `<div class="lv-row"><div><div class="lv-row-title">${d.getMonth()+1}/${d.getDate()}</div><div class="lv-row-sub">建議可用 ${money(i.allowance)} · 已花 ${money(sp)} · 未來預留 ${money(i.planned)}</div></div><strong class="${sp>i.allowance?'lv-bad':'lv-good'}">${sp>i.allowance?'超支 '+money(sp-i.allowance):'剩 '+money(i.allowance-sp)}</strong></div>`}).join('');
+    const weeksEl=page.querySelector('#lvBudgetWeeks');
+    if(weeksEl)weeksEl.innerHTML=rb.weeks.map(w=>{const budget=w.week.reduce((s,d)=>s+rb.map[key(d)].allowance,0),sp=w.spent,remain=w.endPool;return `<div class="lv-row"><div><div class="lv-row-title">第 ${w.index} 週 · ${key(w.week[0]).slice(5)}–${key(w.week[w.week.length-1]).slice(5)}</div><div class="lv-row-sub">本週基準 ${money(w.base)} · 已花 ${money(sp)} · 未來安排 ${money(w.future)} · 週末可結餘 ${money(Math.max(0,remain))}</div></div><strong class="${remain<0?'lv-bad':'lv-good'}">${remain<0?'需下週吸收 '+money(-remain):'本週可調度 '+money(remain)}</strong></div>`}).join('');
+    const today=key(new Date()).startsWith(monthKey())?key(new Date()):key(ds[0]);
+    const info=rb.map[today];
+    const el=page.querySelector('#lvBudgetToday');if(el)el.textContent=money(info?.allowance||0);
+    renderAIAdvice();
+  }
+
+  // 支出頁：直接使用原 data.futureExpenses，所以既有資料也能看、改、刪。
+  const oldRenderFuture=window.renderFuture;
+  if(typeof oldRenderFuture==='function')window.renderFuture=function(){oldRenderFuture.apply(this,arguments);setTimeout(renderFuturePlans,0)};
+  const oldRender=window.render;
+  window.render=function(){const r=oldRender?.apply(this,arguments);setTimeout(()=>{renderFuturePlans();refreshRollingView()},20);return r};
+  const oldLine=window.lineViewRefresh;
+  window.lineViewRefresh=function(){const r=oldLine?.apply(this,arguments);setTimeout(()=>{renderFuturePlans();refreshRollingView()},20);return r};
+
+  ['saveFuture','deleteFuture','saveRecord','deleteRecord'].forEach(fn=>{
+    const old=window[fn]; if(typeof old!=='function')return;
+    window[fn]=function(){const r=old.apply(this,arguments);setTimeout(()=>{renderFuturePlans();refreshRollingView()},50);return r};
+  });
+
+  setTimeout(()=>{renderFuturePlans();refreshRollingView()},120);
+})();
+</script>
+<!-- ===== 追加結束 ===== -->
+
+
+<!-- ===== 最終追加：未來支出明細＋支付工具／交通分類統整 ===== -->
+<style>
+#future-payment-summary{
+  margin:14px 0;padding:16px;border-radius:18px;
+  background:var(--card,#fff);box-shadow:0 4px 18px rgba(0,0,0,.06)
+}
+.fps-title{font-weight:800;font-size:18px;margin-bottom:10px}
+.fps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.fps-card{padding:12px;border:1px solid #eee;border-radius:14px;background:#fafafa}
+.fps-card b{display:block;margin-bottom:5px}
+.fps-total{font-size:18px;font-weight:800}
+.fps-detail{font-size:13px;color:#666;margin-top:5px;line-height:1.6}
+.future-detail-box{display:none;margin-top:10px;padding:12px;border-radius:14px;background:#f7f7f7}
+.future-detail-box.open{display:block}
+.future-plan-click{cursor:pointer}
+.future-edit-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.future-edit-row input,.future-edit-row select{
+  padding:8px;border:1px solid #ddd;border-radius:9px;min-width:90px
+}
+</style>
+
+<script>
+(function(){
+  /*
+   * 這一層只讀取原 App 的 data.futureExpenses，
+   * 不建立第二份未來支出資料，也不改變 $15,000 總預算。
+   */
+
+  const TYPES = [
+    '船','火車','區間火車','高鐵','公車','捷運','客運','計程車',
+    '電影','餐飲','住宿','門票','購物','其他'
+  ];
+  const METHODS = [
+    '悠遊卡','一卡通','現金','信用卡','LINE Pay','Apple Pay','其他'
+  ];
+
+  function appData(){
+    try{
+      if(typeof data !== 'undefined' && data && Array.isArray(data.futureExpenses)) return data;
+    }catch(e){}
+    return null;
+  }
+
+  function money(n){
+    return '$'+Number(n||0).toLocaleString();
+  }
+
+  function esc(v){
+    return String(v??'').replace(/[&<>"']/g,m=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  function monthKey(date){
+    return String(date||'').slice(0,7);
+  }
+
+  function isThisMonth(date){
+    const now=new Date();
+    return monthKey(date) === now.toISOString().slice(0,7);
+  }
+
+  function getItems(plan){
+    return Array.isArray(plan.items) ? plan.items : [];
+  }
+
+  function getAmount(item){
+    return Number(item.amount ?? item.cost ?? item.price ?? 0);
+  }
+
+  function getType(item){
+    return item.type || item.category || item.name || '其他';
+  }
+
+  function getMethod(item){
+    return item.method || item.paymentMethod || item.payType || '其他';
+  }
+
+  function renderPaymentSummary(){
+    const d=appData();
+    if(!d)return;
+
+    let host=document.getElementById('future-payment-summary');
+    if(!host){
+      const candidates=[...document.querySelectorAll('h1,h2,h3,h4')];
+      const title=candidates.find(x=>/未來支出|未來預算|支出/.test(x.textContent||''));
+      host=document.createElement('section');
+      host.id='future-payment-summary';
+      (title?.parentElement || document.body).appendChild(host);
+    }
+
+    const plans=(d.futureExpenses||[]).filter(p=>isThisMonth(p.date));
+
+    const methodTotals={};
+    const methodTypeTotals={};
+    const typeTotals={};
+
+    plans.forEach(p=>{
+      getItems(p).forEach(item=>{
+        const amount=getAmount(item);
+        const method=getMethod(item);
+        const type=getType(item);
+
+        methodTotals[method]=(methodTotals[method]||0)+amount;
+
+        const k=method+'｜'+type;
+        methodTypeTotals[k]=(methodTypeTotals[k]||0)+amount;
+
+        typeTotals[type]=(typeTotals[type]||0)+amount;
+      });
+    });
+
+    const methodCards=Object.entries(methodTotals)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([method,total])=>{
+        const details=Object.entries(methodTypeTotals)
+          .filter(([k])=>k.startsWith(method+'｜'))
+          .sort((a,b)=>b[1]-a[1])
+          .map(([k,v])=>`${esc(k.split('｜')[1])} ${money(v)}`)
+          .join(' · ');
+
+        return `
+          <div class="fps-card">
+            <b>💳 ${esc(method)}</b>
+            <div class="fps-total">${money(total)}</div>
+            <div class="fps-detail">${details||'尚無細項'}</div>
+          </div>`;
+      }).join('');
+
+    const transportMethods=['悠遊卡','一卡通'];
+    const transportTotal=Object.entries(methodTypeTotals)
+      .filter(([k])=>{
+        const [method,type]=k.split('｜');
+        return transportMethods.includes(method) &&
+          ['船','火車','區間火車','高鐵','公車','捷運','客運','計程車'].includes(type);
+      })
+      .reduce((sum,[,v])=>sum+v,0);
+
+    const transportDetail=Object.entries(methodTypeTotals)
+      .filter(([k])=>{
+        const [method,type]=k.split('｜');
+        return transportMethods.includes(method) &&
+          ['船','火車','區間火車','高鐵','公車','捷運','客運','計程車'].includes(type);
+      })
+      .sort((a,b)=>b[1]-a[1])
+      .map(([k,v])=>`${esc(k.replace('｜',' · '))} ${money(v)}`)
+      .join(' · ');
+
+    host.innerHTML=`
+      <div class="fps-title">💳 本月未來支出・支付工具準備</div>
+      <div class="fps-detail" style="margin-bottom:12px">
+        系統會把所有未來行程的細項，依「支付方式」重新統整，方便你提前準備或儲值。
+      </div>
+      <div class="fps-grid">
+        ${methodCards || '<div class="fps-card">目前沒有本月未來支出</div>'}
+      </div>
+      <div class="fps-card" style="margin-top:10px">
+        <b>🚉 交通支付準備</b>
+        <div class="fps-total">${money(transportTotal)}</div>
+        <div class="fps-detail">${transportDetail||'目前沒有悠遊卡／一卡通交通預估支出'}</div>
+      </div>
+    `;
+  }
+
+  function enhanceExistingFutureCards(){
+    const d=appData();
+    if(!d)return;
+
+    // 只替既有未來支出卡片增加「查看規劃」提示；
+    // 不取代原本的編輯／刪除按鈕。
+    const cards=document.querySelectorAll(
+      '[data-future-expense], .future-expense-card, .future-card, .future-item'
+    );
+
+    cards.forEach((card,idx)=>{
+      if(card.dataset.fpsEnhanced)return;
+      card.dataset.fpsEnhanced='1';
+
+      const hint=document.createElement('div');
+      hint.className='future-detail-box';
+      hint.innerHTML='<b>📋 已規劃細項</b><div class="fps-detail">點擊原有編輯功能即可查看及修改完整細項。</div>';
+      card.appendChild(hint);
+
+      card.addEventListener('click',e=>{
+        if(e.target.closest('button,input,select,a'))return;
+        hint.classList.toggle('open');
+      });
     });
   }
 
-  function refresh(){
-    renderCards();
-    wire();
+  function rerender(){
+    try{
+      if(typeof renderFuture==='function') renderFuture();
+    }catch(e){}
+    try{
+      if(typeof renderAll==='function') renderAll();
+    }catch(e){}
+    try{
+      if(typeof renderBudget==='function') renderBudget();
+    }catch(e){}
+    setTimeout(()=>{
+      renderPaymentSummary();
+      enhanceExistingFutureCards();
+    },30);
   }
 
-  // 原有 render() 完成後重新繪製「支出」頁卡片，資料仍使用原本 data.futureExpenses。
-  const wait=setInterval(()=>{
-    if(typeof data!=='undefined' && document.getElementById('lvFutureList')){
-      refresh();
-      clearInterval(wait);
-    }
-  },100);
+  // 監聽原 App 的儲存事件；如果原程式沒有事件，也會定時同步顯示。
+  document.addEventListener('futureExpenseChanged',rerender);
+  window.addEventListener('storage',rerender);
 
-  const oldRender=window.render;
-  if(typeof oldRender==='function'){
-    window.render=function(){
-      const result=oldRender.apply(this,arguments);
-      setTimeout(refresh,30);
-      return result;
-    };
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(rerender,100));
+  }else{
+    setTimeout(rerender,100);
   }
 
-  // 新增／修改／刪除 modal 後，也會重新同步卡片。
-  ['futureExpenseChanged'].forEach(ev=>document.addEventListener(ev,()=>setTimeout(refresh,30)));
+  // 保持統整與原有資料同步。
+  setInterval(()=>{
+    renderPaymentSummary();
+    enhanceExistingFutureCards();
+  },1200);
 })();
 </script>
 <!-- ===== 最終追加結束 ===== -->
