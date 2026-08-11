@@ -4639,3 +4639,124 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 })();
 </script>
 <!-- ===== 追加結束 ===== -->
+
+
+<!-- ===== 最終追加：既有未來支出卡片可檢視／編輯／刪除 ===== -->
+<style>
+#lvFutureList .lv-future-editable{cursor:pointer}
+#lvFutureList .lv-future-editable .lv-future-details{display:none;margin-top:10px;padding-top:10px;border-top:1px solid #eee}
+#lvFutureList .lv-future-editable.open .lv-future-details{display:block}
+#lvFutureList .lv-future-detail-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px}
+#lvFutureList .lv-future-actions{display:flex;gap:7px;margin-top:10px}
+#lvFutureList .lv-future-actions button{border:0;border-radius:9px;padding:7px 10px;background:#f1f2f5;cursor:pointer}
+#lvFutureList .lv-future-hint{font-size:11px;color:#888;margin-top:5px}
+</style>
+<script id="futureExistingCardsFix">
+(function(){
+  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+  function money(n){return '$'+Math.round(Number(n)||0).toLocaleString('zh-TW')}
+  function typeOf(d){
+    if(d.type)return d.type;
+    const s=String(d.name||'');
+    if(/船|渡輪|船票/.test(s))return '船';
+    if(/火車|台鐵|高鐵|區間車|車票/.test(s))return '火車';
+    if(/公車|巴士|客運/.test(s))return '公車';
+    if(/捷運|MRT/i.test(s))return '捷運';
+    if(/電影|影城/.test(s))return '電影';
+    if(/餐|早餐|午餐|晚餐|飲料|咖啡/.test(s))return '餐飲';
+    return '其他';
+  }
+  function renderCards(){
+    const box=document.getElementById('lvFutureList');
+    if(!box || typeof data==='undefined')return;
+    const items=(data.futureExpenses||[]).slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+    if(!items.length){
+      box.innerHTML='<div class="lv-empty">目前沒有未來支出</div>';return;
+    }
+    box.innerHTML=items.map((x,i)=>{
+      const total=Number(x.total||0);
+      const details=x.details||[];
+      const detailTotal=details.reduce((s,d)=>s+Number(d.amount||0),0);
+      const spent=typeof futureSpent==='function'?futureSpent(x):Number(x.spent||0);
+      const rem=Math.max(0,total-spent);
+      const pct=total?Math.min(100,spent/total*100):0;
+      return `<div class="lv-row lv-future-editable" data-future-id="${esc(x.id)}">
+        <div style="width:100%">
+          <div style="display:flex;justify-content:space-between;gap:10px">
+            <div>
+              <div class="lv-row-title">📌 ${esc(x.name||'未來支出')}</div>
+              <div class="lv-row-sub">${esc(x.date||'')} · 預計 ${money(total)}</div>
+            </div>
+            <strong>${money(rem)}</strong>
+          </div>
+          <div class="lv-progress"><i style="width:${pct}%"></i></div>
+          <div class="lv-row-sub" style="margin-top:6px">已花 ${money(spent)} · 剩餘預留 ${money(rem)}</div>
+          <div class="lv-future-hint">點擊查看「我編了什麼預算」</div>
+          <div class="lv-future-details">
+            ${details.length?details.map(d=>`<div class="lv-future-detail-row">
+              <span>• ${esc(d.name||'未命名')} <small>（${esc(typeOf(d))} · ${esc(d.paymentMethod||'未設定支付方式')}）</small></span>
+              <strong>${money(d.amount)}</strong>
+            </div>`).join(''):'<div class="lv-future-hint">尚未編列細項</div>'}
+            ${details.length?`<div class="lv-future-hint">細項合計 ${money(detailTotal)}${detailTotal!==total?' · 與行程總額不同':''}</div>`:''}
+            <div class="lv-future-actions">
+              <button type="button" data-action="edit">✏️ 編輯</button>
+              <button type="button" data-action="delete">🗑️ 刪除</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function wire(){
+    const box=document.getElementById('lvFutureList');
+    if(!box || box.dataset.futureFixWired)return;
+    box.dataset.futureFixWired='1';
+    box.addEventListener('click',function(e){
+      const card=e.target.closest('.lv-future-editable');
+      if(!card)return;
+      const id=card.dataset.futureId;
+      const item=(data.futureExpenses||[]).find(x=>String(x.id)===String(id));
+      if(!item)return;
+      const action=e.target.closest('[data-action]')?.dataset.action;
+      if(action==='edit'){
+        e.stopPropagation();
+        if(typeof window.editFuture==='function')window.editFuture(id);
+        return;
+      }
+      if(action==='delete'){
+        e.stopPropagation();
+        if(typeof window.deleteFuture==='function')window.deleteFuture(id);
+        return;
+      }
+      card.classList.toggle('open');
+    });
+  }
+
+  function refresh(){
+    renderCards();
+    wire();
+  }
+
+  // 原有 render() 完成後重新繪製「支出」頁卡片，資料仍使用原本 data.futureExpenses。
+  const wait=setInterval(()=>{
+    if(typeof data!=='undefined' && document.getElementById('lvFutureList')){
+      refresh();
+      clearInterval(wait);
+    }
+  },100);
+
+  const oldRender=window.render;
+  if(typeof oldRender==='function'){
+    window.render=function(){
+      const result=oldRender.apply(this,arguments);
+      setTimeout(refresh,30);
+      return result;
+    };
+  }
+
+  // 新增／修改／刪除 modal 後，也會重新同步卡片。
+  ['futureExpenseChanged'].forEach(ev=>document.addEventListener(ev,()=>setTimeout(refresh,30)));
+})();
+</script>
+<!-- ===== 最終追加結束 ===== -->
