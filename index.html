@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>右承的記帳｜個人預算管理</title>
+<title>週週記｜個人預算管理</title>
 
 <style>
 :root{
@@ -4137,5 +4138,253 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 })();
 </script>
 
+
+
+<style id="futurePlanningUpgradeStyles">
+  .fp-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .fp-category-row{padding:12px;border:1px solid #e5e5ea;border-radius:13px;background:#f8f9fb}
+  .fp-category-top{display:flex;justify-content:space-between;gap:10px;font-weight:800}
+  .fp-category-sub{margin-top:4px;color:#777;font-size:11px}
+  .fp-category-bar{height:7px;background:#e9ebef;border-radius:99px;overflow:hidden;margin-top:8px}
+  .fp-category-bar i{display:block;height:100%;background:#1677ff;border-radius:inherit}
+  .fp-roll-note{margin-top:10px;padding:11px 12px;border-radius:12px;background:#fff6df;color:#805500;font-size:12px;line-height:1.6}
+  .fp-reserve-badge{display:inline-block;margin-top:4px;padding:3px 7px;border-radius:7px;background:#fff6df;color:#a86500;font-size:10px;font-weight:750}
+  @media(max-width:600px){.fp-category-grid{grid-template-columns:1fr}}
+</style>
+
+<script id="futurePlanningUpgradeScript">
+(function(){
+  const MONTHLY=15000;
+  const pad=n=>String(n).padStart(2,'0');
+  const key=d=>{const x=new Date(d);return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate())};
+  const mkey=d=>{const x=new Date(d);return x.getFullYear()+'-'+pad(x.getMonth()+1)};
+  const daysOfMonth=month=>{const y=month.getFullYear(),m=month.getMonth(),n=new Date(y,m+1,0).getDate();return Array.from({length:n},(_,i)=>new Date(y,m,i+1));};
+  const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('zh-TW');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const records=()=>data.records||[];
+  const future=()=>data.futureExpenses||[];
+  const spentOn=k=>records().filter(r=>r.date===k).reduce((s,r)=>s+Number(r.amount||0),0);
+  const sameMonth=(item,month)=>item.date&&String(item.date).startsWith(mkey(month));
+  const futureItemsForMonth=month=>future().filter(x=>sameMonth(x,month));
+  const futureSpent=item=>{
+    const same=future().filter(x=>x.date===item.date).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+    let avail=spentOn(item.date);
+    for(const x of same){
+      const used=Math.max(0,Math.min(Number(x.total||0),avail));
+      if(x.id===item.id)return used;
+      avail=Math.max(0,avail-Number(x.total||0));
+    }
+    return 0;
+  };
+  const outstanding=item=>Math.max(0,Number(item.total||0)-futureSpent(item));
+
+  /*
+    真正的滾動預算：
+    1. 未來支出不是到期日才突然扣，而是從今天起分攤「預留負擔」。
+    2. 臨時超支只會把「超支差額」往後推，先影響本週後續日期；若本週日期用完，
+       carry 會自然延伸到下一週，再往後滾動。
+    3. 前一天省下來的錢不會抵銷之後超支。
+  */
+  function reservationBurden(day,month){
+    const dk=key(day);
+    let burden=0;
+    for(const item of futureItemsForMonth(month)){
+      const due=item.date;
+      const rem=outstanding(item);
+      if(!due || rem<=0)continue;
+      if(due<dk)continue;
+      const dueDate=new Date(due+'T00:00:00');
+      const diff=Math.max(0,Math.round((dueDate-new Date(dk+'T00:00:00'))/86400000));
+      burden += rem/(diff+1);
+    }
+    return burden;
+  }
+
+  function rollingBudget(month){
+    const days=daysOfMonth(month);
+    const base=MONTHLY/days.length;
+    let carry=0;
+    const map={};
+    let saved=0;
+    let overspent=0;
+
+    for(const d of days){
+      const k=key(d);
+      const reserve=reservationBurden(d,month);
+      const planned=Math.max(0,base-reserve-carry);
+      const spent=spentOn(k);
+      const diff=planned-spent;
+      map[k]={base,reserve,carryBefore:carry,allowance:planned,spent,remaining:diff};
+
+      if(diff<0){
+        const over=-diff;
+        overspent+=over;
+        carry=over;
+      }else{
+        saved+=diff;
+        carry=0;
+      }
+    }
+    return {days,base,map,saved,overspent};
+  }
+
+  function currentMonthForView(){
+    return (typeof currentMonth!=='undefined' && currentMonth instanceof Date)?new Date(currentMonth):new Date();
+  }
+
+  function classify(name){
+    const s=String(name||'').toLowerCase();
+    const rules=[
+      ['電影',['電影','movie','cinema','威秀','影城']],
+      ['火車',['火車','台鐵','高鐵','車票','train','rail']],
+      ['交通',['捷運','公車','客運','計程車','uber','taxi','機票','飛機','交通']],
+      ['餐飲',['早餐','午餐','晚餐','餐費','吃飯','飲料','咖啡','餐飲','美食']],
+      ['住宿',['住宿','飯店','民宿','旅館','hotel']],
+      ['門票',['門票','票券','景點','展覽','樂園']],
+      ['購物',['購物','衣服','鞋','日用品','購買','shopping']],
+      ['娛樂',['遊戲','唱歌','ktv','娛樂','演唱會']],
+    ];
+    for(const [label,words] of rules){if(words.some(w=>s.includes(w)))return label;}
+    return '其他';
+  }
+
+  function categoryRows(month){
+    const map={};
+    for(const item of futureItemsForMonth(month)){
+      const details=(item.details&&item.details.length)?item.details:[{name:item.name,amount:item.total}];
+      for(const d of details){
+        const label=classify(d.name||item.name);
+        if(!map[label])map[label]={amount:0,items:[],count:0};
+        map[label].amount+=Number(d.amount||0);
+        map[label].count++;
+        map[label].items.push(`${item.name} · ${d.name||item.name}`);
+      }
+    }
+    return Object.entries(map).sort((a,b)=>b[1].amount-a[1].amount);
+  }
+
+  function ensureCategoryPanel(){
+    const page=document.querySelector('#lineViewStage .lv-page[data-page="future"]');
+    if(!page)return null;
+    let panel=document.getElementById('fpCategoryPanel');
+    if(panel)return panel;
+    panel=document.createElement('div');
+    panel.id='fpCategoryPanel';
+    panel.className='lv-card';
+    const list=page.querySelector('#lvFutureList')?.closest('.lv-card');
+    if(list)list.insertAdjacentElement('afterend',panel); else page.appendChild(panel);
+    return panel;
+  }
+
+  function renderCategoryPanel(month){
+    const panel=ensureCategoryPanel();
+    if(!panel)return;
+    const rows=categoryRows(month);
+    const total=rows.reduce((s,[,v])=>s+v.amount,0);
+    panel.innerHTML=`<div class="lv-section-title">📋 本月未來支出分類統整</div>
+      <div class="lv-note">同一個月、不同日期、不同未來行程的相同花費會自動合併。例如：兩次看電影會統整成「電影」；台中、高雄兩趟火車會統整成「火車」。</div>
+      <div class="fp-category-grid" style="margin-top:10px">${rows.length?rows.map(([label,v])=>{
+        const pct=total?Math.min(100,v.amount/total*100):0;
+        return `<div class="fp-category-row"><div class="fp-category-top"><span>${esc(label)}</span><span>${money(v.amount)}</span></div><div class="fp-category-sub">${v.count} 筆細項 · ${v.items.map(esc).join('、')}</div><div class="fp-category-bar"><i style="width:${pct}%"></i></div></div>`;
+      }).join(''):'<div class="lv-empty">目前沒有可統整的未來支出細項</div>'}</div>`;
+  }
+
+  function renderRollingFuture(){
+    const month=currentMonthForView();
+    const rb=rollingBudget(month);
+    const days=rb.days;
+    const todayKey=key(new Date());
+
+    const futureTotal=futureItemsForMonth(month).reduce((s,x)=>s+outstanding(x),0);
+    const dailyEl=document.getElementById('lvBudgetToday');
+    if(dailyEl){
+      const today=days.find(d=>key(d)===todayKey)||days[0];
+      dailyEl.textContent=money(rb.map[key(today)]?.allowance||0);
+    }
+    const baseEl=document.getElementById('lvBudgetBase');
+    if(baseEl)baseEl.textContent=money(rb.base);
+    const futureEl=document.getElementById('lvBudgetFuture');
+    if(futureEl)futureEl.textContent=money(futureTotal);
+
+    /* 預算頁月曆：覆寫每日金額，讓未來預留與臨時超支都即時滾動。 */
+    const grid=document.getElementById('lvBudgetCalendarGrid');
+    if(grid){
+      const cells=grid.querySelectorAll('.lv-cal-day:not(.empty)');
+      days.forEach((d,i)=>{
+        const node=cells[i]; if(!node)return;
+        const info=rb.map[key(d)];
+        const budget=node.querySelector('.lv-cal-budget');
+        const spent=node.querySelector('.lv-cal-spent');
+        const result=node.querySelector('.lv-cal-result');
+        if(budget)budget.textContent=`可用 ${money(info.allowance)}`;
+        if(spent)spent.textContent=`已花 ${money(info.spent)}`;
+        if(result){
+          result.className='lv-cal-result '+(info.remaining<0?'bad':'good');
+          result.textContent=info.remaining<0?`超支 ${money(-info.remaining)}`:`剩 ${money(info.remaining)}`;
+        }
+      });
+    }
+
+    /* 每週：實際採每日滾動結果，不再只用固定週平均。 */
+    const weeksEl=document.getElementById('lvBudgetWeeks');
+    if(weeksEl){
+      const weeks=[];let start=0;while(start<days.length){const end=Math.min(days.length,start+6);weeks.push(days.slice(start,end));start=end;}
+      weeksEl.innerHTML=weeks.map((w,i)=>{
+        const budget=w.reduce((s,d)=>s+rb.map[key(d)].allowance,0);
+        const spent=w.reduce((s,d)=>s+spentOn(key(d)),0);
+        const reserve=w.reduce((s,d)=>s+reservationBurden(d,month),0);
+        const remain=budget-spent;
+        return `<div class="lv-row"><div><div class="lv-row-title">第 ${i+1} 週 · ${w[0].getMonth()+1}/${w[0].getDate()}–${w[w.length-1].getMonth()+1}/${w[w.length-1].getDate()}</div><div class="lv-row-sub">可用預算 ${money(budget)} · 已花 ${money(spent)} · 預留負擔 ${money(reserve)}</div></div><strong class="${remain<0?'lv-bad':'lv-good'}">${remain<0?'超支 '+money(-remain):'剩 '+money(remain)}</strong></div>`;
+      }).join('');
+    }
+
+    const note=document.getElementById('fpRollingNote');
+    if(note){
+      note.innerHTML=`🔄 <strong>滾動調整已啟用</strong><br>未來支出會從現在起提前分攤預留；臨時超支會先壓縮本週後續日期，若仍不足，超支差額會繼續滾到下一週，不會動用已經累積的存款。`;
+    }
+
+    renderCategoryPanel(month);
+  }
+
+  function addRollingNote(){
+    const page=document.querySelector('#lineViewStage .lv-page[data-page="budget"]');
+    if(!page||document.getElementById('fpRollingNote'))return;
+    const note=document.createElement('div');
+    note.id='fpRollingNote';note.className='fp-roll-note';
+    const cal=page.querySelector('.lv-budget-calendar-card');
+    if(cal)cal.insertAdjacentElement('beforebegin',note); else page.appendChild(note);
+  }
+
+  function refreshAll(){
+    addRollingNote();
+    renderRollingFuture();
+  }
+
+  const oldRefresh=window.lineViewRefresh;
+  window.lineViewRefresh=function(){
+    if(typeof oldRefresh==='function')oldRefresh();
+    setTimeout(refreshAll,0);
+  };
+  const oldRender=window.render;
+  window.render=function(){
+    if(typeof oldRender==='function')oldRender();
+    setTimeout(refreshAll,0);
+  };
+
+  /* 未來支出新增／編輯／刪除後，立即重新計算，不需要重新整理頁面。 */
+  ['saveFuture','deleteFuture','saveRecord','deleteRecord'].forEach(fn=>{
+    const original=window[fn];
+    if(typeof original!=='function')return;
+    window[fn]=function(){
+      const result=original.apply(this,arguments);
+      setTimeout(refreshAll,30);
+      return result;
+    };
+  });
+
+  setTimeout(refreshAll,50);
+})();
+</script>
 </body>
 </html>
+```
