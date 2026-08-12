@@ -5054,3 +5054,421 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 })();
 </script>
 <!-- FINAL_PATCH_V3_END -->
+
+
+<!-- ===== FINAL FIX: 真正修正支出頁既有資料的查看／編輯／刪除與即時統整 ===== -->
+<style id="finalRealFixStyles">
+  #lineViewStage #lvFutureList .rf-card{
+    border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin:8px 0;background:#fff;
+  }
+  #lineViewStage #lvFutureList .rf-head{
+    display:flex;justify-content:space-between;gap:12px;align-items:center;cursor:pointer;
+  }
+  #lineViewStage #lvFutureList .rf-name{font-weight:850;font-size:15px}
+  #lineViewStage #lvFutureList .rf-meta{font-size:11px;color:#777;margin-top:4px}
+  #lineViewStage #lvFutureList .rf-total{text-align:right;font-weight:900}
+  #lineViewStage #lvFutureList .rf-rem{font-size:10px;color:#777;margin-top:3px}
+  #lineViewStage #lvFutureList .rf-bar{height:7px;background:#eee;border-radius:99px;overflow:hidden;margin-top:10px}
+  #lineViewStage #lvFutureList .rf-bar i{display:block;height:100%;background:#1677ff}
+  #lineViewStage #lvFutureList .rf-detail{
+    display:none;margin-top:10px;padding:10px;border-radius:12px;background:#f7f8fa
+  }
+  #lineViewStage #lvFutureList .rf-detail.open{display:block}
+  #lineViewStage #lvFutureList .rf-row{
+    display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #e8e8e8;font-size:12px
+  }
+  #lineViewStage #lvFutureList .rf-row:last-child{border-bottom:0}
+  #lineViewStage #lvFutureList .rf-row small{display:block;color:#777;margin-top:2px}
+  #lineViewStage #lvFutureList .rf-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:9px}
+  #lineViewStage #lvFutureList .rf-actions button{
+    border:0;border-radius:9px;padding:7px 11px;background:#f0f2f5;font-weight:700;cursor:pointer
+  }
+  #lineViewStage #lvFutureList .rf-actions .danger{background:#fff0ef;color:#d93025}
+  #rfPaymentSummary .rf-pay{
+    padding:11px;border:1px solid #e8e8e8;border-radius:12px;margin:7px 0;background:#fff
+  }
+  #rfPaymentSummary .rf-pay-top{display:flex;justify-content:space-between;font-weight:850}
+  #rfPaymentSummary .rf-pay-detail{font-size:11px;color:#777;margin-top:4px;line-height:1.6}
+  #rfPaymentSummary .rf-save{font-size:11px;color:#8a5a00;margin-top:5px}
+</style>
+
+<script id="finalRealFixScript">
+(function(){
+  'use strict';
+
+  const TYPES=['船','火車','區間火車','高鐵','公車','捷運','客運','計程車','電影','餐飲','住宿','門票','購物','其他'];
+  const PAY=['悠遊卡','一卡通','現金','信用卡','LINE Pay','Apple Pay','其他'];
+
+  const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('zh-TW');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const dataNow=()=>window.data;
+  const futureData=()=>Array.isArray(dataNow()?.futureExpenses)?dataNow().futureExpenses:[];
+
+  function currentMonthKey(){
+    const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  }
+
+  function typeFromName(name){
+    const s=String(name||'').toLowerCase();
+    const rules=[
+      ['船',['船','渡輪','船票']],
+      ['火車',['火車','台鐵','區間','車票']],
+      ['高鐵',['高鐵']],
+      ['公車',['公車','客運','巴士']],
+      ['捷運',['捷運','mrt']],
+      ['計程車',['計程車','uber','taxi']],
+      ['電影',['電影','影城','威秀','國賓']],
+      ['餐飲',['餐','早餐','午餐','晚餐','飲料','咖啡']],
+      ['住宿',['住宿','飯店','民宿','旅館']],
+      ['門票',['門票','景點','展覽','樂園']],
+      ['購物',['購物','日用品','衣服']]
+    ];
+    for(const [type,words] of rules){
+      if(words.some(w=>s.includes(w))) return type;
+    }
+    return '其他';
+  }
+
+  function detailType(d){
+    return d?.type || typeFromName(d?.name);
+  }
+
+  function detailPay(d){
+    return d?.paymentMethod || '現金';
+  }
+
+  function detailAmount(d){
+    return Number(d?.amount||0);
+  }
+
+  function getFutureForCurrentMonth(){
+    const mk=currentMonthKey();
+    return futureData()
+      .filter(x=>String(x.date||'').startsWith(mk))
+      .slice()
+      .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+  }
+
+  /*
+   * 關鍵修正：
+   * 原程式有 #futureList（舊頁面）與 #lvFutureList（真正的「🏝️ 支出」分頁）。
+   * 之前的補丁更新錯誤的容器，所以使用者新增的資料看不到新功能。
+   * 現在只對真正的 #lvFutureList 渲染。
+   */
+  function renderRealFutureList(){
+    const list=document.querySelector('#lineViewStage .lv-page[data-page="future"] #lvFutureList');
+    if(!list)return;
+
+    const items=getFutureForCurrentMonth();
+
+    if(!items.length){
+      list.innerHTML='<div class="lv-empty">目前沒有未來支出</div>';
+      return;
+    }
+
+    list.innerHTML=items.map(item=>{
+      const total=Number(item.total||0);
+      const spent=Number(item.spent||0);
+      const remaining=Math.max(0,total-spent);
+      const pct=total>0?Math.min(100,spent/total*100):0;
+      const details=Array.isArray(item.details)?item.details:[];
+
+      const detailHTML=details.length
+        ? details.map(d=>`
+            <div class="rf-row">
+              <div>
+                <b>${esc(d.name||'未命名細項')}</b>
+                <small>${esc(detailType(d))} · ${esc(detailPay(d))}</small>
+              </div>
+              <strong>${money(detailAmount(d))}</strong>
+            </div>
+          `).join('')
+        : '<div style="font-size:12px;color:#777;padding:5px 0">尚未拆分細項</div>';
+
+      return `
+        <div class="rf-card" data-rf-id="${esc(item.id)}">
+          <div class="rf-head" data-rf-toggle="${esc(item.id)}">
+            <div>
+              <div class="rf-name">📌 ${esc(item.name||'未來支出')}</div>
+              <div class="rf-meta">${esc(item.date||'')} · ${details.length} 個細項</div>
+            </div>
+            <div class="rf-total">
+              ${money(total)}
+              <div class="rf-rem">已花 ${money(spent)} · 剩 ${money(remaining)}</div>
+            </div>
+          </div>
+
+          <div class="rf-bar"><i style="width:${pct}%"></i></div>
+
+          <div class="rf-detail" id="rf-detail-${esc(item.id)}">
+            ${detailHTML}
+            <div class="rf-actions">
+              <button type="button" data-rf-edit="${esc(item.id)}">✏️ 編輯</button>
+              <button type="button" class="danger" data-rf-delete="${esc(item.id)}">🗑️ 刪除</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('[data-rf-toggle]').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const box=document.getElementById('rf-detail-'+el.dataset.rfToggle);
+        if(box)box.classList.toggle('open');
+      });
+    });
+
+    list.querySelectorAll('[data-rf-edit]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const id=btn.dataset.rfEdit;
+        if(typeof window.editFuture==='function') window.editFuture(id);
+      });
+    });
+
+    list.querySelectorAll('[data-rf-delete]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const id=btn.dataset.rfDelete;
+        if(typeof window.deleteFuture==='function') window.deleteFuture(id);
+      });
+    });
+  }
+
+  /*
+   * 支付工具統整也直接讀同一份 data.futureExpenses。
+   * 不再讀 items，也不依賴另一套 weekly_future 資料。
+   */
+  function renderRealPaymentSummary(){
+    const page=document.querySelector('#lineViewStage .lv-page[data-page="future"]');
+    if(!page)return;
+
+    let panel=document.getElementById('rfPaymentSummary');
+
+    if(!panel){
+      panel=document.createElement('div');
+      panel.id='rfPaymentSummary';
+      panel.className='lv-card';
+
+      const list=page.querySelector('#lvFutureList');
+      const parent=list?.closest('.lv-card');
+
+      if(parent) parent.insertAdjacentElement('beforebegin',panel);
+      else page.appendChild(panel);
+    }
+
+    const agg={};
+
+    getFutureForCurrentMonth().forEach(item=>{
+      (item.details||[]).forEach(d=>{
+        const pay=detailPay(d);
+        const type=detailType(d);
+        const amount=detailAmount(d);
+
+        if(!agg[pay])agg[pay]={total:0,types:{}};
+        agg[pay].total+=amount;
+        agg[pay].types[type]=(agg[pay].types[type]||0)+amount;
+      });
+    });
+
+    const entries=Object.entries(agg).sort((a,b)=>b[1].total-a[1].total);
+
+    const html=entries.map(([pay,v])=>{
+      const details=Object.entries(v.types)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([type,n])=>`${esc(type)} ${money(n)}`)
+        .join(' · ');
+
+      const prep=['悠遊卡','一卡通'].includes(pay)
+        ? `<div class="rf-save">建議提前準備／儲值：${money(v.total)}</div>`
+        : '';
+
+      return `
+        <div class="rf-pay">
+          <div class="rf-pay-top">
+            <span>💳 ${esc(pay)}</span>
+            <span>${money(v.total)}</span>
+          </div>
+          <div class="rf-pay-detail">${details}</div>
+          ${prep}
+        </div>
+      `;
+    }).join('');
+
+    panel.innerHTML=`
+      <div class="lv-section-title">💳 本月未來支出支付工具準備</div>
+      <div class="lv-note">
+        直接統整目前所有未來行程的細項，依支付方式計算本月需要提前準備的金額。
+      </div>
+      ${html||'<div class="lv-empty">目前沒有本月已設定細項的未來支出。</div>'}
+    `;
+  }
+
+  function syncAll(){
+    renderRealFutureList();
+    renderRealPaymentSummary();
+
+    // 原本的預算／月曆重新計算，但不再整頁重繪。
+    try{
+      if(typeof window.renderSmartCalendar==='function') window.renderSmartCalendar();
+    }catch(e){}
+    try{
+      if(typeof window.refreshRollingView==='function') window.refreshRollingView();
+    }catch(e){}
+  }
+
+  /*
+   * 儲存前把新增的「支出類型／支付方式」寫回原始 details。
+   * 這樣之後重新開啟編輯仍然會保留。
+   */
+  function attachDetailPersistence(){
+    const original=window.saveFuture;
+    if(typeof original!=='function' || original.__rfWrapped)return;
+
+    const wrapped=function(){
+      const rows=[...document.querySelectorAll('#detailRows .detail-row')];
+
+      const extras=rows.map(row=>({
+        type:row.querySelector('.fp3-type,.fed-detail-type')?.value || typeFromName(row.querySelector('.detail-name')?.value),
+        paymentMethod:row.querySelector('.fp3-pay,.fed-detail-payment')?.value || '現金'
+      }));
+
+      const beforeId=window.editingFutureId || null;
+      const beforeName=document.getElementById('futureName')?.value.trim();
+      const beforeDate=document.getElementById('futureDate')?.value;
+
+      const result=original.apply(this,arguments);
+
+      const item=futureData().find(x=>
+        beforeId ? x.id===beforeId :
+        (x.name===beforeName && x.date===beforeDate)
+      );
+
+      if(item && Array.isArray(item.details)){
+        item.details.forEach((d,i)=>{
+          if(extras[i]){
+            d.type=extras[i].type;
+            d.paymentMethod=extras[i].paymentMethod;
+          }
+        });
+        if(typeof window.saveData==='function')window.saveData();
+      }
+
+      setTimeout(syncAll,30);
+      return result;
+    };
+
+    wrapped.__rfWrapped=true;
+    window.saveFuture=wrapped;
+  }
+
+  function attachDeletePersistence(){
+    const original=window.deleteFuture;
+    if(typeof original!=='function' || original.__rfWrapped)return;
+
+    const wrapped=function(){
+      const result=original.apply(this,arguments);
+      setTimeout(syncAll,30);
+      return result;
+    };
+
+    wrapped.__rfWrapped=true;
+    window.deleteFuture=wrapped;
+  }
+
+  /*
+   * 編輯時補回支付方式／類型控制項。
+   * 使用者點「編輯」後，會直接進原本的 modal，
+   * 並把既有 details 帶進去。
+   */
+  function attachEditPersistence(){
+    const original=window.editFuture;
+    if(typeof original!=='function' || original.__rfWrapped)return;
+
+    const wrapped=function(id){
+      const result=original.apply(this,arguments);
+
+      setTimeout(()=>{
+        const item=futureData().find(x=>x.id===id);
+        const rows=[...document.querySelectorAll('#detailRows .detail-row')];
+
+        rows.forEach((row,i)=>{
+          if(row.querySelector('.fp3-pay-grid,.fed-pay-grid'))return;
+
+          const detail=item?.details?.[i]||{};
+          const wrap=document.createElement('div');
+          wrap.className='fp3-pay-grid';
+
+          const type=document.createElement('select');
+          type.className='fp3-type';
+          TYPES.forEach(v=>{
+            const o=document.createElement('option');
+            o.value=v;o.textContent=v;
+            o.selected=(detail.type||typeFromName(detail.name))===v;
+            type.appendChild(o);
+          });
+
+          const pay=document.createElement('select');
+          pay.className='fp3-pay';
+          PAY.forEach(v=>{
+            const o=document.createElement('option');
+            o.value=v;o.textContent='支付：'+v;
+            o.selected=(detail.paymentMethod||'現金')===v;
+            pay.appendChild(o);
+          });
+
+          wrap.append(type,pay);
+          row.appendChild(wrap);
+        });
+      },20);
+
+      return result;
+    };
+
+    wrapped.__rfWrapped=true;
+    window.editFuture=wrapped;
+  }
+
+  /*
+   * 最重要：真正的 #lvFutureList 會在「新增／編輯／刪除」後更新。
+   * 不使用 setInterval，避免造成卡頓。
+   */
+  function install(){
+    attachDetailPersistence();
+    attachEditPersistence();
+    attachDeletePersistence();
+    syncAll();
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(install,80));
+  }else{
+    setTimeout(install,80);
+  }
+
+  // 原 App render 完成後同步一次；只更新必要區塊。
+  const oldRender=window.render;
+  if(typeof oldRender==='function' && !oldRender.__rfWrapped){
+    const wrapped=function(){
+      const result=oldRender.apply(this,arguments);
+      setTimeout(syncAll,20);
+      return result;
+    };
+    wrapped.__rfWrapped=true;
+    window.render=wrapped;
+  }
+
+  const oldLineRefresh=window.lineViewRefresh;
+  if(typeof oldLineRefresh==='function' && !oldLineRefresh.__rfWrapped){
+    const wrapped=function(){
+      const result=oldLineRefresh.apply(this,arguments);
+      setTimeout(syncAll,20);
+      return result;
+    };
+    wrapped.__rfWrapped=true;
+    window.lineViewRefresh=wrapped;
+  }
+})();
+</script>
+<!-- ===== FINAL FIX END ===== -->
