@@ -4884,3 +4884,173 @@ body.line-view-active #lineViewStage{display:block;max-width:900px;margin:0 auto
 })();
 </script>
 <!-- ===== 最終追加結束 ===== -->
+<!-- FINAL_PATCH_V3 -->
+<style id="finalPatchV3Styles">
+  #fp3FutureList .fp3-card{padding:13px 0;border-bottom:1px solid #eee}
+  #fp3FutureList .fp3-main{display:flex;justify-content:space-between;gap:12px;align-items:center;cursor:pointer}
+  #fp3FutureList .fp3-name{font-weight:850;font-size:15px}
+  #fp3FutureList .fp3-meta{font-size:11px;color:#777;margin-top:4px}
+  #fp3FutureList .fp3-amount{text-align:right;font-weight:850}
+  #fp3FutureList .fp3-progress{height:7px;background:#eee;border-radius:99px;overflow:hidden;margin-top:9px}
+  #fp3FutureList .fp3-progress i{display:block;height:100%;background:#1677ff}
+  #fp3FutureList .fp3-sub{display:none;margin-top:10px;padding:11px;border-radius:12px;background:#f7f7f7}
+  #fp3FutureList .fp3-sub.open{display:block}
+  #fp3FutureList .fp3-detail{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #e8e8e8;font-size:12px}
+  #fp3FutureList .fp3-detail:last-child{border-bottom:0}
+  #fp3FutureList .fp3-detail small{display:block;color:#777;margin-top:2px}
+  #fp3FutureList .fp3-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:9px}
+  #fp3FutureList .fp3-actions button{border:0;border-radius:9px;padding:7px 11px;cursor:pointer}
+  .fp3-budget-warn{color:#b42318;font-weight:800}
+  .fp3-budget-note{font-size:10px;color:#b42318;margin-top:3px;font-weight:750}
+  .fp3-budget-week{font-size:10px;color:#8a5a00;margin-top:3px}
+  .fp3-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
+  .fp3-pay-grid select{width:100%;padding:8px;border:1px solid #ddd;border-radius:9px;background:#fff}
+  @media(max-width:600px){.fp3-pay-grid{grid-template-columns:1fr}}
+</style>
+<script id="finalPatchV3Script">
+(function(){
+  const MONTHLY=15000, MIN_MEAL=250;
+  const TYPES=['船','火車','區間火車','高鐵','公車','捷運','客運','計程車','電影','餐飲','住宿','門票','購物','其他'];
+  const PAY=['悠遊卡','一卡通','現金','信用卡','LINE Pay','Apple Pay','其他'];
+  const pad=n=>String(n).padStart(2,'0');
+  const dayKey=d=>{const x=new Date(d);return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate())};
+  const monthKey=d=>{const x=new Date(d);return x.getFullYear()+'-'+pad(x.getMonth()+1)};
+  const money=n=>'$'+Math.round(Number(n)||0).toLocaleString('zh-TW');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const records=()=>data.records||[];
+  const futures=()=>data.futureExpenses||[];
+  const spentOn=k=>records().filter(r=>r.date===k).reduce((s,r)=>s+Number(r.amount||0),0);
+  const detailType=name=>{const s=String(name||'').toLowerCase();const m=[['船',['船','渡輪','船票']],['火車',['火車','台鐵','高鐵','區間','車票']],['公車',['公車','客運','巴士']],['捷運',['捷運','mrt']],['計程車',['計程車','uber','taxi']],['電影',['電影','影城','威秀']],['餐飲',['餐','早餐','午餐','晚餐','飲料','咖啡']],['住宿',['住宿','飯店','民宿','旅館']],['門票',['門票','景點','展覽','樂園']],['購物',['購物','日用品','衣服']]];for(const [t,ws] of m)if(ws.some(w=>s.includes(w)))return t;return '其他'};
+  const futureSpent=item=>{const same=futures().filter(x=>x.date===item.date).sort((a,b)=>String(a.id).localeCompare(String(b.id)));let a=spentOn(item.date);for(const x of same){const u=Math.max(0,Math.min(Number(x.total||0),a));if(x.id===item.id)return u;a=Math.max(0,a-Number(x.total||0))}return 0};
+  const outstanding=item=>Math.max(0,Number(item.total||0)-futureSpent(item));
+
+  function addDetailControls(row,detail){
+    if(!row||row.querySelector('.fp3-pay-grid'))return;
+    const name=row.querySelector('.detail-name'), amount=row.querySelector('.detail-amount'); if(!name||!amount)return;
+    const wrap=document.createElement('div');wrap.className='fp3-pay-grid';
+    const t=document.createElement('select');t.className='fp3-type';
+    TYPES.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;o.selected=(detail?.type||detailType(name.value))===v;t.appendChild(o)});
+    const p=document.createElement('select');p.className='fp3-pay';
+    PAY.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent='支付：'+v;o.selected=(detail?.paymentMethod||'現金')===v;p.appendChild(o)});
+    wrap.append(t,p);row.appendChild(wrap);
+  }
+  function enhanceRows(){document.querySelectorAll('#detailRows .detail-row').forEach(r=>addDetailControls(r));}
+
+  function paymentSummary(){
+    const page=document.querySelector('#lineViewStage .lv-page[data-page="future"]');if(!page)return;
+    let panel=document.getElementById('fp3PaymentSummary');
+    if(!panel){panel=document.createElement('div');panel.id='fp3PaymentSummary';panel.className='lv-card';const list=page.querySelector('#lvFutureList');(list?.closest('.lv-card')||page).insertAdjacentElement('beforebegin',panel)}
+    const mk=monthKey(new Date()), agg={};
+    futures().filter(x=>String(x.date||'').startsWith(mk)).forEach(p=>(p.details||[]).forEach(d=>{const pay=d.paymentMethod||'現金';const type=d.type||detailType(d.name);const k=pay+'｜'+type;agg[k]=(agg[k]||0)+Number(d.amount||0)}));
+    const byPay={};Object.entries(agg).forEach(([k,v])=>{const [p,t]=k.split('｜');(byPay[p]??={total:0,items:[]});byPay[p].total+=v;byPay[p].items.push([t,v])});
+    const html=Object.entries(byPay).sort((a,b)=>b[1].total-a[1].total).map(([p,v])=>`<div style="padding:11px;border:1px solid #eee;border-radius:12px;margin:7px 0"><b>💳 ${esc(p)}</b><strong style="float:right">${money(v.total)}</strong><div style="clear:both;font-size:11px;color:#777;margin-top:4px">${v.items.sort((a,b)=>b[1]-a[1]).map(([t,n])=>esc(t)+' '+money(n)).join(' · ')}</div>${['悠遊卡','一卡通'].includes(p)?`<div style="font-size:11px;color:#8a5a00;margin-top:5px">建議提前準備／儲值：${money(v.total)}</div>`:''}</div>`).join('');
+    panel.innerHTML=`<div class="lv-section-title">💳 本月未來支出支付工具準備</div><div class="lv-note">依所有未來行程的「支付方式＋支出類型」即時統整，方便提前儲值或準備現金。</div>${html||'<div class="lv-empty">目前沒有本月已設定支付方式的未來支出。</div>'}`;
+  }
+
+  function futureListTwoLayer(){
+    const host=document.getElementById('futureList');if(!host)return;
+    const items=futures().filter(x=>x.date&&String(x.date).startsWith(monthKey(new Date()))).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    host.innerHTML=items.length?items.map(item=>{const spent=futureSpent(item),total=Number(item.total||0),remain=Math.max(0,total-spent),pct=total?Math.min(100,spent/total*100):0;return `<div class="fp3-card"><div class="fp3-main" data-fp3-id="${esc(item.id)}"><div><div class="fp3-name">${esc(item.name)}</div><div class="fp3-meta">${esc(item.date)} · ${item.details?.length||0} 個細項</div></div><div class="fp3-amount">${money(total)}<div style="font-size:10px;color:#777">剩 ${money(remain)}</div></div></div><div class="fp3-progress"><i style="width:${pct}%"></i></div><div class="fp3-sub" id="fp3-sub-${esc(item.id)}">${(item.details||[]).map(d=>`<div class="fp3-detail"><div><b>${esc(d.name)}</b><small>${esc(d.type||detailType(d.name))} · ${esc(d.paymentMethod||'現金')}</small></div><strong>${money(d.amount)}</strong></div>`).join('')||'<div style="font-size:12px;color:#777">尚未拆分細項</div>'}<div class="fp3-actions"><button type="button" onclick="editFuture('${esc(item.id)}')">✏️ 編輯</button><button type="button" onclick="deleteFuture('${esc(item.id)}')">🗑️ 刪除</button></div></div></div>`}).join(''):'<div class="empty">目前沒有未來支出</div>';
+    host.querySelectorAll('.fp3-main').forEach(el=>el.addEventListener('click',()=>document.getElementById('fp3-sub-'+el.dataset.fp3Id)?.classList.toggle('open')));
+  }
+
+  function weekStart(d){const x=new Date(d);const dow=x.getDay();x.setDate(x.getDate()-dow);return new Date(x.getFullYear(),x.getMonth(),x.getDate())}
+  function weekEnd(d){const x=weekStart(d);x.setDate(x.getDate()+6);return x}
+  function weekDaysFor(d){const s=weekStart(d),arr=[];for(let i=0;i<7;i++){const x=new Date(s);x.setDate(s.getDate()+i);if(x.getMonth()===d.getMonth())arr.push(x)}return arr}
+  function futureBurdenForDay(k,allDays){let n=0;futures().forEach(f=>{if(!f.date||f.date<k)return;const due=new Date(f.date+'T00:00:00');const start=new Date(k+'T00:00:00');const days=Math.max(1,Math.round((due-start)/86400000)+1);n+=outstanding(f)/days});return n}
+
+  /*
+   * 週內優先調度：
+   * - 每天先保留至少 250 元生活底線。
+   * - 本週前面省下的錢，只能在同一週拿來支援後面的大額支出。
+   * - 上週省下的錢原則上只進存款。
+   * - 若本週某天按正常分配會低於 250，才允許動用本週尚未使用的週結餘。
+   * - 本週仍不足，才把壓力往下一週滾動。
+   */
+  function smartMonth(month){
+    const days=[];const y=month.getFullYear(),m=month.getMonth(),n=new Date(y,m+1,0).getDate();for(let i=1;i<=n;i++)days.push(new Date(y,m,i));
+    const base=MONTHLY/n;const map={};const weekSaved={};
+    let carryFromPrior=0;
+    const today=dayKey(new Date());
+    for(let wi=0;wi<Math.ceil(n/7);wi++){
+      const wk=days.slice(wi*7,Math.min(n,wi*7+7));if(!wk.length)continue;
+      let weekPool=carryFromPrior; // only emergency carry, normally 0
+      let usedWeekSaved=0;
+      const raw=wk.map(d=>({d,k:dayKey(d),spent:spentOn(dayKey(d)),reserve:futureBurdenForDay(dayKey(d),days)}));
+      const rawRemaining=raw.map(x=>Math.max(0,base-x.reserve-x.spent));
+      const weeklyBase=wk.length*base;
+      const weekSpent=raw.reduce((s,x)=>s+x.spent,0);
+      const weekFuture=raw.reduce((s,x)=>s+x.reserve,0);
+      let weekSurplus=Math.max(0,weeklyBase-weekSpent-weekFuture);
+      for(const x of raw){
+        const natural=Math.max(0,base-x.reserve);
+        let allowance=natural;
+        let note='';
+        let emergency=0;
+        if(natural<MIN_MEAL){
+          emergency=Math.min(weekSurplus,MIN_MEAL-natural);
+          allowance=natural+emergency;
+          weekSurplus-=emergency;usedWeekSaved+=emergency;
+          note='需當週剩餘錢支應';
+        }
+        const actual=x.spent;
+        const remaining=allowance-actual;
+        if(actual>allowance){
+          const over=actual-allowance;
+          if(weekSurplus>0){const use=Math.min(weekSurplus,over);weekSurplus-=use;usedWeekSaved+=use;allowance+=use;}
+          if(actual>allowance){carryFromPrior=actual-allowance;note='本週不足，將調整下週預算';}
+        }
+        map[x.k]={base,natural,allowance,spent:actual,remaining:allowance-actual,reserve:x.reserve,note,weekSavedUsed:usedWeekSaved};
+      }
+      // only positive weekly remainder is retained as savings, not transferred to next week
+      weekSaved[wi]=weekSurplus;
+      carryFromPrior=0;
+      // if the week is already too tight, carry a pressure marker only to following week via explicit calculation below
+      const weekActual=wk.reduce((s,d)=>s+spentOn(dayKey(d)),0);
+      const weekNatural=wk.reduce((s,d)=>s+Math.max(0,base-futureBurdenForDay(dayKey(d),days)),0);
+      if(weekActual>weekNatural){
+        const deficit=weekActual-weekNatural;
+        const next=days[(wi+1)*7];
+        if(next){for(let j=(wi+1)*7;j<days.length;j++){const k=dayKey(days[j]);if(map[k])continue;/* computed later */}map['__carry_'+wi]=deficit;}
+      }
+    }
+    return {days,base,map,weekSaved};
+  }
+
+  function renderSmartCalendar(){
+    const grid=document.getElementById('lvBudgetCalendarGrid');if(!grid)return;
+    const month=(typeof currentMonth!=='undefined'&&currentMonth instanceof Date)?new Date(currentMonth):new Date();
+    const rb=smartMonth(month), cells=grid.querySelectorAll('.lv-cal-day:not(.empty)');
+    rb.days.forEach((d,i)=>{const node=cells[i];if(!node)return;const info=rb.map[dayKey(d)];if(!info)return;const b=node.querySelector('.lv-cal-budget'),s=node.querySelector('.lv-cal-spent'),r=node.querySelector('.lv-cal-result');if(b){b.textContent='可用 '+money(info.allowance);if(info.natural<MIN_MEAL){b.classList.add('fp3-budget-warn');b.innerHTML='可用 '+money(info.allowance)+'<div class="fp3-budget-note">需當週剩餘錢支應</div>'}else b.classList.remove('fp3-budget-warn')}if(s)s.textContent='已花 '+money(info.spent);if(r){r.className='lv-cal-result '+(info.remaining<0?'bad':'good');r.textContent=info.remaining<0?'超支 '+money(-info.remaining):'剩 '+money(info.remaining);if(info.note)r.innerHTML+=`<div class="fp3-budget-week">${esc(info.note)}</div>`}});
+  }
+
+  function syncDetailControls(){
+    document.querySelectorAll('#detailRows .detail-row').forEach((row,i)=>{
+      const itemId=typeof editingFutureId!=='undefined'?editingFutureId:null;const item=itemId?futures().find(x=>x.id===itemId):null;addDetailControls(row,item?.details?.[i]);
+    });
+  }
+
+  const oldAdd=window.addDetailRow;
+  if(typeof oldAdd==='function')window.addDetailRow=function(name,amount,extra){const r=oldAdd.apply(this,arguments);setTimeout(syncDetailControls,0);return r};
+  const oldEdit=window.editFuture;
+  if(typeof oldEdit==='function')window.editFuture=function(id){const r=oldEdit.apply(this,arguments);setTimeout(syncDetailControls,15);return r};
+  const oldSave=window.saveFuture;
+  if(typeof oldSave==='function')window.saveFuture=function(){
+    const rows=[...document.querySelectorAll('#detailRows .detail-row')];const extra=rows.map(r=>({type:r.querySelector('.fp3-type')?.value||detailType(r.querySelector('.detail-name')?.value),paymentMethod:r.querySelector('.fp3-pay')?.value||'現金'}));
+    const beforeId=(typeof editingFutureId!=='undefined')?editingFutureId:null;const beforeName=document.getElementById('futureName')?.value.trim();const beforeDate=document.getElementById('futureDate')?.value;
+    const r=oldSave.apply(this,arguments);const item=futures().find(x=>beforeId?x.id===beforeId:(x.name===beforeName&&x.date===beforeDate));if(item&&item.details)item.details.forEach((d,i)=>{d.type=extra[i]?.type||detailType(d.name);d.paymentMethod=extra[i]?.paymentMethod||'現金'});if(item)saveData();setTimeout(refresh,20);return r;
+  };
+  const oldDelete=window.deleteFuture;
+  if(typeof oldDelete==='function')window.deleteFuture=function(id){const r=oldDelete.apply(this,arguments);setTimeout(refresh,20);return r};
+
+  function refresh(){futureListTwoLayer();paymentSummary();renderSmartCalendar();}
+  const oldRender=window.render;
+  if(typeof oldRender==='function')window.render=function(){const r=oldRender.apply(this,arguments);setTimeout(refresh,0);return r};
+  const oldLV=window.lineViewRefresh;
+  if(typeof oldLV==='function')window.lineViewRefresh=function(){const r=oldLV.apply(this,arguments);setTimeout(refresh,0);return r};
+  document.getElementById('futureModal')?.addEventListener('input',()=>setTimeout(paymentSummary,0));
+  document.getElementById('futureModal')?.addEventListener('change',()=>setTimeout(paymentSummary,0));
+  setTimeout(refresh,50);
+})();
+</script>
+<!-- FINAL_PATCH_V3_END -->
