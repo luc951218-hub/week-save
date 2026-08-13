@@ -4490,3 +4490,251 @@ document.querySelectorAll(".modal")
   }
 })();
 </script>
+
+
+<style id="mobile-budget-calendar-fix">
+/* 預算頁手機版：禁止統計區把 viewport 撐開 */
+@media (max-width:600px){
+  .v2-budget-panel{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+  }
+  .v2-budget-grid{
+    width:100% !important;
+    max-width:100% !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+  .v2-stat{
+    min-width:0 !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+  }
+  .v2-stat-label,
+  .v2-stat-value{
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .v2-stat-value{
+    font-size:17px !important;
+  }
+  .v2-reallocation,
+  .v2-budget-note,
+  .v2-future-line,
+  .v2-week-detail{
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+  }
+
+  #weekList{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+  }
+
+  #calendar{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+    gap:3px !important;
+    overflow:hidden !important;
+  }
+  #calendar .calendar-weekday,
+  #calendar .calendar-day{
+    min-width:0 !important;
+    width:auto !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+  #calendar .calendar-day{
+    min-height:76px !important;
+    padding:4px 3px !important;
+    overflow:hidden !important;
+  }
+  #calendar .calendar-day-money,
+  #calendar .calendar-day-expense,
+  #calendar .calendar-event,
+  #calendar .calendar-ai{
+    max-width:100% !important;
+    font-size:8px !important;
+    line-height:1.25 !important;
+    white-space:normal !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+  }
+  #calendar .calendar-event{
+    max-height:26px !important;
+    overflow:hidden !important;
+  }
+}
+
+/* 日曆 AI 建議，不改原本日曆結構，只增加一行提示 */
+.calendar-ai{
+  margin-top:2px;
+  padding:2px 3px;
+  border-radius:5px;
+  font-size:9px;
+  line-height:1.25;
+  font-weight:800;
+  background:#eef6ff;
+  color:#1769aa;
+}
+.calendar-ai.ai-warning{
+  background:#fff0ef;
+  color:#c62828;
+}
+.calendar-ai.ai-plan{
+  background:#fff6df;
+  color:#8a5a00;
+}
+.calendar-ai.ai-after{
+  background:#eef8f0;
+  color:#26733a;
+}
+</style>
+
+<script id="budget-calendar-ai-fix">
+(function(){
+  'use strict';
+
+  function n(v){ return Number(v||0); }
+
+  function monthFuture(){
+    const mk=monthKey();
+    return (data.futureExpenses||[])
+      .filter(x=>x && x.date && String(x.date).startsWith(mk))
+      .map(x=>({
+        item:x,
+        date:parseDate(x.date),
+        amount:Math.max(0,n(x.total)-n(x.spent))
+      }))
+      .filter(x=>x.amount>0);
+  }
+
+  function diffDays(a,b){
+    const A=new Date(a.getFullYear(),a.getMonth(),a.getDate());
+    const B=new Date(b.getFullYear(),b.getMonth(),b.getDate());
+    return Math.round((B-A)/86400000);
+  }
+
+  function baseDaily(day){
+    try{
+      const week=getWeekByDate(day);
+      if(week && week.days && week.days.length){
+        return getAdjustedWeeklyBudget(week)/week.days.length;
+      }
+    }catch(e){}
+    const days=getMonthDays();
+    return days.length ? 15000/days.length : 0;
+  }
+
+  function adviceFor(day){
+    const events=monthFuture();
+    if(!events.length) return null;
+
+    const todayEvents=events.filter(e=>diffDays(day,e.date)===0);
+    if(todayEvents.length){
+      const total=todayEvents.reduce((sum,e)=>sum+e.amount,0);
+      const names=todayEvents.map(e=>e.item.name).join("、");
+      return {
+        cls:"ai-warning",
+        text:`🔴 ${names} 預計 ${formatMoney(total)}`
+      };
+    }
+
+    /* 找最近的未來支出；前方最多提前 7 天提醒 */
+    const upcoming=events
+      .map(e=>({...e,days:diffDays(day,e.date)}))
+      .filter(e=>e.days>0 && e.days<=7)
+      .sort((a,b)=>a.days-b.days);
+
+    if(upcoming.length){
+      const e=upcoming[0];
+      const daily=baseDaily(day);
+      const reserve=e.amount/e.days;
+      const recommended=Math.max(250,Math.floor(daily-reserve));
+
+      if(daily-reserve<250){
+        return {
+          cls:"ai-warning",
+          text:`🔴 ${e.days}天後 ${e.item.name} ${formatMoney(e.amount)}｜需節約`
+        };
+      }
+
+      return {
+        cls:"ai-plan",
+        text:`🤖 ${e.days}天後 ${e.item.name}｜建議 ${formatMoney(recommended)}`
+      };
+    }
+
+    /* 行程後兩天給恢復提示，讓前後日期都有提示 */
+    const justPassed=events
+      .map(e=>({...e,days:diffDays(day,e.date)}))
+      .filter(e=>e.days<0 && e.days>=-2)
+      .sort((a,b)=>b.days-a.days);
+
+    if(justPassed.length){
+      const daily=baseDaily(day);
+      return {
+        cls:"ai-after",
+        text:`🤖 行程已過｜建議約 ${formatMoney(daily)}`
+      };
+    }
+
+    return null;
+  }
+
+  function renderAI(){
+    const container=document.getElementById("calendar");
+    if(!container) return;
+
+    const days=getMonthDays();
+    const nodes=[...container.querySelectorAll(".calendar-day:not(.empty)")];
+
+    days.forEach((day,index)=>{
+      const node=nodes[index];
+      if(!node) return;
+
+      const old=node.querySelector(".calendar-ai");
+      if(old) old.remove();
+
+      const advice=adviceFor(day);
+      if(!advice) return;
+
+      const el=document.createElement("div");
+      el.className="calendar-ai "+advice.cls;
+      el.textContent=advice.text;
+      node.appendChild(el);
+    });
+  }
+
+  let timer=0;
+  function schedule(){
+    clearTimeout(timer);
+    timer=setTimeout(renderAI,30);
+  }
+
+  const original=window.renderCalendar;
+  if(typeof original==="function" && !original.__budgetAIFixed){
+    const wrapped=function(){
+      const result=original.apply(this,arguments);
+      schedule();
+      return result;
+    };
+    wrapped.__budgetAIFixed=true;
+    window.renderCalendar=wrapped;
+  }
+
+  document.addEventListener("DOMContentLoaded",schedule);
+  window.addEventListener("resize",schedule);
+  setTimeout(schedule,100);
+})();
+</script>
